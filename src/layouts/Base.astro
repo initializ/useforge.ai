@@ -3,6 +3,7 @@ import '@/styles/global.css';
 import Nav from '@/components/Nav.astro';
 import Footer from '@/components/Footer.astro';
 import SEO from '@/components/SEO.astro';
+import SearchModal from '@/components/docs/SearchModal.astro';
 
 interface Props {
   title?: string;
@@ -53,6 +54,8 @@ const {
     <main class="flex-1">
       <slot />
     </main>
-    <Footer />
+    {layout !== 'docs' && <Footer />}
+
+    <SearchModal />
   </body>
 </html>

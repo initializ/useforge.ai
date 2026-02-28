@@ -6,15 +6,9 @@ const docs = defineCollection({
   schema: z.object({
     title: z.string(),
     description: z.string(),
-    sidebar: z
-      .object({
-        order: z.number().optional(),
-        label: z.string().optional(),
-        badge: z.string().optional(),
-      })
-      .optional(),
+    order: z.number().optional(),
+    editUrl: z.string().optional(),
     draft: z.boolean().optional().default(false),
-    lastUpdated: z.coerce.date().optional(),
   }),
 });
 
@@ -23,32 +17,25 @@ const blog = defineCollection({
   schema: z.object({
     title: z.string(),
     description: z.string(),
-    pubDate: z.coerce.date(),
-    updatedDate: z.coerce.date().optional(),
     author: z.string(),
-    tags: z.array(z.string()).optional().default([]),
-    image: z.string().optional(),
-    draft: z.boolean().optional().default(false),
-  }),
-});
-
-const changelog = defineCollection({
-  loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/changelog' }),
-  schema: z.object({
-    title: z.string(),
-    version: z.string(),
     date: z.coerce.date(),
-    description: z.string(),
+    tags: z.array(z.string()).default([]),
+    draft: z.boolean().default(false),
+    image: z.string().optional(),
   }),
 });
 
 const skills = defineCollection({
   loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/skills' }),
   schema: z.object({
-    title: z.string(),
+    name: z.string(),
     description: z.string(),
-    icon: z.string().optional(),
-    order: z.number().optional(),
+    trustLevel: z.enum(['trusted', 'under_review', 'untrusted', 'failed']),
+    bins: z.array(z.string()).default([]),
+    envRequired: z.array(z.string()).default([]),
+    envOneOf: z.array(z.string()).default([]),
+    egressDomains: z.array(z.string()).default([]),
+    publisher: z.string().default('forge'),
   }),
 });
 
@@ -58,7 +45,17 @@ const comparisons = defineCollection({
     title: z.string(),
     description: z.string(),
     competitor: z.string(),
-    draft: z.boolean().optional().default(false),
+    order: z.number().optional(),
+  }),
+});
+
+const changelog = defineCollection({
+  loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/changelog' }),
+  schema: z.object({
+    version: z.string(),
+    date: z.coerce.date(),
+    breaking: z.boolean().default(false),
+    githubUrl: z.string().optional(),
   }),
 });
 
