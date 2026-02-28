@@ -1,0 +1,47 @@
+@import "tailwindcss";
+@import "./prose.css";
+@plugin "@tailwindcss/typography";
+
+@theme {
+  --color-forge-orange: #F97316;
+  --color-forge-amber: #FF8C42;
+  --color-forge-deep: #D94F00;
+
+  --color-dark-bg: #0B0F1A;
+  --color-dark-surface: #111827;
+  --color-dark-border: #1F2937;
+  --color-dark-hover: #1a2332;
+
+  --color-steel-700: #2D3748;
+  --color-steel-800: #1A202C;
+
+  --color-spark-light: #FFF7ED;
+  --color-spark-mid: #FDBA74;
+  --color-spark-warm: #FFD4A8;
+
+  --font-body: 'DM Sans', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  --radius-forge-sm: 6px;
+  --radius-forge-md: 10px;
+  --radius-forge-lg: 16px;
+  --radius-forge-xl: 20px;
+
+  --ease-forge: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* @font-face declarations — uncomment when woff2 files are added to public/fonts/
+@font-face {
+  font-family: 'DM Sans';
+  src: url('/fonts/DMSans-Variable.woff2') format('woff2');
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'JetBrains Mono';
+  src: url('/fonts/JetBrainsMono-Variable.woff2') format('woff2');
+  font-weight: 100 800;
+  font-display: swap;
+}
+*/

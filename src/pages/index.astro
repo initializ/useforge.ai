@@ -1,0 +1,13 @@
+---
+import Base from '@/layouts/Base.astro';
+import SkillBrowser from '@/components/SkillBrowser';
+---
+
+<Base title="Forge — AI Agent Framework">
+  <main class="min-h-screen flex flex-col items-center justify-center gap-8 p-8">
+    <img src="/logos/forge-full.svg" alt="Forge" class="w-48 h-48" />
+    <h1 class="text-4xl font-bold text-forge-orange">Forge</h1>
+    <p class="text-spark-mid text-lg">Build production-ready AI agents with skill-based architecture.</p>
+    <SkillBrowser client:load />
+  </main>
+</Base>

@@ -1,0 +1,18 @@
+# Forge — AI Agent Framework
+
+> Build production-ready AI agents with skill-based architecture.
+
+Forge is an open-source framework for building AI agents that use composable skills.
+Skills are defined in Markdown (skill.md) and executed by a secure runtime.
+
+## Key Features
+- Skill-based agent architecture
+- Markdown-defined skills (skill.md)
+- Secure sandboxed execution
+- Multi-model support
+- Production-ready deployment
+
+## Links
+- Website: https://useforge.ai
+- Documentation: https://useforge.ai/docs
+- GitHub: https://github.com/useforge
