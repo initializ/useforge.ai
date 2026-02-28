@@ -1,0 +1,72 @@
+---
+const skillSource = `---
+name: summarize
+description: Summarize a document or URL
+model: gpt-4o
+tools:
+  - web_fetch
+  - file_read
+egress:
+  allow:
+    - "*.openai.com"
+    - "*.wikipedia.org"
+---
+
+# Summarize
+
+You are a summarization agent.
+Given a URL or document, produce a
+concise summary in 3-5 bullet points.
+
+## Constraints
+- Stay factual, no opinions
+- Max 150 words per summary
+- Cite sources when possible`;
+
+const outputLines = [
+  { key: 'name', value: 'summarize' },
+  { key: 'description', value: 'Summarize a document or URL' },
+  { key: 'model', value: 'gpt-4o' },
+  { key: 'tools', value: 'web_fetch, file_read' },
+  { key: 'egress', value: '*.openai.com, *.wikipedia.org' },
+  { key: 'status', value: 'ready', highlight: true },
+];
+---
+
+<section class="py-20 sm:py-24">
+  <div class="mx-auto max-w-7xl px-4">
+    <h2 class="text-center text-3xl sm:text-4xl font-bold text-white mb-4">
+      Skills are just Markdown
+    </h2>
+    <p class="text-center text-gray-400 mb-12 max-w-xl mx-auto">
+      Define everything in a single SKILL.md file — model, tools, egress rules, and prompt. Forge handles the rest.
+    </p>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mx-auto max-w-5xl">
+      <!-- Left: SKILL.md source -->
+      <div class="bg-dark-surface border border-dark-border rounded-forge-lg overflow-hidden">
+        <div class="px-4 py-2 border-b border-dark-border flex items-center gap-2">
+          <span class="text-xs font-mono text-gray-500">SKILL.md</span>
+        </div>
+        <pre class="p-4 text-sm font-mono text-gray-300 leading-relaxed overflow-x-auto"><code>{skillSource}</code></pre>
+      </div>
+
+      <!-- Right: Compiled output -->
+      <div class="bg-dark-surface border border-dark-border rounded-forge-lg overflow-hidden">
+        <div class="px-4 py-2 border-b border-dark-border flex items-center gap-2">
+          <span class="text-xs font-mono text-gray-500">forge inspect</span>
+        </div>
+        <div class="p-4 font-mono text-sm space-y-2">
+          {outputLines.map(line => (
+            <div class="flex gap-3">
+              <span class="text-gray-500 min-w-[100px]">{line.key}:</span>
+              <span class:list={[line.highlight ? 'text-green-400' : 'text-spark-mid']}>
+                {line.value}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
