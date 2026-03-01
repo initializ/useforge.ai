@@ -102,7 +102,7 @@ useforge.ai/
 | **Skills** | Embedded Skills, Writing Custom Skills, Skills CLI, Contributing a Skill |
 | **Deployment** | Docker, Kubernetes, Production Checklist, Monitoring & Observability |
 | **Reference** | CLI Reference, forge.yaml Schema, Environment Variables, Agent Skills Compatibility |
-| **FAQ** | 12 Q&A covering providers, security, deployment, contributing |
+| **FAQ** | 12 Q&A covering providers, security, deployment, and contributing |
 
 ## Development
 
