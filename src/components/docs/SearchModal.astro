@@ -15,7 +15,7 @@
         <input
           id="search-input"
           type="text"
-          placeholder="Search documentation..."
+          placeholder="Search Forge..."
           class="flex-1 py-3 bg-transparent text-white placeholder-gray-500 text-sm outline-none"
           autocomplete="off"
         />
@@ -27,7 +27,7 @@
       <!-- Results -->
       <div id="search-results" class="max-h-[60vh] overflow-y-auto p-2">
         <p id="search-empty" class="px-3 py-8 text-sm text-gray-500 text-center">
-          Type to search documentation...
+          Type to search...
         </p>
       </div>
     </div>
@@ -69,7 +69,7 @@
       if (input) input.value = '';
       if (results && empty) {
         results.innerHTML = '';
-        empty.textContent = 'Type to search documentation...';
+        empty.textContent = 'Type to search...';
         results.appendChild(empty);
       }
     }
@@ -102,7 +102,7 @@
 
           if (!query) {
             results.innerHTML = '';
-            empty.textContent = 'Type to search documentation...';
+            empty.textContent = 'Type to search...';
             results.appendChild(empty);
             return;
           }

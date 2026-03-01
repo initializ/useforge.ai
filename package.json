@@ -5,7 +5,8 @@
   "private": true,
   "scripts": {
     "dev": "astro dev",
-    "build": "npm run fetch && astro build",
+    "generate:og": "npx tsx scripts/generate-og.ts",
+    "build": "npm run fetch && npm run generate:og && astro build",
     "fetch": "npm run fetch:skills && npm run fetch:contributors && npm run fetch:releases && npm run fetch:trust",
     "fetch:skills": "npx tsx scripts/fetch-skills.ts",
     "fetch:contributors": "npx tsx scripts/fetch-contributors.ts",

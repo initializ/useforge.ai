@@ -6,7 +6,9 @@ interface Props {
   jsonLd?: Record<string, unknown>;
 }
 
-const { title, description, ogImage = '/logos/forge-full.svg', jsonLd } = Astro.props;
+const pathSlug = Astro.url.pathname === '/' ? 'index' : Astro.url.pathname.replace(/^\/|\/$/g, '');
+const autoOgImage = `/og/${pathSlug}.png`;
+const { title, description, ogImage = autoOgImage, jsonLd } = Astro.props;
 
 const displayTitle = title.includes('Forge') ? title : `${title} — Forge`;
 const canonicalURL = new URL(Astro.url.pathname, Astro.site);
