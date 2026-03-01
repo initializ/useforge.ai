@@ -1,0 +1,1193 @@
+---
+import Base from '@/layouts/Base.astro';
+import SecurityStack from '@/components/SecurityStack.astro';
+
+// Load trust data at build time with fallback
+let trustData = {
+  ciStatus: 'unknown',
+  ciUrl: 'https://github.com/initializ/forge/actions',
+  latestVersion: '',
+  latestDate: '',
+  securityAdvisories: 0,
+  license: 'Apache-2.0',
+  fetchedAt: '',
+};
+
+try {
+  const raw = await import('@/data/trust-data.json');
+  trustData = { ...trustData, ...raw.default };
+} catch {
+  // trust-data.json not generated yet — use placeholders
+}
+
+// Also pull latest release from releases.json as backup
+if (!trustData.latestVersion) {
+  try {
+    const releases = await import('@/data/releases.json');
+    const list = releases.default as Array<{ version: string; date: string }>;
+    if (list.length > 0) {
+      trustData.latestVersion = list[0].version;
+      trustData.latestDate = list[0].date;
+    }
+  } catch {}
+}
+
+const ciColor =
+  trustData.ciStatus === 'success'
+    ? 'text-green-400'
+    : trustData.ciStatus === 'failure'
+      ? 'text-red-400'
+      : 'text-gray-400';
+
+const ciLabel =
+  trustData.ciStatus === 'success'
+    ? 'Passing'
+    : trustData.ciStatus === 'failure'
+      ? 'Failing'
+      : 'Unknown';
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebPage',
+  name: 'Forge Trust & Security',
+  description:
+    'Comprehensive security architecture documentation for Forge — the secure, portable AI Agent runtime.',
+  publisher: {
+    '@type': 'Organization',
+    name: 'Initializ',
+    url: 'https://initializ.ai',
+  },
+  url: 'https://useforge.ai/trust',
+};
+
+const ndjsonExample = `{"ts":"2026-02-28T10:00:00Z","event":"session_start","correlation_id":"a1b2c3d4","task_id":"task-1"}
+{"ts":"2026-02-28T10:00:01Z","event":"tool_exec","correlation_id":"a1b2c3d4","fields":{"tool":"tavily_research","phase":"start"}}
+{"ts":"2026-02-28T10:00:01Z","event":"egress_allowed","correlation_id":"a1b2c3d4","fields":{"domain":"api.tavily.com","mode":"allowlist","source":"proxy"}}
+{"ts":"2026-02-28T10:00:05Z","event":"tool_exec","correlation_id":"a1b2c3d4","fields":{"tool":"tavily_research","phase":"end"}}
+{"ts":"2026-02-28T10:00:06Z","event":"session_end","correlation_id":"a1b2c3d4","fields":{"state":"completed"}}`;
+---
+
+<Base
+  title="Trust & Security — Forge"
+  description="Comprehensive security architecture documentation for Forge — the secure, portable AI Agent runtime."
+  jsonLd={jsonLd}
+>
+  <!-- ─── A. Hero ─── -->
+  <section class="relative py-20 sm:py-28 overflow-hidden">
+    <div class="absolute inset-0 pointer-events-none">
+      <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-forge-orange/5 rounded-full blur-3xl"></div>
+    </div>
+    <div class="relative mx-auto max-w-4xl px-4 text-center">
+      <h1 class="text-4xl sm:text-5xl lg:text-6xl font-bold text-white tracking-tight">
+        Forge Trust &amp; Security
+      </h1>
+      <p class="mt-6 text-lg sm:text-xl text-gray-400 leading-relaxed max-w-3xl mx-auto">
+        Forge is a secure, portable AI Agent runtime. Run agents locally, in cloud, or enterprise environments without exposing inbound tunnels. Here's how.
+      </p>
+    </div>
+  </section>
+
+  <!-- ─── B. Project Health Dashboard ─── -->
+  <section id="project-health" class="py-16 sm:py-20">
+    <div class="mx-auto max-w-7xl px-4">
+      <p class="text-sm font-medium text-forge-orange uppercase tracking-wider mb-4">Project Health</p>
+      <h2 class="text-2xl sm:text-3xl font-bold text-white mb-8">
+        <a href="#project-health" class="hover:text-forge-orange transition-colors">Live Status</a>
+      </h2>
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- CI Status -->
+        <a href={trustData.ciUrl} target="_blank" rel="noopener noreferrer" class="bg-dark-surface border border-dark-border rounded-forge-md p-5 hover:border-dark-hover transition-colors group">
+          <div class="flex items-center gap-2 mb-2">
+            <svg class="w-4 h-4 text-gray-500 group-hover:text-forge-orange transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+              <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span class="text-xs text-gray-500 uppercase tracking-wide">CI Status</span>
+          </div>
+          <p class:list={['text-lg font-semibold', ciColor]}>{ciLabel}</p>
+        </a>
+
+        <!-- Latest Release -->
+        <div class="bg-dark-surface border border-dark-border rounded-forge-md p-5">
+          <div class="flex items-center gap-2 mb-2">
+            <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+              <path d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a4 4 0 014-4z" />
+            </svg>
+            <span class="text-xs text-gray-500 uppercase tracking-wide">Latest Release</span>
+          </div>
+          <p class="text-lg font-semibold text-white">
+            {trustData.latestVersion ? `v${trustData.latestVersion.replace(/^v/, '')}` : '—'}
+          </p>
+          {trustData.latestDate && (
+            <p class="text-xs text-gray-500 mt-1">{trustData.latestDate}</p>
+          )}
+        </div>
+
+        <!-- Security Advisories -->
+        <div class="bg-dark-surface border border-dark-border rounded-forge-md p-5">
+          <div class="flex items-center gap-2 mb-2">
+            <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+            </svg>
+            <span class="text-xs text-gray-500 uppercase tracking-wide">Advisories</span>
+          </div>
+          <p class:list={[
+            'text-lg font-semibold',
+            trustData.securityAdvisories === 0 ? 'text-green-400' : 'text-yellow-400',
+          ]}>
+            {trustData.securityAdvisories}
+          </p>
+          <p class="text-xs text-gray-500 mt-1">published</p>
+        </div>
+
+        <!-- License -->
+        <div class="bg-dark-surface border border-dark-border rounded-forge-md p-5">
+          <div class="flex items-center gap-2 mb-2">
+            <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+              <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            <span class="text-xs text-gray-500 uppercase tracking-wide">License</span>
+          </div>
+          <p class="text-lg font-semibold text-white">{trustData.license}</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── C. Security Architecture Overview ─── -->
+  <section id="security-architecture" class="py-16 sm:py-20">
+    <div class="mx-auto max-w-7xl px-4">
+      <p class="text-sm font-medium text-forge-orange uppercase tracking-wider mb-4">Architecture</p>
+      <h2 class="text-2xl sm:text-3xl font-bold text-white mb-6">
+        <a href="#security-architecture" class="hover:text-forge-orange transition-colors">Security Architecture</a>
+      </h2>
+      <div class="border-l-4 border-l-forge-orange bg-dark-surface rounded-forge-md p-6 mb-10">
+        <p class="text-white text-lg leading-relaxed">
+          Atomicity. Security. Portability. Every layer of Forge's architecture is designed to make these properties <em class="text-forge-orange not-italic font-medium">verifiable</em>, not just claimed.
+        </p>
+      </div>
+      <p class="text-gray-400 leading-relaxed mb-8 max-w-3xl">
+        Forge's security is organized as a defense-in-depth stack. Each layer addresses a different threat surface, and layers are independently enforceable. No single layer failing compromises the entire system.
+      </p>
+      <div class="max-w-3xl">
+        <SecurityStack />
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── D. Network Posture ─── -->
+  <section id="network-posture" class="py-16 sm:py-20">
+    <div class="mx-auto max-w-7xl px-4">
+      <p class="text-sm font-medium text-forge-orange uppercase tracking-wider mb-4">Layer 6</p>
+      <h2 class="text-2xl sm:text-3xl font-bold text-white mb-6">
+        <a href="#network-posture" class="hover:text-forge-orange transition-colors">Network Posture</a>
+      </h2>
+      <p class="text-gray-400 leading-relaxed mb-8 max-w-3xl">
+        A running Forge agent has <strong class="text-white">zero inbound attack surface</strong> by default. This is a fundamental design constraint, not a configuration option.
+      </p>
+      <div class="grid sm:grid-cols-2 gap-4 max-w-4xl">
+        <div class="bg-dark-surface border border-dark-border rounded-forge-md p-5">
+          <h3 class="text-white font-semibold mb-2">No Public Tunnels</h3>
+          <p class="text-gray-400 text-sm leading-relaxed">Forge does not create ngrok, Cloudflare, or similar tunnels. There is no mechanism for inbound connections from the public internet.</p>
+        </div>
+        <div class="bg-dark-surface border border-dark-border rounded-forge-md p-5">
+          <h3 class="text-white font-semibold mb-2">No Inbound Webhooks</h3>
+          <p class="text-gray-400 text-sm leading-relaxed">Channels use outbound-only connections. Slack uses Socket Mode (outbound WebSocket via <code class="text-forge-orange text-xs">apps.connections.open</code>). Telegram uses long-polling via <code class="text-forge-orange text-xs">getUpdates</code>.</p>
+        </div>
+        <div class="bg-dark-surface border border-dark-border rounded-forge-md p-5">
+          <h3 class="text-white font-semibold mb-2">Local-Only HTTP</h3>
+          <p class="text-gray-400 text-sm leading-relaxed">The A2A dev server binds to <code class="text-forge-orange text-xs">localhost</code> by default. It is never exposed to the network without explicit configuration.</p>
+        </div>
+        <div class="bg-dark-surface border border-dark-border rounded-forge-md p-5">
+          <h3 class="text-white font-semibold mb-2">Explicit Bindings</h3>
+          <p class="text-gray-400 text-sm leading-relaxed">Every network binding is explicit and logged. No hidden listeners, no background services, no surprise ports.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── E. Egress Control ─── -->
+  <section id="egress-control" class="py-16 sm:py-20">
+    <div class="mx-auto max-w-7xl px-4">
+      <p class="text-sm font-medium text-forge-orange uppercase tracking-wider mb-4">Layer 5</p>
+      <h2 class="text-2xl sm:text-3xl font-bold text-white mb-6">
+        <a href="#egress-control" class="hover:text-forge-orange transition-colors">Egress Control</a>
+      </h2>
+      <p class="text-gray-400 leading-relaxed mb-8 max-w-3xl">
+        Forge restricts outbound network access at three independent levels, each catching traffic that could bypass the previous layer.
+      </p>
+
+      <!-- Three-level enforcement -->
+      <h3 class="text-lg font-semibold text-white mb-4">Three-Level Enforcement</h3>
+      <div class="grid sm:grid-cols-3 gap-4 mb-10 max-w-5xl">
+        <div class="bg-dark-surface border border-dark-border rounded-forge-md p-5">
+          <div class="text-forge-orange font-mono text-xs mb-2">Level 1</div>
+          <h4 class="text-white font-semibold mb-2">In-Process Enforcer</h4>
+          <p class="text-gray-400 text-sm leading-relaxed">A Go <code class="text-forge-orange text-xs">http.RoundTripper</code> wraps every outbound HTTP request from in-process tools. Validates destination domain against the resolved allowlist before forwarding.</p>
+        </div>
+        <div class="bg-dark-surface border border-dark-border rounded-forge-md p-5">
+          <div class="text-forge-orange font-mono text-xs mb-2">Level 2</div>
+          <h4 class="text-white font-semibold mb-2">Subprocess Proxy</h4>
+          <p class="text-gray-400 text-sm leading-relaxed">A local <code class="text-forge-orange text-xs">EgressProxy</code> on <code class="text-forge-orange text-xs">127.0.0.1:&lt;port&gt;</code> validates domains for subprocess HTTP traffic via <code class="text-forge-orange text-xs">HTTP_PROXY</code>/<code class="text-forge-orange text-xs">HTTPS_PROXY</code> injection.</p>
+        </div>
+        <div class="bg-dark-surface border border-dark-border rounded-forge-md p-5">
+          <div class="text-forge-orange font-mono text-xs mb-2">Level 3</div>
+          <h4 class="text-white font-semibold mb-2">Kubernetes NetworkPolicy</h4>
+          <p class="text-gray-400 text-sm leading-relaxed">In containerized deployments, generated Kubernetes <code class="text-forge-orange text-xs">NetworkPolicy</code> manifests enforce egress at the pod level, restricting traffic to allowed domains on ports 80/443.</p>
+        </div>
+      </div>
+
+      <!-- Proxy architecture -->
+      <h3 class="text-lg font-semibold text-white mb-4">Proxy Architecture</h3>
+      <div class="bg-dark-surface border border-dark-border rounded-forge-md p-4 sm:p-6 font-mono text-sm text-gray-300 overflow-x-auto mb-10 max-w-3xl">
+        <pre class="whitespace-pre"><code>┌─────────────────────────────────────────────────────┐
+│                   forge run                         │
+│                                                     │
+│  In-process HTTP ──→ EgressEnforcer (RoundTripper)  │
+│                                                     │
+│  Subprocesses ──→ HTTP_PROXY ──→ EgressProxy        │
+│  (curl, wget,       127.0.0.1:&lt;port&gt;  (validates   │
+│   python, etc.)                        domains)     │
+└─────────────────────────────────────────────────────┘</code></pre>
+      </div>
+
+      <!-- Three modes -->
+      <h3 class="text-lg font-semibold text-white mb-4">Egress Modes</h3>
+      <div class="overflow-x-auto mb-10 max-w-3xl">
+        <table class="w-full text-sm border border-dark-border rounded-forge-md overflow-hidden">
+          <thead>
+            <tr class="bg-dark-surface">
+              <th class="text-left px-4 py-3 text-gray-400 font-medium border-b border-dark-border">Mode</th>
+              <th class="text-left px-4 py-3 text-gray-400 font-medium border-b border-dark-border">Behavior</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="border-b border-dark-border">
+              <td class="px-4 py-3 text-white font-mono text-xs">deny-all</td>
+              <td class="px-4 py-3 text-gray-300">All non-localhost outbound traffic blocked</td>
+            </tr>
+            <tr class="border-b border-dark-border bg-dark-surface/50">
+              <td class="px-4 py-3 text-white font-mono text-xs">allowlist</td>
+              <td class="px-4 py-3 text-gray-300">Only explicitly allowed domains (exact + wildcard)</td>
+            </tr>
+            <tr>
+              <td class="px-4 py-3 text-white font-mono text-xs">dev-open</td>
+              <td class="px-4 py-3 text-gray-300">All traffic allowed (development only)</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Domain matching -->
+      <h3 class="text-lg font-semibold text-white mb-4">Domain Matching Rules</h3>
+      <ul class="space-y-2 text-gray-400 text-sm mb-10 max-w-3xl">
+        <li class="flex items-start gap-2">
+          <span class="text-forge-orange mt-1 shrink-0">&bull;</span>
+          <span><strong class="text-white">Exact match:</strong> <code class="text-forge-orange text-xs">api.openai.com</code> matches <code class="text-forge-orange text-xs">api.openai.com</code></span>
+        </li>
+        <li class="flex items-start gap-2">
+          <span class="text-forge-orange mt-1 shrink-0">&bull;</span>
+          <span><strong class="text-white">Wildcard match:</strong> <code class="text-forge-orange text-xs">*.github.com</code> matches <code class="text-forge-orange text-xs">api.github.com</code> but not <code class="text-forge-orange text-xs">github.com</code></span>
+        </li>
+        <li class="flex items-start gap-2">
+          <span class="text-forge-orange mt-1 shrink-0">&bull;</span>
+          <span><strong class="text-white">Case insensitive:</strong> <code class="text-forge-orange text-xs">API.OpenAI.COM</code> matches <code class="text-forge-orange text-xs">api.openai.com</code></span>
+        </li>
+        <li class="flex items-start gap-2">
+          <span class="text-forge-orange mt-1 shrink-0">&bull;</span>
+          <span><strong class="text-white">Localhost bypass:</strong> <code class="text-forge-orange text-xs">127.0.0.1</code>, <code class="text-forge-orange text-xs">::1</code>, and <code class="text-forge-orange text-xs">localhost</code> are always allowed in all modes</span>
+        </li>
+      </ul>
+
+      <!-- Domain resolution -->
+      <h3 class="text-lg font-semibold text-white mb-4">Domain Resolution</h3>
+      <p class="text-gray-400 text-sm leading-relaxed mb-4 max-w-3xl">
+        Allowed domains are resolved from three sources, combined and deduplicated:
+      </p>
+      <ol class="space-y-2 text-gray-400 text-sm mb-10 max-w-3xl list-decimal list-inside">
+        <li><strong class="text-white">Explicit domains</strong> — listed in <code class="text-forge-orange text-xs">forge.yaml</code> under <code class="text-forge-orange text-xs">egress.allowed_domains</code></li>
+        <li><strong class="text-white">Tool domains</strong> — automatically inferred from registered tool names (e.g., <code class="text-forge-orange text-xs">web_search</code> &rarr; <code class="text-forge-orange text-xs">api.tavily.com</code>)</li>
+        <li><strong class="text-white">Capability bundles</strong> — pre-defined domain sets for common services (e.g., <code class="text-forge-orange text-xs">slack</code> &rarr; <code class="text-forge-orange text-xs">slack.com</code>, <code class="text-forge-orange text-xs">hooks.slack.com</code>, <code class="text-forge-orange text-xs">api.slack.com</code>)</li>
+      </ol>
+
+      <!-- forge.yaml config example -->
+      <h3 class="text-lg font-semibold text-white mb-4">Configuration</h3>
+      <div class="bg-dark-surface border border-dark-border rounded-forge-md p-4 font-mono text-sm text-gray-300 overflow-x-auto mb-10 max-w-3xl">
+        <pre><code><span class="text-gray-500"># forge.yaml</span>
+<span class="text-forge-orange">egress:</span>
+  <span class="text-forge-orange">profile:</span> standard
+  <span class="text-forge-orange">mode:</span> allowlist
+  <span class="text-forge-orange">allowed_domains:</span>
+    - api.example.com
+    - "*.github.com"
+    - hooks.slack.com
+  <span class="text-forge-orange">capabilities:</span>
+    - slack
+    - telegram</code></pre>
+      </div>
+
+      <!-- Production vs Development -->
+      <h3 class="text-lg font-semibold text-white mb-4">Production vs Development</h3>
+      <div class="overflow-x-auto max-w-3xl">
+        <table class="w-full text-sm border border-dark-border rounded-forge-md overflow-hidden">
+          <thead>
+            <tr class="bg-dark-surface">
+              <th class="text-left px-4 py-3 text-gray-400 font-medium border-b border-dark-border">Setting</th>
+              <th class="text-left px-4 py-3 text-gray-400 font-medium border-b border-dark-border">Production</th>
+              <th class="text-left px-4 py-3 text-gray-400 font-medium border-b border-dark-border">Development</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="border-b border-dark-border">
+              <td class="px-4 py-3 text-white">Profile</td>
+              <td class="px-4 py-3 text-gray-300 font-mono text-xs">strict / standard</td>
+              <td class="px-4 py-3 text-gray-300 font-mono text-xs">permissive</td>
+            </tr>
+            <tr class="border-b border-dark-border bg-dark-surface/50">
+              <td class="px-4 py-3 text-white">Mode</td>
+              <td class="px-4 py-3 text-gray-300 font-mono text-xs">deny-all / allowlist</td>
+              <td class="px-4 py-3 text-gray-300 font-mono text-xs">dev-open</td>
+            </tr>
+            <tr class="border-b border-dark-border">
+              <td class="px-4 py-3 text-white">Dev tools</td>
+              <td class="px-4 py-3 text-gray-300">Filtered out</td>
+              <td class="px-4 py-3 text-gray-300">Included</td>
+            </tr>
+            <tr class="border-b border-dark-border bg-dark-surface/50">
+              <td class="px-4 py-3 text-white">Network policy</td>
+              <td class="px-4 py-3 text-gray-300">Enforced</td>
+              <td class="px-4 py-3 text-gray-300">Not generated</td>
+            </tr>
+            <tr class="border-b border-dark-border">
+              <td class="px-4 py-3 text-white">Egress proxy</td>
+              <td class="px-4 py-3 text-gray-300">Active</td>
+              <td class="px-4 py-3 text-gray-300">Skipped</td>
+            </tr>
+            <tr>
+              <td class="px-4 py-3 text-white">Container egress</td>
+              <td class="px-4 py-3 text-gray-300">NetworkPolicy</td>
+              <td class="px-4 py-3 text-gray-300">Proxy</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── F. Execution Sandboxing ─── -->
+  <section id="execution-sandboxing" class="py-16 sm:py-20">
+    <div class="mx-auto max-w-7xl px-4">
+      <p class="text-sm font-medium text-forge-orange uppercase tracking-wider mb-4">Layer 4</p>
+      <h2 class="text-2xl sm:text-3xl font-bold text-white mb-6">
+        <a href="#execution-sandboxing" class="hover:text-forge-orange transition-colors">Execution Sandboxing</a>
+      </h2>
+      <p class="text-gray-400 leading-relaxed mb-8 max-w-3xl">
+        Forge agents execute external code through two sandboxed executors, both designed to minimize the attack surface of subprocess execution.
+      </p>
+
+      <!-- SkillCommandExecutor -->
+      <h3 class="text-lg font-semibold text-white mb-4">SkillCommandExecutor</h3>
+      <p class="text-gray-400 text-sm leading-relaxed mb-4 max-w-3xl">
+        Skill scripts run via <code class="text-forge-orange text-xs">SkillCommandExecutor</code> with the following controls:
+      </p>
+      <div class="overflow-x-auto mb-10 max-w-3xl">
+        <table class="w-full text-sm border border-dark-border rounded-forge-md overflow-hidden">
+          <thead>
+            <tr class="bg-dark-surface">
+              <th class="text-left px-4 py-3 text-gray-400 font-medium border-b border-dark-border">Control</th>
+              <th class="text-left px-4 py-3 text-gray-400 font-medium border-b border-dark-border">Detail</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="border-b border-dark-border">
+              <td class="px-4 py-3 text-white">Environment isolation</td>
+              <td class="px-4 py-3 text-gray-300">Only <code class="text-forge-orange text-xs">PATH</code>, <code class="text-forge-orange text-xs">HOME</code>, and explicitly declared env vars passed through</td>
+            </tr>
+            <tr class="border-b border-dark-border bg-dark-surface/50">
+              <td class="px-4 py-3 text-white">Egress proxy injection</td>
+              <td class="px-4 py-3 text-gray-300"><code class="text-forge-orange text-xs">HTTP_PROXY</code>/<code class="text-forge-orange text-xs">HTTPS_PROXY</code> route subprocess HTTP through the egress proxy</td>
+            </tr>
+            <tr class="border-b border-dark-border">
+              <td class="px-4 py-3 text-white">Configurable timeout</td>
+              <td class="px-4 py-3 text-gray-300">Per-skill <code class="text-forge-orange text-xs">timeout_hint</code> in YAML frontmatter (default: 120s)</td>
+            </tr>
+            <tr class="border-b border-dark-border bg-dark-surface/50">
+              <td class="px-4 py-3 text-white">No shell</td>
+              <td class="px-4 py-3 text-gray-300">Runs <code class="text-forge-orange text-xs">bash &lt;script&gt; &lt;json-input&gt;</code>, not through a shell interpreter</td>
+            </tr>
+            <tr>
+              <td class="px-4 py-3 text-white">Scoped env vars</td>
+              <td class="px-4 py-3 text-gray-300">Only env vars declared in the skill's <code class="text-forge-orange text-xs">requires.env</code> section are passed</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- CLIExecuteTool -->
+      <h3 class="text-lg font-semibold text-white mb-4">CLIExecuteTool — 7 Security Layers</h3>
+      <p class="text-gray-400 text-sm leading-relaxed mb-4 max-w-3xl">
+        The <code class="text-forge-orange text-xs">cli_execute</code> tool provides layered security enforcement:
+      </p>
+      <div class="overflow-x-auto mb-10 max-w-3xl">
+        <table class="w-full text-sm border border-dark-border rounded-forge-md overflow-hidden">
+          <thead>
+            <tr class="bg-dark-surface">
+              <th class="text-left px-4 py-3 text-gray-400 font-medium border-b border-dark-border w-8">#</th>
+              <th class="text-left px-4 py-3 text-gray-400 font-medium border-b border-dark-border">Layer</th>
+              <th class="text-left px-4 py-3 text-gray-400 font-medium border-b border-dark-border">Detail</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="border-b border-dark-border">
+              <td class="px-4 py-3 text-forge-orange font-mono">1</td>
+              <td class="px-4 py-3 text-white">Binary allowlist</td>
+              <td class="px-4 py-3 text-gray-300">Only pre-approved binaries can execute</td>
+            </tr>
+            <tr class="border-b border-dark-border bg-dark-surface/50">
+              <td class="px-4 py-3 text-forge-orange font-mono">2</td>
+              <td class="px-4 py-3 text-white">Binary resolution</td>
+              <td class="px-4 py-3 text-gray-300">Resolved to absolute paths via <code class="text-forge-orange text-xs">exec.LookPath</code> at startup</td>
+            </tr>
+            <tr class="border-b border-dark-border">
+              <td class="px-4 py-3 text-forge-orange font-mono">3</td>
+              <td class="px-4 py-3 text-white">Argument validation</td>
+              <td class="px-4 py-3 text-gray-300">Rejects arguments containing <code class="text-forge-orange text-xs">$(</code>, backticks, or newlines</td>
+            </tr>
+            <tr class="border-b border-dark-border bg-dark-surface/50">
+              <td class="px-4 py-3 text-forge-orange font-mono">4</td>
+              <td class="px-4 py-3 text-white">Timeout</td>
+              <td class="px-4 py-3 text-gray-300">Configurable per-command timeout (default: 120s)</td>
+            </tr>
+            <tr class="border-b border-dark-border">
+              <td class="px-4 py-3 text-forge-orange font-mono">5</td>
+              <td class="px-4 py-3 text-white">No shell</td>
+              <td class="px-4 py-3 text-gray-300">Uses <code class="text-forge-orange text-xs">exec.CommandContext</code> directly — no shell expansion</td>
+            </tr>
+            <tr class="border-b border-dark-border bg-dark-surface/50">
+              <td class="px-4 py-3 text-forge-orange font-mono">6</td>
+              <td class="px-4 py-3 text-white">Environment isolation</td>
+              <td class="px-4 py-3 text-gray-300">Only <code class="text-forge-orange text-xs">PATH</code>, <code class="text-forge-orange text-xs">HOME</code>, <code class="text-forge-orange text-xs">LANG</code>, explicit passthrough vars, and proxy vars</td>
+            </tr>
+            <tr>
+              <td class="px-4 py-3 text-forge-orange font-mono">7</td>
+              <td class="px-4 py-3 text-white">Output limits</td>
+              <td class="px-4 py-3 text-gray-300">Configurable max output size (default: 1MB) to prevent memory exhaustion</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Config example -->
+      <h3 class="text-lg font-semibold text-white mb-4">Configuration</h3>
+      <div class="bg-dark-surface border border-dark-border rounded-forge-md p-4 font-mono text-sm text-gray-300 overflow-x-auto max-w-3xl">
+        <pre><code><span class="text-gray-500"># forge.yaml</span>
+<span class="text-forge-orange">tools:</span>
+  - <span class="text-forge-orange">name:</span> cli_execute
+    <span class="text-forge-orange">config:</span>
+      <span class="text-forge-orange">allowed_binaries:</span> ["git", "curl", "jq", "python3"]
+      <span class="text-forge-orange">env_passthrough:</span> ["GITHUB_TOKEN"]
+      <span class="text-forge-orange">timeout:</span> 120
+      <span class="text-forge-orange">max_output_bytes:</span> 1048576</code></pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── G. Trust Model ─── -->
+  <section id="trust-model" class="py-16 sm:py-20">
+    <div class="mx-auto max-w-7xl px-4">
+      <p class="text-sm font-medium text-forge-orange uppercase tracking-wider mb-4">Skill Trust</p>
+      <h2 class="text-2xl sm:text-3xl font-bold text-white mb-6">
+        <a href="#trust-model" class="hover:text-forge-orange transition-colors">Trust Model</a>
+      </h2>
+
+      <div class="border-l-4 border-l-forge-orange bg-dark-surface rounded-forge-md p-6 mb-10 max-w-3xl">
+        <p class="text-white text-lg leading-relaxed">
+          Trust is <em class="text-forge-orange not-italic font-medium">computed</em>, not declared. Contributors cannot set their own trust level.
+        </p>
+      </div>
+
+      <!-- Four trust levels -->
+      <h3 class="text-lg font-semibold text-white mb-4">Trust Levels</h3>
+      <div class="overflow-x-auto mb-10 max-w-4xl">
+        <table class="w-full text-sm border border-dark-border rounded-forge-md overflow-hidden">
+          <thead>
+            <tr class="bg-dark-surface">
+              <th class="text-left px-4 py-3 text-gray-400 font-medium border-b border-dark-border">Level</th>
+              <th class="text-left px-4 py-3 text-gray-400 font-medium border-b border-dark-border">Value</th>
+              <th class="text-left px-4 py-3 text-gray-400 font-medium border-b border-dark-border">Visible</th>
+              <th class="text-left px-4 py-3 text-gray-400 font-medium border-b border-dark-border">Executable</th>
+              <th class="text-left px-4 py-3 text-gray-400 font-medium border-b border-dark-border">Used For</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="border-b border-dark-border">
+              <td class="px-4 py-3 text-red-400 font-medium">Failed</td>
+              <td class="px-4 py-3 text-gray-300 font-mono">-1</td>
+              <td class="px-4 py-3 text-gray-300">No</td>
+              <td class="px-4 py-3 text-gray-300">No</td>
+              <td class="px-4 py-3 text-gray-300">Skills that fail validation or security analysis</td>
+            </tr>
+            <tr class="border-b border-dark-border bg-dark-surface/50">
+              <td class="px-4 py-3 text-gray-400 font-medium">Untrusted</td>
+              <td class="px-4 py-3 text-gray-300 font-mono">0</td>
+              <td class="px-4 py-3 text-gray-300">Yes</td>
+              <td class="px-4 py-3 text-gray-300">No</td>
+              <td class="px-4 py-3 text-gray-300">Discovered but not evaluated, or failed remote signature</td>
+            </tr>
+            <tr class="border-b border-dark-border">
+              <td class="px-4 py-3 text-yellow-400 font-medium">Under Review</td>
+              <td class="px-4 py-3 text-gray-300 font-mono">1</td>
+              <td class="px-4 py-3 text-gray-300">Yes</td>
+              <td class="px-4 py-3 text-gray-300">No</td>
+              <td class="px-4 py-3 text-gray-300">Has warnings, pending admin promotion</td>
+            </tr>
+            <tr>
+              <td class="px-4 py-3 text-green-400 font-medium">Trusted</td>
+              <td class="px-4 py-3 text-gray-300 font-mono">2</td>
+              <td class="px-4 py-3 text-gray-300">Yes</td>
+              <td class="px-4 py-3 text-gray-300">Yes</td>
+              <td class="px-4 py-3 text-gray-300">Passed all gates — fully active</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Autowire pipeline -->
+      <h3 class="text-lg font-semibold text-white mb-4">Autowire Pipeline</h3>
+      <p class="text-gray-400 text-sm leading-relaxed mb-4 max-w-3xl">
+        Skills are autodiscovered and trust-evaluated through a pipeline:
+      </p>
+      <div class="bg-dark-surface border border-dark-border rounded-forge-md p-4 sm:p-6 font-mono text-sm text-gray-300 overflow-x-auto mb-10 max-w-3xl">
+        <pre><code>Directory Scanner → Frontmatter Parser → Security Analyzer → Trust Evaluator
+   Find dirs          Parse YAML           Verify hints        Assign trust
+   with SKILL.md      + validate           vs actual content   level</code></pre>
+      </div>
+
+      <!-- Security analyzer checks -->
+      <h3 class="text-lg font-semibold text-white mb-4">Security Analyzer Checks</h3>
+      <div class="overflow-x-auto mb-10 max-w-4xl">
+        <table class="w-full text-sm border border-dark-border rounded-forge-md overflow-hidden">
+          <thead>
+            <tr class="bg-dark-surface">
+              <th class="text-left px-4 py-3 text-gray-400 font-medium border-b border-dark-border">Check</th>
+              <th class="text-left px-4 py-3 text-gray-400 font-medium border-b border-dark-border">What</th>
+              <th class="text-left px-4 py-3 text-gray-400 font-medium border-b border-dark-border">Severity</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="border-b border-dark-border">
+              <td class="px-4 py-3 text-white">Egress/network mismatch</td>
+              <td class="px-4 py-3 text-gray-300"><code class="text-forge-orange text-xs">trust_hints.requires_network: false</code> but egress domains declared</td>
+              <td class="px-4 py-3 text-red-400 font-medium">Critical</td>
+            </tr>
+            <tr class="border-b border-dark-border bg-dark-surface/50">
+              <td class="px-4 py-3 text-white">Shell/scripts mismatch</td>
+              <td class="px-4 py-3 text-gray-300"><code class="text-forge-orange text-xs">trust_hints.requires_shell: false</code> but <code class="text-forge-orange text-xs">scripts/</code> exists</td>
+              <td class="px-4 py-3 text-red-400 font-medium">Critical</td>
+            </tr>
+            <tr class="border-b border-dark-border">
+              <td class="px-4 py-3 text-white">Dangerous script patterns</td>
+              <td class="px-4 py-3 text-gray-300"><code class="text-forge-orange text-xs">curl|sh</code>, <code class="text-forge-orange text-xs">eval</code>, <code class="text-forge-orange text-xs">rm -rf /</code>, <code class="text-forge-orange text-xs">chmod 777</code></td>
+              <td class="px-4 py-3 text-red-400 font-medium">Critical</td>
+            </tr>
+            <tr class="border-b border-dark-border bg-dark-surface/50">
+              <td class="px-4 py-3 text-white">Hardcoded secrets</td>
+              <td class="px-4 py-3 text-gray-300"><code class="text-forge-orange text-xs">API_KEY=...</code> patterns in scripts</td>
+              <td class="px-4 py-3 text-red-400 font-medium">Critical</td>
+            </tr>
+            <tr class="border-b border-dark-border">
+              <td class="px-4 py-3 text-white">Broad binary request</td>
+              <td class="px-4 py-3 text-gray-300">Requiring <code class="text-forge-orange text-xs">bash</code>, <code class="text-forge-orange text-xs">sh</code> directly</td>
+              <td class="px-4 py-3 text-yellow-400 font-medium">Warning</td>
+            </tr>
+            <tr class="border-b border-dark-border bg-dark-surface/50">
+              <td class="px-4 py-3 text-white">Overly permissive egress</td>
+              <td class="px-4 py-3 text-gray-300">Wildcard patterns, CDN domains</td>
+              <td class="px-4 py-3 text-yellow-400 font-medium">Warning</td>
+            </tr>
+            <tr>
+              <td class="px-4 py-3 text-white">Env var leak risk</td>
+              <td class="px-4 py-3 text-gray-300">Scripts that echo/print secrets</td>
+              <td class="px-4 py-3 text-yellow-400 font-medium">Warning</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Trust rules by tier -->
+      <h3 class="text-lg font-semibold text-white mb-4">Trust Rules by Tier</h3>
+      <div class="space-y-4 max-w-3xl">
+        <div class="bg-dark-surface border border-dark-border rounded-forge-md p-5">
+          <h4 class="text-white font-semibold mb-2">Embedded Skills</h4>
+          <p class="text-gray-400 text-sm">Always <span class="text-green-400 font-medium">Trusted</span> — curated by Forge maintainers.</p>
+        </div>
+        <div class="bg-dark-surface border border-dark-border rounded-forge-md p-5">
+          <h4 class="text-white font-semibold mb-2">Local Skills (strict)</h4>
+          <p class="text-gray-400 text-sm">Validation fail &rarr; <span class="text-red-400">Failed</span>. Security critical &rarr; <span class="text-red-400">Failed</span>. Security warning &rarr; <span class="text-yellow-400">Under Review</span>. All clean &rarr; <span class="text-green-400">Trusted</span>.</p>
+        </div>
+        <div class="bg-dark-surface border border-dark-border rounded-forge-md p-5">
+          <h4 class="text-white font-semibold mb-2">Remote Skills (leveled)</h4>
+          <p class="text-gray-400 text-sm">Failed at remote &rarr; <span class="text-red-400">Failed</span> (never shown). Invalid signature &rarr; <span class="text-gray-400">Untrusted</span>. Untrusted registry &rarr; capped at <span class="text-yellow-400">Under Review</span>. Trusted registry + clean &rarr; <span class="text-green-400">Trusted</span>.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── H. Secrets Management ─── -->
+  <section id="secrets-management" class="py-16 sm:py-20">
+    <div class="mx-auto max-w-7xl px-4">
+      <p class="text-sm font-medium text-forge-orange uppercase tracking-wider mb-4">Layer 3</p>
+      <h2 class="text-2xl sm:text-3xl font-bold text-white mb-6">
+        <a href="#secrets-management" class="hover:text-forge-orange transition-colors">Secrets Management</a>
+      </h2>
+      <p class="text-gray-400 leading-relaxed mb-8 max-w-3xl">
+        Forge provides encrypted secret storage with per-agent isolation and defense-in-depth.
+      </p>
+
+      <!-- Encryption -->
+      <h3 class="text-lg font-semibold text-white mb-4">Encryption</h3>
+      <div class="grid sm:grid-cols-2 gap-4 mb-10 max-w-3xl">
+        <div class="bg-dark-surface border border-dark-border rounded-forge-md p-5">
+          <div class="text-forge-orange font-mono text-xs mb-1">Algorithm</div>
+          <p class="text-white font-semibold">AES-256-GCM</p>
+          <p class="text-gray-400 text-sm mt-1">Authenticated encryption</p>
+        </div>
+        <div class="bg-dark-surface border border-dark-border rounded-forge-md p-5">
+          <div class="text-forge-orange font-mono text-xs mb-1">Key Derivation</div>
+          <p class="text-white font-semibold">Argon2id</p>
+          <p class="text-gray-400 text-sm mt-1">Memory-hard, resistant to GPU attacks</p>
+        </div>
+      </div>
+
+      <p class="text-gray-400 text-sm leading-relaxed mb-4 max-w-3xl">
+        File format: <code class="text-forge-orange text-xs">salt(16 bytes) || nonce(12 bytes) || ciphertext</code>. Plaintext format is JSON key-value map.
+      </p>
+
+      <!-- Storage hierarchy -->
+      <h3 class="text-lg font-semibold text-white mb-4 mt-10">Storage Hierarchy</h3>
+      <p class="text-gray-400 text-sm leading-relaxed mb-4 max-w-3xl">
+        Secrets are resolved in order, with earlier sources taking priority:
+      </p>
+      <div class="overflow-x-auto mb-10 max-w-3xl">
+        <table class="w-full text-sm border border-dark-border rounded-forge-md overflow-hidden">
+          <thead>
+            <tr class="bg-dark-surface">
+              <th class="text-left px-4 py-3 text-gray-400 font-medium border-b border-dark-border w-8">#</th>
+              <th class="text-left px-4 py-3 text-gray-400 font-medium border-b border-dark-border">Source</th>
+              <th class="text-left px-4 py-3 text-gray-400 font-medium border-b border-dark-border">Location</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="border-b border-dark-border">
+              <td class="px-4 py-3 text-forge-orange font-mono">1</td>
+              <td class="px-4 py-3 text-white">Agent-local</td>
+              <td class="px-4 py-3 text-gray-300 font-mono text-xs">&lt;agent-dir&gt;/.forge/secrets.enc</td>
+            </tr>
+            <tr class="border-b border-dark-border bg-dark-surface/50">
+              <td class="px-4 py-3 text-forge-orange font-mono">2</td>
+              <td class="px-4 py-3 text-white">Global</td>
+              <td class="px-4 py-3 text-gray-300 font-mono text-xs">~/.forge/secrets.enc</td>
+            </tr>
+            <tr>
+              <td class="px-4 py-3 text-forge-orange font-mono">3</td>
+              <td class="px-4 py-3 text-white">Environment</td>
+              <td class="px-4 py-3 text-gray-300 font-mono text-xs">os.Getenv()</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Passphrase handling -->
+      <h3 class="text-lg font-semibold text-white mb-4">Passphrase Handling</h3>
+      <div class="overflow-x-auto mb-10 max-w-3xl">
+        <table class="w-full text-sm border border-dark-border rounded-forge-md overflow-hidden">
+          <thead>
+            <tr class="bg-dark-surface">
+              <th class="text-left px-4 py-3 text-gray-400 font-medium border-b border-dark-border">Context</th>
+              <th class="text-left px-4 py-3 text-gray-400 font-medium border-b border-dark-border">Behavior</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="border-b border-dark-border">
+              <td class="px-4 py-3 text-white font-mono text-xs">forge run (TTY)</td>
+              <td class="px-4 py-3 text-gray-300">Prompts interactively if <code class="text-forge-orange text-xs">FORGE_PASSPHRASE</code> not set</td>
+            </tr>
+            <tr class="border-b border-dark-border bg-dark-surface/50">
+              <td class="px-4 py-3 text-white font-mono text-xs">forge run (CI/CD)</td>
+              <td class="px-4 py-3 text-gray-300">Reads from <code class="text-forge-orange text-xs">FORGE_PASSPHRASE</code> environment variable</td>
+            </tr>
+            <tr class="border-b border-dark-border">
+              <td class="px-4 py-3 text-white font-mono text-xs">forge init (first time)</td>
+              <td class="px-4 py-3 text-gray-300">Prompts for passphrase + confirmation</td>
+            </tr>
+            <tr>
+              <td class="px-4 py-3 text-white font-mono text-xs">forge init (subsequent)</td>
+              <td class="px-4 py-3 text-gray-300">Prompts once and validates against existing file</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- File safety -->
+      <h3 class="text-lg font-semibold text-white mb-4">File Safety</h3>
+      <ul class="space-y-2 text-gray-400 text-sm mb-10 max-w-3xl">
+        <li class="flex items-start gap-2">
+          <span class="text-forge-orange mt-1 shrink-0">&bull;</span>
+          <span><code class="text-forge-orange text-xs">.forge/</code> directories are automatically added to <code class="text-forge-orange text-xs">.gitignore</code></span>
+        </li>
+        <li class="flex items-start gap-2">
+          <span class="text-forge-orange mt-1 shrink-0">&bull;</span>
+          <span><code class="text-forge-orange text-xs">*.enc</code> files are excluded in <code class="text-forge-orange text-xs">.dockerignore</code></span>
+        </li>
+        <li class="flex items-start gap-2">
+          <span class="text-forge-orange mt-1 shrink-0">&bull;</span>
+          <span>Secret files use <code class="text-forge-orange text-xs">0600</code> permissions (owner-only read/write)</span>
+        </li>
+        <li class="flex items-start gap-2">
+          <span class="text-forge-orange mt-1 shrink-0">&bull;</span>
+          <span>Secret files never appear in container images</span>
+        </li>
+      </ul>
+
+      <!-- CLI commands -->
+      <h3 class="text-lg font-semibold text-white mb-4">CLI Commands</h3>
+      <div class="bg-dark-surface border border-dark-border rounded-forge-md p-4 font-mono text-sm text-gray-300 overflow-x-auto max-w-3xl">
+        <pre><code>forge secret set OPENAI_API_KEY              <span class="text-gray-500"># Prompts for value securely</span>
+forge secret set SLACK_BOT_TOKEN xoxb-...    <span class="text-gray-500"># Inline value</span>
+forge secret get OPENAI_API_KEY              <span class="text-gray-500"># Shows value and source</span>
+forge secret list                            <span class="text-gray-500"># Lists all keys</span>
+forge secret delete OLD_KEY                  <span class="text-gray-500"># Removes a key</span>
+forge secret set API_KEY --local             <span class="text-gray-500"># Agent-local secret</span></code></pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── I. Build Signing ─── -->
+  <section id="build-signing" class="py-16 sm:py-20">
+    <div class="mx-auto max-w-7xl px-4">
+      <p class="text-sm font-medium text-forge-orange uppercase tracking-wider mb-4">Layer 2</p>
+      <h2 class="text-2xl sm:text-3xl font-bold text-white mb-6">
+        <a href="#build-signing" class="hover:text-forge-orange transition-colors">Build Signing &amp; Integrity</a>
+      </h2>
+      <p class="text-gray-400 leading-relaxed mb-8 max-w-3xl">
+        Forge supports Ed25519 signing of build artifacts for supply chain integrity verification.
+      </p>
+
+      <!-- Signing flow -->
+      <h3 class="text-lg font-semibold text-white mb-4">Signing Flow</h3>
+      <div class="space-y-3 mb-10 max-w-3xl">
+        <div class="flex items-start gap-3">
+          <div class="shrink-0 w-7 h-7 rounded-full bg-dark-surface border border-dark-border flex items-center justify-center text-forge-orange font-mono text-xs">1</div>
+          <p class="text-gray-400 text-sm pt-1"><code class="text-forge-orange text-xs">forge build</code> computes SHA-256 checksums of all generated artifacts</p>
+        </div>
+        <div class="flex items-start gap-3">
+          <div class="shrink-0 w-7 h-7 rounded-full bg-dark-surface border border-dark-border flex items-center justify-center text-forge-orange font-mono text-xs">2</div>
+          <p class="text-gray-400 text-sm pt-1">If a signing key exists at <code class="text-forge-orange text-xs">~/.forge/signing-key.pem</code>, checksums are signed with Ed25519</p>
+        </div>
+        <div class="flex items-start gap-3">
+          <div class="shrink-0 w-7 h-7 rounded-full bg-dark-surface border border-dark-border flex items-center justify-center text-forge-orange font-mono text-xs">3</div>
+          <p class="text-gray-400 text-sm pt-1"><code class="text-forge-orange text-xs">checksums.json</code> is written with checksums, signature, and key ID</p>
+        </div>
+      </div>
+
+      <!-- Verification flow -->
+      <h3 class="text-lg font-semibold text-white mb-4">Verification Flow</h3>
+      <div class="space-y-3 mb-10 max-w-3xl">
+        <div class="flex items-start gap-3">
+          <div class="shrink-0 w-7 h-7 rounded-full bg-dark-surface border border-dark-border flex items-center justify-center text-forge-orange font-mono text-xs">1</div>
+          <p class="text-gray-400 text-sm pt-1">Validates SHA-256 checksums of all files against <code class="text-forge-orange text-xs">checksums.json</code></p>
+        </div>
+        <div class="flex items-start gap-3">
+          <div class="shrink-0 w-7 h-7 rounded-full bg-dark-surface border border-dark-border flex items-center justify-center text-forge-orange font-mono text-xs">2</div>
+          <p class="text-gray-400 text-sm pt-1">Verifies the Ed25519 signature against trusted keys in <code class="text-forge-orange text-xs">~/.forge/trusted-keys/</code></p>
+        </div>
+        <div class="flex items-start gap-3">
+          <div class="shrink-0 w-7 h-7 rounded-full bg-dark-surface border border-dark-border flex items-center justify-center text-forge-orange font-mono text-xs">3</div>
+          <p class="text-gray-400 text-sm pt-1">If <code class="text-forge-orange text-xs">checksums.json</code> doesn't exist, verification is skipped (opt-in model)</p>
+        </div>
+      </div>
+
+      <!-- Key management -->
+      <h3 class="text-lg font-semibold text-white mb-4">Key Management</h3>
+      <div class="bg-dark-surface border border-dark-border rounded-forge-md p-4 font-mono text-sm text-gray-300 overflow-x-auto mb-10 max-w-3xl">
+        <pre><code>forge key generate                     <span class="text-gray-500"># Generate Ed25519 keypair</span>
+forge key generate --name ci-key       <span class="text-gray-500"># Named keypair</span>
+forge key trust ~/.forge/signing-key.pub   <span class="text-gray-500"># Add to trusted keyring</span>
+forge key list                         <span class="text-gray-500"># List signing + trusted keys</span></code></pre>
+      </div>
+
+      <!-- Production build safety -->
+      <h3 class="text-lg font-semibold text-white mb-4">Production Build Safety</h3>
+      <p class="text-gray-400 text-sm leading-relaxed mb-4 max-w-3xl">
+        The build pipeline includes a <code class="text-forge-orange text-xs">secret-safety</code> stage that enforces production constraints:
+      </p>
+      <ul class="space-y-2 text-gray-400 text-sm max-w-3xl">
+        <li class="flex items-start gap-2">
+          <span class="text-forge-orange mt-1 shrink-0">&bull;</span>
+          <span>Blocks production builds that only use <code class="text-forge-orange text-xs">encrypted-file</code> without <code class="text-forge-orange text-xs">env</code> provider</span>
+        </li>
+        <li class="flex items-start gap-2">
+          <span class="text-forge-orange mt-1 shrink-0">&bull;</span>
+          <span>Warns if <code class="text-forge-orange text-xs">.dockerignore</code> is missing alongside a generated Dockerfile</span>
+        </li>
+        <li class="flex items-start gap-2">
+          <span class="text-forge-orange mt-1 shrink-0">&bull;</span>
+          <span>Rejects <code class="text-forge-orange text-xs">dev-open</code> egress mode in production builds</span>
+        </li>
+        <li class="flex items-start gap-2">
+          <span class="text-forge-orange mt-1 shrink-0">&bull;</span>
+          <span>Filters out dev-only tools (<code class="text-forge-orange text-xs">local_shell</code>, <code class="text-forge-orange text-xs">local_file_browser</code>)</span>
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ─── J. Guardrails ─── -->
+  <section id="guardrails" class="py-16 sm:py-20">
+    <div class="mx-auto max-w-7xl px-4">
+      <p class="text-sm font-medium text-forge-orange uppercase tracking-wider mb-4">Layer 1</p>
+      <h2 class="text-2xl sm:text-3xl font-bold text-white mb-6">
+        <a href="#guardrails" class="hover:text-forge-orange transition-colors">Guardrails</a>
+      </h2>
+      <p class="text-gray-400 leading-relaxed mb-8 max-w-3xl">
+        The guardrail engine checks inbound and outbound messages against configurable policy rules.
+      </p>
+
+      <!-- Built-in guardrails -->
+      <h3 class="text-lg font-semibold text-white mb-4">Built-in Guardrails</h3>
+      <div class="overflow-x-auto mb-10 max-w-4xl">
+        <table class="w-full text-sm border border-dark-border rounded-forge-md overflow-hidden">
+          <thead>
+            <tr class="bg-dark-surface">
+              <th class="text-left px-4 py-3 text-gray-400 font-medium border-b border-dark-border">Guardrail</th>
+              <th class="text-left px-4 py-3 text-gray-400 font-medium border-b border-dark-border">Direction</th>
+              <th class="text-left px-4 py-3 text-gray-400 font-medium border-b border-dark-border">Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="border-b border-dark-border">
+              <td class="px-4 py-3 text-white font-mono text-xs">content_filter</td>
+              <td class="px-4 py-3 text-gray-300">Inbound + Outbound</td>
+              <td class="px-4 py-3 text-gray-300">Blocks messages containing configured blocked words</td>
+            </tr>
+            <tr class="border-b border-dark-border bg-dark-surface/50">
+              <td class="px-4 py-3 text-white font-mono text-xs">no_pii</td>
+              <td class="px-4 py-3 text-gray-300">Outbound</td>
+              <td class="px-4 py-3 text-gray-300">Detects email addresses, phone numbers, and SSNs via regex</td>
+            </tr>
+            <tr>
+              <td class="px-4 py-3 text-white font-mono text-xs">jailbreak_protection</td>
+              <td class="px-4 py-3 text-gray-300">Inbound</td>
+              <td class="px-4 py-3 text-gray-300">Detects common jailbreak phrases ("ignore previous instructions", etc.)</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Modes -->
+      <h3 class="text-lg font-semibold text-white mb-4">Enforcement Modes</h3>
+      <div class="overflow-x-auto mb-10 max-w-3xl">
+        <table class="w-full text-sm border border-dark-border rounded-forge-md overflow-hidden">
+          <thead>
+            <tr class="bg-dark-surface">
+              <th class="text-left px-4 py-3 text-gray-400 font-medium border-b border-dark-border">Mode</th>
+              <th class="text-left px-4 py-3 text-gray-400 font-medium border-b border-dark-border">Behavior</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="border-b border-dark-border">
+              <td class="px-4 py-3 text-white font-mono text-xs">enforce</td>
+              <td class="px-4 py-3 text-gray-300">Blocks violating messages, returns error to caller</td>
+            </tr>
+            <tr>
+              <td class="px-4 py-3 text-white font-mono text-xs">warn</td>
+              <td class="px-4 py-3 text-gray-300">Logs violation, allows message to pass</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Runtime -->
+      <h3 class="text-lg font-semibold text-white mb-4">Runtime</h3>
+      <div class="bg-dark-surface border border-dark-border rounded-forge-md p-4 font-mono text-sm text-gray-300 overflow-x-auto max-w-3xl">
+        <pre><code><span class="text-gray-500"># Run with guardrails enforced</span>
+forge run --enforce-guardrails
+
+<span class="text-gray-500"># Default: warn mode (log only)</span>
+forge run</code></pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── K. Audit Logging ─── -->
+  <section id="audit-logging" class="py-16 sm:py-20">
+    <div class="mx-auto max-w-7xl px-4">
+      <p class="text-sm font-medium text-forge-orange uppercase tracking-wider mb-4">Observability</p>
+      <h2 class="text-2xl sm:text-3xl font-bold text-white mb-6">
+        <a href="#audit-logging" class="hover:text-forge-orange transition-colors">Audit Logging</a>
+      </h2>
+      <p class="text-gray-400 leading-relaxed mb-8 max-w-3xl">
+        All runtime security events are emitted as structured NDJSON to stderr with correlation IDs for end-to-end tracing.
+      </p>
+
+      <!-- Event types -->
+      <h3 class="text-lg font-semibold text-white mb-4">Event Types</h3>
+      <div class="overflow-x-auto mb-10 max-w-4xl">
+        <table class="w-full text-sm border border-dark-border rounded-forge-md overflow-hidden">
+          <thead>
+            <tr class="bg-dark-surface">
+              <th class="text-left px-4 py-3 text-gray-400 font-medium border-b border-dark-border">Event</th>
+              <th class="text-left px-4 py-3 text-gray-400 font-medium border-b border-dark-border">Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="border-b border-dark-border">
+              <td class="px-4 py-3 text-white font-mono text-xs">session_start</td>
+              <td class="px-4 py-3 text-gray-300">New task session begins</td>
+            </tr>
+            <tr class="border-b border-dark-border bg-dark-surface/50">
+              <td class="px-4 py-3 text-white font-mono text-xs">session_end</td>
+              <td class="px-4 py-3 text-gray-300">Task session completes (with final state)</td>
+            </tr>
+            <tr class="border-b border-dark-border">
+              <td class="px-4 py-3 text-white font-mono text-xs">tool_exec</td>
+              <td class="px-4 py-3 text-gray-300">Tool execution start/end (with tool name)</td>
+            </tr>
+            <tr class="border-b border-dark-border bg-dark-surface/50">
+              <td class="px-4 py-3 text-white font-mono text-xs">egress_allowed</td>
+              <td class="px-4 py-3 text-gray-300">Outbound request allowed (with domain, mode)</td>
+            </tr>
+            <tr class="border-b border-dark-border">
+              <td class="px-4 py-3 text-white font-mono text-xs">egress_blocked</td>
+              <td class="px-4 py-3 text-gray-300">Outbound request blocked (with domain, mode)</td>
+            </tr>
+            <tr class="border-b border-dark-border bg-dark-surface/50">
+              <td class="px-4 py-3 text-white font-mono text-xs">llm_call</td>
+              <td class="px-4 py-3 text-gray-300">LLM API call completed (with token count)</td>
+            </tr>
+            <tr>
+              <td class="px-4 py-3 text-white font-mono text-xs">guardrail_check</td>
+              <td class="px-4 py-3 text-gray-300">Guardrail evaluation result</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Correlation threading -->
+      <h3 class="text-lg font-semibold text-white mb-4">Correlation Threading</h3>
+      <p class="text-gray-400 text-sm leading-relaxed mb-6 max-w-3xl">
+        Every event carries a 16-hex-character <code class="text-forge-orange text-xs">correlation_id</code> that links all events within a single task session. The <code class="text-forge-orange text-xs">source</code> field distinguishes in-process enforcer events from subprocess proxy events (<code class="text-forge-orange text-xs">"source": "proxy"</code>).
+      </p>
+
+      <!-- NDJSON example -->
+      <h3 class="text-lg font-semibold text-white mb-4">Example Output</h3>
+      <div class="bg-dark-surface border border-dark-border rounded-forge-md p-4 font-mono text-xs sm:text-sm text-gray-300 overflow-x-auto max-w-4xl">
+        <pre><code set:text={ndjsonExample} /></pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── L. Container Security ─── -->
+  <section id="container-security" class="py-16 sm:py-20">
+    <div class="mx-auto max-w-7xl px-4">
+      <p class="text-sm font-medium text-forge-orange uppercase tracking-wider mb-4">Deployment</p>
+      <h2 class="text-2xl sm:text-3xl font-bold text-white mb-6">
+        <a href="#container-security" class="hover:text-forge-orange transition-colors">Container Security</a>
+      </h2>
+      <p class="text-gray-400 leading-relaxed mb-8 max-w-3xl">
+        Every <code class="text-forge-orange text-xs">forge build</code> generates container-ready security artifacts for production deployment.
+      </p>
+
+      <!-- Build artifacts -->
+      <h3 class="text-lg font-semibold text-white mb-4">Build Artifacts</h3>
+      <div class="overflow-x-auto mb-10 max-w-3xl">
+        <table class="w-full text-sm border border-dark-border rounded-forge-md overflow-hidden">
+          <thead>
+            <tr class="bg-dark-surface">
+              <th class="text-left px-4 py-3 text-gray-400 font-medium border-b border-dark-border">Artifact</th>
+              <th class="text-left px-4 py-3 text-gray-400 font-medium border-b border-dark-border">Purpose</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="border-b border-dark-border">
+              <td class="px-4 py-3 text-white font-mono text-xs">egress_allowlist.json</td>
+              <td class="px-4 py-3 text-gray-300">Machine-readable domain allowlist</td>
+            </tr>
+            <tr class="border-b border-dark-border bg-dark-surface/50">
+              <td class="px-4 py-3 text-white font-mono text-xs">network-policy.yaml</td>
+              <td class="px-4 py-3 text-gray-300">Kubernetes NetworkPolicy restricting pod egress</td>
+            </tr>
+            <tr class="border-b border-dark-border">
+              <td class="px-4 py-3 text-white font-mono text-xs">Dockerfile</td>
+              <td class="px-4 py-3 text-gray-300">Container image with minimal attack surface</td>
+            </tr>
+            <tr>
+              <td class="px-4 py-3 text-white font-mono text-xs">checksums.json</td>
+              <td class="px-4 py-3 text-gray-300">SHA-256 checksums + Ed25519 signature</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Runtime behavior -->
+      <h3 class="text-lg font-semibold text-white mb-4">Container Runtime Behavior</h3>
+      <p class="text-gray-400 text-sm leading-relaxed mb-4 max-w-3xl">
+        When Forge detects it's running inside a container (via <code class="text-forge-orange text-xs">KUBERNETES_SERVICE_HOST</code> or <code class="text-forge-orange text-xs">/.dockerenv</code>):
+      </p>
+      <ul class="space-y-2 text-gray-400 text-sm mb-10 max-w-3xl">
+        <li class="flex items-start gap-2">
+          <span class="text-forge-orange mt-1 shrink-0">&bull;</span>
+          <span>The local <code class="text-forge-orange text-xs">EgressProxy</code> is <strong class="text-white">not started</strong> — <code class="text-forge-orange text-xs">NetworkPolicy</code> handles egress enforcement at the infrastructure level</span>
+        </li>
+        <li class="flex items-start gap-2">
+          <span class="text-forge-orange mt-1 shrink-0">&bull;</span>
+          <span>All other security controls (guardrails, execution sandboxing, audit logging) remain active</span>
+        </li>
+        <li class="flex items-start gap-2">
+          <span class="text-forge-orange mt-1 shrink-0">&bull;</span>
+          <span>Secrets must use the <code class="text-forge-orange text-xs">env</code> provider (encrypted files can't be decrypted without a passphrase)</span>
+        </li>
+      </ul>
+
+      <!-- Production build -->
+      <h3 class="text-lg font-semibold text-white mb-4">Production Build</h3>
+      <div class="bg-dark-surface border border-dark-border rounded-forge-md p-4 font-mono text-sm text-gray-300 overflow-x-auto mb-4 max-w-3xl">
+        <pre><code>forge package --prod</code></pre>
+      </div>
+      <p class="text-gray-400 text-sm leading-relaxed max-w-3xl">
+        Production builds enforce: no <code class="text-forge-orange text-xs">dev-open</code> egress mode, no dev-only tools, secret provider chain must include <code class="text-forge-orange text-xs">env</code>, and <code class="text-forge-orange text-xs">.dockerignore</code> must exist if a Dockerfile is generated.
+      </p>
+    </div>
+  </section>
+
+  <!-- ─── M. Responsible Disclosure ─── -->
+  <section id="responsible-disclosure" class="py-16 sm:py-20">
+    <div class="mx-auto max-w-7xl px-4">
+      <p class="text-sm font-medium text-forge-orange uppercase tracking-wider mb-4">Reporting</p>
+      <h2 class="text-2xl sm:text-3xl font-bold text-white mb-6">
+        <a href="#responsible-disclosure" class="hover:text-forge-orange transition-colors">Responsible Disclosure</a>
+      </h2>
+
+      <div class="max-w-3xl bg-dark-surface border border-dark-border border-l-4 border-l-forge-orange rounded-forge-md p-6 sm:p-8">
+        <div class="flex items-start gap-4">
+          <div class="hidden sm:flex shrink-0 mt-1 text-forge-orange">
+            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+            </svg>
+          </div>
+          <div>
+            <h3 class="text-white font-semibold text-lg mb-4">Report a Vulnerability</h3>
+            <div class="space-y-4 text-gray-400 text-sm leading-relaxed">
+              <p>
+                If you discover a security vulnerability in Forge, please report it responsibly.
+              </p>
+              <div>
+                <p class="text-white font-medium mb-1">Security Contact</p>
+                <p><a href="mailto:security@initializ.ai" class="text-forge-orange hover:text-forge-amber transition-colors">security@initializ.ai</a></p>
+              </div>
+              <div>
+                <p class="text-white font-medium mb-1">Response Timeline</p>
+                <ul class="space-y-1 mt-1">
+                  <li>&bull; Acknowledge within <strong class="text-white">48 hours</strong></li>
+                  <li>&bull; Fix within <strong class="text-white">90 days</strong></li>
+                </ul>
+              </div>
+              <div>
+                <p class="text-white font-medium mb-1">GitHub Security Advisories</p>
+                <p>
+                  <a
+                    href="https://github.com/initializ/forge/security/advisories"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="text-forge-orange hover:text-forge-amber transition-colors"
+                  >
+                    View published advisories &rarr;
+                  </a>
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── N. Compliance & Standards ─── -->
+  <section id="compliance" class="py-16 sm:py-20">
+    <div class="mx-auto max-w-7xl px-4">
+      <p class="text-sm font-medium text-forge-orange uppercase tracking-wider mb-4">Standards</p>
+      <h2 class="text-2xl sm:text-3xl font-bold text-white mb-6">
+        <a href="#compliance" class="hover:text-forge-orange transition-colors">Compliance &amp; Standards</a>
+      </h2>
+
+      <div class="grid sm:grid-cols-2 gap-6 max-w-4xl">
+        <!-- Current -->
+        <div class="bg-dark-surface border border-dark-border rounded-forge-md p-6">
+          <h3 class="text-white font-semibold mb-4">Available Today</h3>
+          <ul class="space-y-3 text-gray-400 text-sm">
+            <li class="flex items-start gap-2">
+              <svg class="w-4 h-4 text-green-400 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+              <span>Apache 2.0 open-source license</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <svg class="w-4 h-4 text-green-400 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+              <span>NDJSON audit logs with correlation threading</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <svg class="w-4 h-4 text-green-400 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+              <span>AES-256-GCM encrypted secrets at rest</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <svg class="w-4 h-4 text-green-400 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+              <span>Ed25519 signed builds with checksum verification</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <svg class="w-4 h-4 text-green-400 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+              <span>Layered egress enforcement with NetworkPolicy</span>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Roadmap -->
+        <div class="bg-dark-surface border border-dark-border rounded-forge-md p-6">
+          <h3 class="text-white font-semibold mb-4">Roadmap</h3>
+          <ul class="space-y-3 text-gray-400 text-sm">
+            <li class="flex items-start gap-2">
+              <svg class="w-4 h-4 text-gray-500 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                <circle cx="12" cy="12" r="10" />
+              </svg>
+              <span>SOC 2 Type II readiness</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <svg class="w-4 h-4 text-gray-500 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                <circle cx="12" cy="12" r="10" />
+              </svg>
+              <span>HIPAA-compliant skill packs (via Hub Enterprise)</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <svg class="w-4 h-4 text-gray-500 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                <circle cx="12" cy="12" r="10" />
+              </svg>
+              <span>SIEM integration guides</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <svg class="w-4 h-4 text-gray-500 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                <circle cx="12" cy="12" r="10" />
+              </svg>
+              <span>Dependency vulnerability scanning (<code class="text-forge-orange text-xs">govulncheck</code>)</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+</Base>

@@ -1,0 +1,42 @@
+---
+const features = [
+  {
+    title: 'Atomic',
+    description: 'Each skill is a self-contained unit with declared inputs, outputs, and dependencies. No hidden state, no side effects — just composable building blocks.',
+    icon: '&#x2699;', // gear
+  },
+  {
+    title: 'Secure',
+    description: 'Skills run in sandboxed environments with egress allowlists and no inbound tunnels. Every build is signed and verifiable. Security is the default, not an add-on.',
+    icon: '&#x1F512;', // lock
+  },
+  {
+    title: 'Portable',
+    description: 'Write once, run anywhere. From your laptop to Docker to Kubernetes — Forge agents deploy the same way everywhere with zero configuration changes.',
+    icon: '&#x1F4E6;', // package
+  },
+];
+---
+
+<section class="py-20 sm:py-24">
+  <div class="mx-auto max-w-7xl px-4">
+    <!-- Section header -->
+    <p class="text-center text-sm font-medium text-forge-orange tracking-widest uppercase mb-4">
+      Atomicity &middot; Security &middot; Portability
+    </p>
+    <h2 class="text-center text-3xl sm:text-4xl font-bold text-white mb-12">
+      Built on principles that matter
+    </h2>
+
+    <!-- Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {features.map(feature => (
+        <div class="group bg-dark-surface border border-dark-border rounded-forge-lg p-6 transition-transform duration-300 ease-forge hover:-translate-y-1">
+          <div class="text-3xl mb-4" set:html={feature.icon} />
+          <h3 class="text-xl font-semibold text-white mb-2">{feature.title}</h3>
+          <p class="text-gray-400 text-sm leading-relaxed">{feature.description}</p>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>

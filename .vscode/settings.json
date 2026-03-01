@@ -1,0 +1,16 @@
+{
+  "files.associations": {
+    "*.astro": "astro"
+  },
+  "editor.defaultFormatter": "astro-build.astro-vscode",
+  "[astro]": {
+    "editor.defaultFormatter": "astro-build.astro-vscode"
+  },
+  "tailwindCSS.includeLanguages": {
+    "astro": "html"
+  },
+  "css.customData": [],
+  "editor.quickSuggestions": {
+    "strings": "on"
+  }
+}

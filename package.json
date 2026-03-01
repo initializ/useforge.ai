@@ -1,0 +1,45 @@
+{
+  "name": "useforge-ai",
+  "type": "module",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "astro dev",
+    "generate:og": "npx tsx scripts/generate-og.ts",
+    "build": "npm run fetch && npm run generate:og && astro build",
+    "fetch": "npm run fetch:skills && npm run fetch:contributors && npm run fetch:releases && npm run fetch:trust",
+    "fetch:skills": "npx tsx scripts/fetch-skills.ts",
+    "fetch:contributors": "npx tsx scripts/fetch-contributors.ts",
+    "fetch:releases": "npx tsx scripts/fetch-releases.ts",
+    "fetch:trust": "npx tsx scripts/fetch-trust-data.ts",
+    "postbuild": "npx pagefind --site dist",
+    "preview": "astro preview",
+    "check": "astro check",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "@astrojs/check": "^0.9.6",
+    "@astrojs/mdx": "^4.3.13",
+    "@astrojs/react": "^4.4.2",
+    "@astrojs/rss": "^4.0.15",
+    "@astrojs/sitemap": "^3.7.0",
+    "@tailwindcss/typography": "^0.5.19",
+    "@tailwindcss/vite": "^4.2.1",
+    "astro": "^5.18.0",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "tailwindcss": "^4.2.1"
+  },
+  "devDependencies": {
+    "@resvg/resvg-js": "^2.6.2",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "gray-matter": "^4.0.3",
+    "pagefind": "^1.4.0",
+    "satori": "^0.19.2",
+    "satori-html": "^0.3.2",
+    "sharp": "^0.34.5",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  }
+}

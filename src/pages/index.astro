@@ -1,0 +1,37 @@
+---
+import Base from '@/layouts/Base.astro';
+import Hero from '@/components/Hero.astro';
+import StackVisual from '@/components/StackVisual.astro';
+import FeatureGrid from '@/components/FeatureGrid.astro';
+import SkillExample from '@/components/SkillExample.astro';
+import TrustCallout from '@/components/TrustCallout.astro';
+import ContributorGrid from '@/components/ContributorGrid.astro';
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareApplication',
+  name: 'Forge',
+  description: 'Build production-ready AI agents with skill-based architecture. Define skills in Markdown, run anywhere.',
+  url: 'https://useforge.ai',
+  applicationCategory: 'DeveloperApplication',
+  operatingSystem: 'macOS, Linux',
+  offers: {
+    '@type': 'Offer',
+    price: '0',
+    priceCurrency: 'USD',
+  },
+};
+---
+
+<Base
+  title="Forge — AI Agent Framework"
+  description="Build production-ready AI agents with skill-based architecture. Define skills in Markdown, run anywhere."
+  jsonLd={jsonLd}
+>
+  <Hero />
+  <StackVisual />
+  <FeatureGrid />
+  <SkillExample />
+  <TrustCallout />
+  <ContributorGrid />
+</Base>

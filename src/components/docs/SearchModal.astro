@@ -1,0 +1,142 @@
+<!-- Search modal triggered by #search-trigger or Cmd+K/Ctrl+K -->
+<div id="search-modal" class="fixed inset-0 z-[60] hidden">
+  <!-- Backdrop -->
+  <div id="search-backdrop" class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
+
+  <!-- Modal -->
+  <div class="relative mx-auto mt-[15vh] max-w-xl w-full px-4">
+    <div class="bg-dark-surface border border-dark-border rounded-forge-lg shadow-2xl overflow-hidden">
+      <!-- Search input -->
+      <div class="flex items-center gap-3 px-4 border-b border-dark-border">
+        <svg class="w-4 h-4 text-gray-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+          <circle cx="11" cy="11" r="8" />
+          <path d="m21 21-4.35-4.35" />
+        </svg>
+        <input
+          id="search-input"
+          type="text"
+          placeholder="Search Forge..."
+          class="flex-1 py-3 bg-transparent text-white placeholder-gray-500 text-sm outline-none"
+          autocomplete="off"
+        />
+        <kbd class="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 text-xs text-gray-500 bg-dark-bg border border-dark-border rounded">
+          Esc
+        </kbd>
+      </div>
+
+      <!-- Results -->
+      <div id="search-results" class="max-h-[60vh] overflow-y-auto p-2">
+        <p id="search-empty" class="px-3 py-8 text-sm text-gray-500 text-center">
+          Type to search...
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script is:inline>
+  (function() {
+    var pagefind = null;
+
+    async function loadPagefind() {
+      if (pagefind) return pagefind;
+      try {
+        pagefind = await import('/pagefind/pagefind.js');
+        await pagefind.init();
+        return pagefind;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    var modal = document.getElementById('search-modal');
+    var backdrop = document.getElementById('search-backdrop');
+    var input = document.getElementById('search-input');
+    var results = document.getElementById('search-results');
+    var empty = document.getElementById('search-empty');
+    var trigger = document.getElementById('search-trigger');
+
+    function openSearch() {
+      if (modal) modal.classList.remove('hidden');
+      document.body.classList.add('overflow-hidden');
+      if (input) input.focus();
+      loadPagefind();
+    }
+
+    function closeSearch() {
+      if (modal) modal.classList.add('hidden');
+      document.body.classList.remove('overflow-hidden');
+      if (input) input.value = '';
+      if (results && empty) {
+        results.innerHTML = '';
+        empty.textContent = 'Type to search...';
+        results.appendChild(empty);
+      }
+    }
+
+    if (trigger) trigger.addEventListener('click', openSearch);
+    if (backdrop) backdrop.addEventListener('click', closeSearch);
+
+    document.addEventListener('keydown', function(e) {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        if (modal && modal.classList.contains('hidden')) {
+          openSearch();
+        } else {
+          closeSearch();
+        }
+      }
+      if (e.key === 'Escape') {
+        closeSearch();
+      }
+    });
+
+    var debounceTimer;
+
+    if (input) {
+      input.addEventListener('input', function() {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(async function() {
+          var query = input.value.trim();
+          if (!results || !empty) return;
+
+          if (!query) {
+            results.innerHTML = '';
+            empty.textContent = 'Type to search...';
+            results.appendChild(empty);
+            return;
+          }
+
+          var pf = await loadPagefind();
+          if (!pf) {
+            results.innerHTML = '';
+            empty.textContent = 'Search is available after building the site (npm run build).';
+            results.appendChild(empty);
+            return;
+          }
+
+          var search = await pf.search(query);
+          if (search.results.length === 0) {
+            results.innerHTML = '';
+            empty.textContent = 'No results for "' + query + '"';
+            results.appendChild(empty);
+            return;
+          }
+
+          var items = await Promise.all(
+            search.results.slice(0, 8).map(function(r) { return r.data(); })
+          );
+
+          results.innerHTML = items
+            .map(function(item) {
+              return '<a href="' + item.url + '" class="block px-3 py-2.5 rounded-forge-sm hover:bg-dark-hover transition-colors group">' +
+                '<p class="text-sm text-white group-hover:text-forge-orange transition-colors">' + (item.meta && item.meta.title ? item.meta.title : item.url) + '</p>' +
+                '<p class="text-xs text-gray-500 mt-0.5 line-clamp-2">' + item.excerpt + '</p>' +
+                '</a>';
+            })
+            .join('');
+        }, 200);
+      });
+    }
+  })();
+</script>
