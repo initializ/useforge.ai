@@ -13,12 +13,15 @@
     "fetch:releases": "npx tsx scripts/fetch-releases.ts",
     "fetch:trust": "npx tsx scripts/fetch-trust-data.ts",
     "postbuild": "npx pagefind --site dist",
-    "preview": "astro preview",
+    "preview": "npm run build && wrangler dev",
     "check": "astro check",
-    "astro": "astro"
+    "astro": "astro",
+    "deploy": "npm run build && wrangler deploy",
+    "cf-typegen": "wrangler types"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.6",
+    "@astrojs/cloudflare": "^12.6.12",
     "@astrojs/mdx": "^4.3.13",
     "@astrojs/react": "^4.4.2",
     "@astrojs/rss": "^4.0.15",
@@ -40,6 +43,7 @@
     "satori-html": "^0.3.2",
     "sharp": "^0.34.5",
     "tsx": "^4.21.0",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "wrangler": "^4.69.0"
   }
 }

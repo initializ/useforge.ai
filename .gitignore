@@ -16,3 +16,9 @@ src/content/skills/*.md
 !src/content/skills/.gitkeep
 src/content/changelog/*.md
 !src/content/changelog/.gitkeep
+
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example
+!.env.example
