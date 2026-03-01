@@ -16,6 +16,66 @@ const { Content, headings } = await render(entry);
 const editUrl =
   entry.data.editUrl ||
   `https://github.com/initializ/forge/edit/main/website/src/content/docs/${entry.id}.md`;
+
+// Generate FAQPage JSON-LD for the FAQ page
+let jsonLd: Record<string, unknown> | undefined;
+if (entry.id === 'faq') {
+  const faqItems = [
+    {
+      question: 'What is Forge?',
+      answer: 'Forge is a secure, portable AI agent runtime that lets you execute AI agents across local machines, cloud environments, and enterprise infrastructure without inbound tunnels or exposed ports. Unlike demo-oriented agent frameworks, Forge enforces security boundaries, outbound-only networking, and atomic skill execution for production workflows.',
+    },
+    {
+      question: 'Is Forge secure enough for enterprise environments?',
+      answer: 'Yes — Forge is built with enterprise security in mind and supports outbound-only networking, audit logging, secret encryption, and strict trust evaluation. This architecture aligns with common enterprise constraints such as egress control, identity enforcement, and compliance requirements.',
+    },
+    {
+      question: 'Can Forge run agents without exposing inbound network ports?',
+      answer: 'Yes. Forge does not rely on inbound tunnels and can run agents without opening public ports. Instead, it enforces outbound-only communication models that meet strict security policies and reduce attack surface.',
+    },
+    {
+      question: 'How is Forge different from other agent frameworks like LangChain or CrewAI?',
+      answer: "Forge focuses on secure runtime architecture, production portability, and deployment constraints, whereas other frameworks often emphasize orchestration and developer tooling. Forge's priorities are environment isolation, enterprise compliance, and secure execution across local, cloud, and air-gapped environments.",
+    },
+    {
+      question: 'Which LLM providers does Forge support, and can I run Forge locally without API keys?',
+      answer: 'Forge supports multiple LLM providers (including OpenAI, Anthropic, Google Gemini, and local inference via Ollama). You can run Forge locally without an API key using Ollama. Using a local provider allows you to build and test agents without relying on hosted LLM services.',
+    },
+    {
+      question: 'How does Forge handle secrets and sensitive configuration?',
+      answer: 'Forge encrypts secrets at rest using AES-256-GCM and a secure key derivation method. Each agent holds its own encrypted secrets file. In production, environment variables can be used instead of local encryption for containerized deployments.',
+    },
+    {
+      question: 'What happens if a skill fails security or trust evaluation?',
+      answer: 'Skills that fail critical trust checks are excluded from execution and cannot be used by the agent. Non-critical issues may still allow execution in "under review" mode, with options to promote trust after assessment.',
+    },
+    {
+      question: 'How do I deploy a Forge agent with Docker or Kubernetes?',
+      answer: 'Use forge build to generate artifacts and forge package --prod to create a Docker image. For Kubernetes, deploy the image with your cluster\'s security policies. Production flags enforce stricter egress policies and validate security configurations.',
+    },
+    {
+      question: 'Do I need webhooks to use channels like Slack or Telegram?',
+      answer: "For Telegram, long polling is supported without inbound ports. For Slack, you'll need to expose a port for webhook events. Each channel has different integration requirements, and Forge handles them in a secure, controlled way.",
+    },
+    {
+      question: 'What license is Forge under?',
+      answer: 'Forge is licensed under the Apache 2.0 license and is fully open source. You are free to modify and distribute the source code under the terms of this license.',
+    },
+  ];
+
+  jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqItems.map((item) => ({
+      '@type': 'Question',
+      name: item.question,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: item.answer,
+      },
+    })),
+  };
+}
 ---
 
 <Docs
@@ -24,6 +84,7 @@ const editUrl =
   headings={headings}
   editUrl={editUrl}
   currentSlug={entry.id}
+  jsonLd={jsonLd}
 >
   <Content />
 </Docs>

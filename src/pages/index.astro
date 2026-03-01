@@ -1,36 +1,61 @@
 ---
-import Base from '@/layouts/Base.astro';
-import Hero from '@/components/Hero.astro';
-import StackVisual from '@/components/StackVisual.astro';
-import FeatureGrid from '@/components/FeatureGrid.astro';
-import SkillExample from '@/components/SkillExample.astro';
-import TrustCallout from '@/components/TrustCallout.astro';
-import ContributorGrid from '@/components/ContributorGrid.astro';
+import Base from '../layouts/Base.astro';
+import Hero from '../components/Hero.astro';
+import HowForgeWorks from '../components/HowForgeWorks.astro';
+import UseCases from '../components/UseCases.astro';
+import ComparisonTable from '../components/HomeComparisonTable.astro';
+import SkillExample from '../components/SkillExample.astro';
+import TrustCallout from '../components/TrustCallout.astro';
+import ContributorGrid from '../components/ContributorGrid.astro';
 
 const jsonLd = {
-  '@context': 'https://schema.org',
-  '@type': 'SoftwareApplication',
-  name: 'Forge',
-  description: 'Build production-ready AI agents with skill-based architecture. Define skills in Markdown, run anywhere.',
-  url: 'https://useforge.ai',
-  applicationCategory: 'DeveloperApplication',
-  operatingSystem: 'macOS, Linux',
-  offers: {
-    '@type': 'Offer',
-    price: '0',
-    priceCurrency: 'USD',
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Forge",
+  "applicationCategory": "DeveloperApplication",
+  "operatingSystem": "Cross-platform",
+  "description": "Forge is a secure, portable AI agent runtime for enterprise work. Run agents locally, in cloud, Kubernetes, or air-gapped environments without inbound tunnels or exposed ports.",
+  "url": "https://useforge.ai/",
+  "downloadUrl": "https://github.com/initializ/forge",
+  "softwareHelp": {
+    "@type": "CreativeWork",
+    "url": "https://useforge.ai/docs"
   },
+  "featureList": [
+    "Secure outbound-only architecture (no inbound tunnels)",
+    "Atomic skill-based execution (SKILL.md)",
+    "Portable runtime across local, cloud, Kubernetes, and air-gapped deployments",
+    "Enterprise-ready agent execution model"
+  ],
+  "creator": {
+    "@type": "Organization",
+    "name": "initializ",
+    "url": "https://initializ.ai"
+  },
+  "sameAs": [
+    "https://github.com/initializ/forge"
+  ],
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD",
+    "availability": "https://schema.org/InStock",
+    "url": "https://github.com/initializ/forge"
+  }
 };
 ---
 
 <Base
-  title="Forge — AI Agent Framework"
-  description="Build production-ready AI agents with skill-based architecture. Define skills in Markdown, run anywhere."
+  title="Forge — Secure, Portable AI Agent Runtime for Enterprise Work"
+  description="Forge is a secure, portable AI agent runtime for enterprise work. Run agents locally, in cloud, Kubernetes, or air-gapped environments—without inbound tunnels or exposed ports."
+  ogImage="https://useforge.ai/og/forge-og.png"
+  keywords="secure ai agent runtime, enterprise ai agent framework, outbound-only ai agents, portable agents, air-gapped ai agents"
   jsonLd={jsonLd}
 >
   <Hero />
-  <StackVisual />
-  <FeatureGrid />
+  <HowForgeWorks />
+  <UseCases />
+  <ComparisonTable />
   <SkillExample />
   <TrustCallout />
   <ContributorGrid />
