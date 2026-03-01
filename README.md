@@ -1,6 +1,6 @@
 # useforge.ai
 
-The official website, documentation, and content hub for [Forge](https://github.com/initializ/forge) — the open-source CLI that turns a `SKILL.md` into a portable, secure, runnable AI agent.
+The official website, documentation, and content hub for [Forge](https://github.com/initializ/forge) — the open-source AI Agent runtime that turns a `SKILL.md` into a portable, secure, runnable AI agent.
 
 **Live site:** [https://useforge.ai](https://useforge.ai)
 
