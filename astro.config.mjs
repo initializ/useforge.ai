@@ -15,10 +15,7 @@ export default defineConfig({
   },
   markdown: {
     shikiConfig: {
-      themes: {
-        dark: 'github-dark',
-        light: 'github-light',
-      },
+      theme: 'github-dark',
     },
   },
 });

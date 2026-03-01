@@ -5,7 +5,11 @@
   "private": true,
   "scripts": {
     "dev": "astro dev",
-    "build": "astro build",
+    "build": "npm run fetch && astro build",
+    "fetch": "npm run fetch:skills && npm run fetch:contributors && npm run fetch:releases",
+    "fetch:skills": "npx tsx scripts/fetch-skills.ts",
+    "fetch:contributors": "npx tsx scripts/fetch-contributors.ts",
+    "fetch:releases": "npx tsx scripts/fetch-releases.ts",
     "postbuild": "npx pagefind --site dist",
     "preview": "astro preview",
     "check": "astro check",
@@ -32,6 +36,7 @@
     "satori": "^0.19.2",
     "satori-html": "^0.3.2",
     "sharp": "^0.34.5",
+    "tsx": "^4.21.0",
     "typescript": "^5.9.3"
   }
 }

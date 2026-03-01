@@ -7,8 +7,11 @@ node_modules/
 npm-debug.log*
 public/og/
 public/pagefind/
+# Generated data files (fetched from GitHub at build time)
 src/data/skills.json
 src/data/contributors.json
 src/data/releases.json
-src/content/skills/
-src/content/changelog/
+src/content/skills/*.md
+!src/content/skills/.gitkeep
+src/content/changelog/*.md
+!src/content/changelog/.gitkeep
