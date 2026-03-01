@@ -14,9 +14,10 @@ interface Props {
   editUrl?: string;
   lastUpdated?: Date;
   currentSlug: string;
+  jsonLd?: Record<string, unknown>;
 }
 
-const { title, description, headings, editUrl, lastUpdated, currentSlug } = Astro.props;
+const { title, description, headings, editUrl, lastUpdated, currentSlug, jsonLd } = Astro.props;
 
 const currentPath = `/docs/${currentSlug}`;
 const flat = flattenNav();
@@ -26,7 +27,7 @@ const next = currentIndex < flat.length - 1 ? flat[currentIndex + 1] : null;
 const current = currentIndex >= 0 ? flat[currentIndex] : null;
 ---
 
-<Base title={`${title} — Forge Docs`} description={description} layout="docs">
+<Base title={`${title} — Forge Docs`} description={description} layout="docs" jsonLd={jsonLd}>
   <div class="flex min-h-[calc(100vh-4rem)]">
     <!-- Left sidebar -->
     <DocsSidebar currentPath={currentPath} />

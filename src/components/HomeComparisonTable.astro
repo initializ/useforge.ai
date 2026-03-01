@@ -1,0 +1,58 @@
+---
+const rows = [
+  { feature: 'Outbound-only networking', forge: true, typical: false },
+  { feature: 'Inbound tunnel required', forge: false, typical: 'Often' },
+  { feature: 'Environment portability', forge: true, typical: 'Limited' },
+  { feature: 'Skill-based atomic model', forge: true, typical: false },
+  { feature: 'Enterprise deployment focus', forge: true, typical: 'Rare' },
+  { feature: 'Air-gapped compatibility', forge: true, typical: 'Rare' },
+];
+---
+
+<section class="py-20 relative">
+  <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="text-center mb-12">
+      <h2 class="text-3xl sm:text-4xl font-bold text-gray-200 mb-4">
+        Forge vs Typical Agent Frameworks
+      </h2>
+      <p class="text-gray-400 text-lg">
+        Forge focuses on infrastructure. Not just capability.
+      </p>
+    </div>
+
+    <div class="bg-dark-surface border border-dark-border rounded-forge-xl overflow-hidden">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="border-b border-dark-border">
+            <th class="text-left px-6 py-4 text-gray-400 font-mono text-xs uppercase tracking-wider">Feature</th>
+            <th class="text-center px-6 py-4 text-forge-orange font-mono text-xs uppercase tracking-wider">Forge</th>
+            <th class="text-center px-6 py-4 text-gray-500 font-mono text-xs uppercase tracking-wider">Typical</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row, i) => (
+            <tr class:list={[i < rows.length - 1 ? 'border-b border-dark-border/50' : '']}>
+              <td class="px-6 py-3.5 text-gray-300">{row.feature}</td>
+              <td class="px-6 py-3.5 text-center">
+                {row.forge === true ? (
+                  <span class="text-green-400">&#10003;</span>
+                ) : (
+                  <span class="text-red-400/70">&#10007;</span>
+                )}
+              </td>
+              <td class="px-6 py-3.5 text-center">
+                {row.typical === true ? (
+                  <span class="text-green-400">&#10003;</span>
+                ) : row.typical === false ? (
+                  <span class="text-red-400/70">&#10007;</span>
+                ) : (
+                  <span class="text-gray-500 text-xs">{row.typical}</span>
+                )}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>

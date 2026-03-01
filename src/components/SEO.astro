@@ -4,11 +4,12 @@ interface Props {
   description: string;
   ogImage?: string;
   jsonLd?: Record<string, unknown>;
+  keywords?: string;
 }
 
 const pathSlug = Astro.url.pathname === '/' ? 'index' : Astro.url.pathname.replace(/^\/|\/$/g, '');
 const autoOgImage = `/og/${pathSlug}.png`;
-const { title, description, ogImage = autoOgImage, jsonLd } = Astro.props;
+const { title, description, ogImage = autoOgImage, jsonLd, keywords } = Astro.props;
 
 const displayTitle = title.includes('Forge') ? title : `${title} — Forge`;
 const canonicalURL = new URL(Astro.url.pathname, Astro.site);
@@ -16,6 +17,7 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
 
 <title>{displayTitle}</title>
 <meta name="description" content={description} />
+{keywords && <meta name="keywords" content={keywords} />}
 <link rel="canonical" href={canonicalURL.href} />
 
 <!-- Open Graph -->

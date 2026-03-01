@@ -1,0 +1,108 @@
+---
+const layers = [
+  {
+    number: '1',
+    title: 'Agent Skill Layer',
+    subtitle: 'Declarative Agent Capabilities',
+    summary: 'Skills define what an agent can do.',
+    points: [
+      'Written in Markdown (SKILL.md)',
+      'Explicit scope of tools',
+      'Defined execution boundaries',
+      'No implicit capability',
+    ],
+    conclusion: 'This enables atomic execution.',
+  },
+  {
+    number: '2',
+    title: 'Runtime Layer',
+    subtitle: 'Secure Execution Engine',
+    summary: 'The runtime enforces:',
+    points: [
+      'Outbound-only networking',
+      'Execution isolation',
+      'Controlled environment access',
+      'Security validation',
+    ],
+    conclusion: 'This reduces attack surface compared to inbound tunnel models.',
+  },
+  {
+    number: '3',
+    title: 'Packaging Layer',
+    subtitle: 'Portable Deployment',
+    summary: 'Agents can be packaged for:',
+    points: [
+      'Local CLI execution',
+      'Docker containers',
+      'Kubernetes clusters',
+      'Air-gapped enterprise systems',
+    ],
+    conclusion: 'Same agent definition. Different deployment target.',
+  },
+  {
+    number: '4',
+    title: 'Governance Layer',
+    subtitle: 'Trust & Security Controls',
+    summary: 'Forge evaluates:',
+    points: [
+      'Skill trust',
+      'Execution scope',
+      'Secret management',
+      'Production policies',
+    ],
+    conclusion: 'This aligns agents with enterprise compliance requirements.',
+  },
+];
+---
+
+<section class="py-24 relative">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <!-- Section header -->
+    <div class="text-center mb-16">
+      <h2 class="text-3xl sm:text-4xl font-bold text-gray-200 mb-4">
+        How Forge's Secure Agent Runtime Works
+      </h2>
+      <p class="text-gray-400 text-lg max-w-2xl mx-auto">
+        Four layers that make AI agents enterprise-ready — from skill definition to production governance.
+      </p>
+    </div>
+
+    <!-- 2x2 Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {layers.map(layer => (
+        <div class="bg-dark-surface border border-dark-border rounded-forge-xl p-8 hover:-translate-y-1 transition-all duration-300 ease-forge group">
+          <!-- Layer number + title -->
+          <div class="flex items-start gap-4 mb-5">
+            <div class="flex-shrink-0 w-10 h-10 rounded-forge-md bg-forge-orange/10 flex items-center justify-center group-hover:bg-forge-orange/20 transition-colors duration-300">
+              <span class="font-mono text-lg font-bold text-forge-orange">{layer.number}</span>
+            </div>
+            <div>
+              <h3 class="text-xl font-bold text-gray-200">{layer.title}</h3>
+              <p class="text-sm text-gray-500 font-mono">{layer.subtitle}</p>
+            </div>
+          </div>
+
+          <!-- Summary -->
+          <p class="text-gray-400 text-sm mb-4">{layer.summary}</p>
+
+          <!-- Points -->
+          <ul class="space-y-2 mb-5">
+            {layer.points.map(point => (
+              <li class="flex items-start gap-2.5 text-sm text-gray-300">
+                <span class="text-forge-orange mt-1 flex-shrink-0">
+                  <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 16 16"><path d="M8 4l4 4-4 4V4z"/></svg>
+                </span>
+                {point}
+              </li>
+            ))}
+          </ul>
+
+          <!-- Conclusion -->
+          <p class="text-sm text-gray-500 italic border-t border-dark-border pt-4">
+            {layer.conclusion}
+          </p>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
