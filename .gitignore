@@ -11,6 +11,7 @@ public/pagefind/
 src/data/skills.json
 src/data/contributors.json
 src/data/releases.json
+src/data/trust-data.json
 src/content/skills/*.md
 !src/content/skills/.gitkeep
 src/content/changelog/*.md

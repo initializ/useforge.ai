@@ -1,0 +1,131 @@
+---
+const layers = [
+  {
+    name: 'Guardrails',
+    sublabel: 'Content filtering, PII detection, jailbreak protection',
+    icon: 'shield',
+    detail:
+      'Inbound and outbound messages are checked against configurable policy rules. Built-in guardrails include content filtering, PII detection (email, phone, SSN), and jailbreak phrase detection. Modes: enforce (blocking) or warn (logging).',
+  },
+  {
+    name: 'Egress Enforcement',
+    sublabel: 'EgressEnforcer + EgressProxy + NetworkPolicy',
+    icon: 'globe',
+    detail:
+      'Three-level outbound network control: an in-process Go RoundTripper validates every HTTP request, a localhost proxy enforces the same rules on subprocess traffic (curl, wget, Python), and Kubernetes NetworkPolicy restricts pod-level egress in production.',
+  },
+  {
+    name: 'Execution Sandboxing',
+    sublabel: 'Env isolation, binary allowlists, arg validation',
+    icon: 'terminal',
+    detail:
+      'External code runs through sandboxed executors with environment isolation, binary allowlists, argument validation (rejects shell injection patterns), configurable timeouts, and output size limits. No shell expansion — ever.',
+  },
+  {
+    name: 'Secrets Management',
+    sublabel: 'AES-256-GCM, Argon2id, per-agent isolation',
+    icon: 'key',
+    detail:
+      'Secrets are encrypted at rest using AES-256-GCM with Argon2id key derivation. Storage is per-agent with a provider chain: agent-local encrypted → global encrypted → environment variables. Files are 0600, excluded from git and Docker.',
+  },
+  {
+    name: 'Build Integrity',
+    sublabel: 'Ed25519 signing, SHA-256 checksums',
+    icon: 'pen-tool',
+    detail:
+      'Every build computes SHA-256 checksums of all artifacts and signs them with Ed25519. Verification at runtime checks checksums and validates signatures against a trusted keyring. Production builds reject dev-open egress and dev-only tools.',
+  },
+  {
+    name: 'Network Posture',
+    sublabel: 'Outbound-only connections, no public listeners',
+    icon: 'wifi-off',
+    detail:
+      'Forge agents never expose inbound listeners. No ngrok, no Cloudflare tunnels, no inbound webhooks. Slack uses Socket Mode (outbound WebSocket), Telegram uses long-polling. The dev server binds to localhost only. Zero inbound attack surface by default.',
+  },
+];
+---
+
+<div class="space-y-0">
+  {layers.map((layer, i) => (
+    <div
+      class:list={[
+        'group relative border border-dark-border bg-dark-surface transition-all duration-300 ease-forge overflow-hidden',
+        'hover:border-l-forge-orange hover:border-l-4 hover:bg-dark-hover',
+        i === 0 && 'rounded-t-forge-md',
+        i === layers.length - 1 && 'rounded-b-forge-md',
+        i > 0 && '-mt-px',
+      ]}
+    >
+      <div class="flex items-center gap-4 px-5 py-4 sm:px-6 sm:py-5 cursor-default">
+        {/* Icon */}
+        <div class="shrink-0 text-gray-500 group-hover:text-forge-orange transition-colors duration-300">
+          {layer.icon === 'shield' && (
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+            </svg>
+          )}
+          {layer.icon === 'globe' && (
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+              <circle cx="12" cy="12" r="10" />
+              <path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10A15.3 15.3 0 0112 2z" />
+            </svg>
+          )}
+          {layer.icon === 'terminal' && (
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+              <polyline points="4 17 10 11 4 5" />
+              <line x1="12" y1="19" x2="20" y2="19" />
+            </svg>
+          )}
+          {layer.icon === 'key' && (
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+              <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 11-7.778 7.778 5.5 5.5 0 017.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4" />
+            </svg>
+          )}
+          {layer.icon === 'pen-tool' && (
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+              <path d="M12 19l7-7 3 3-7 7-3-3z" />
+              <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z" />
+              <path d="M2 2l7.586 7.586" />
+              <circle cx="11" cy="11" r="2" />
+            </svg>
+          )}
+          {layer.icon === 'wifi-off' && (
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+              <line x1="1" y1="1" x2="23" y2="23" />
+              <path d="M16.72 11.06A10.94 10.94 0 0119 12.55" />
+              <path d="M5 12.55a10.94 10.94 0 015.17-2.39" />
+              <path d="M10.71 5.05A16 16 0 0122.56 9" />
+              <path d="M1.42 9a15.91 15.91 0 014.7-2.88" />
+              <path d="M8.53 16.11a6 6 0 016.95 0" />
+              <line x1="12" y1="20" x2="12.01" y2="20" />
+            </svg>
+          )}
+        </div>
+
+        {/* Content */}
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-3">
+            <span class="text-white font-semibold text-sm sm:text-base">{layer.name}</span>
+            <span class="hidden sm:inline text-gray-500 text-xs">—</span>
+            <span class="hidden sm:inline text-gray-400 text-sm truncate">{layer.sublabel}</span>
+          </div>
+          <p class="sm:hidden text-gray-400 text-xs mt-0.5">{layer.sublabel}</p>
+        </div>
+
+        {/* Expand hint */}
+        <div class="shrink-0 text-gray-600 group-hover:text-gray-400 transition-colors">
+          <svg class="w-4 h-4 transition-transform duration-300 group-hover:rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+            <polyline points="9 18 15 12 9 6" />
+          </svg>
+        </div>
+      </div>
+
+      {/* Expanded detail */}
+      <div class="max-h-0 group-hover:max-h-40 overflow-hidden transition-all duration-300 ease-forge">
+        <div class="px-5 pb-4 sm:px-6 sm:pb-5 pl-14 sm:pl-16">
+          <p class="text-gray-400 text-sm leading-relaxed">{layer.detail}</p>
+        </div>
+      </div>
+    </div>
+  ))}
+</div>
