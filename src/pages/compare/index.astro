@@ -1,0 +1,74 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '@/layouts/Base.astro';
+
+const allComparisons = await getCollection('comparisons');
+const comparisons = allComparisons.sort(
+  (a, b) => (a.data.order ?? 99) - (b.data.order ?? 99)
+);
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebPage',
+  name: 'Compare Forge',
+  description: 'See how Forge compares to other agent frameworks on security, portability, and deployment.',
+  url: 'https://useforge.ai/compare',
+};
+---
+
+<Base
+  title="Compare Forge — Forge"
+  description="See how Forge compares to other agent frameworks on security, portability, and deployment."
+  layout="marketing"
+  jsonLd={jsonLd}
+>
+  <!-- Hero -->
+  <section class="relative overflow-hidden pt-20 pb-12 sm:pt-28 sm:pb-16">
+    <div
+      class="pointer-events-none absolute inset-0 -top-40"
+      style="background: radial-gradient(ellipse 60% 50% at 50% 0%, rgba(249,115,22,0.10) 0%, transparent 70%)"
+    ></div>
+    <div class="relative mx-auto max-w-3xl px-4 text-center">
+      <h1 class="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight">
+        <span class="bg-gradient-to-r from-forge-orange to-forge-amber bg-clip-text text-transparent">
+          Compare Forge
+        </span>
+      </h1>
+      <p class="mt-4 text-lg sm:text-xl text-gray-400 max-w-2xl mx-auto">
+        When agents move from assistant to worker, the runtime layer changes everything.
+        See how Forge handles security, portability, and deployment differently.
+      </p>
+    </div>
+  </section>
+
+  <!-- Comparison cards -->
+  <section class="pb-20 sm:pb-28">
+    <div class="mx-auto max-w-4xl px-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        {comparisons.map((comp) => (
+          <a
+            href={`/compare/${comp.id}`}
+            class="group bg-dark-surface border border-dark-border rounded-forge-lg p-6 hover:border-gray-500 transition-colors"
+          >
+            <div class="flex items-center gap-3 mb-3">
+              <span class="text-xs font-medium uppercase tracking-wider text-gray-500">vs</span>
+              <span class="text-sm font-bold text-forge-orange">{comp.data.competitor}</span>
+            </div>
+            <h2 class="text-lg font-bold text-white group-hover:text-forge-orange transition-colors mb-2">
+              {comp.data.title}
+            </h2>
+            <p class="text-sm text-gray-400 line-clamp-3">
+              {comp.data.description}
+            </p>
+            <span class="inline-flex items-center gap-1 mt-4 text-sm text-forge-orange group-hover:text-forge-amber transition-colors">
+              Read comparison
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                <path d="M5 12h14M12 5l7 7-7 7" />
+              </svg>
+            </span>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+</Base>

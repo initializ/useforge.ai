@@ -1,0 +1,100 @@
+---
+import { getCollection, render } from 'astro:content';
+import Base from '@/layouts/Base.astro';
+
+export async function getStaticPaths() {
+  const comparisons = await getCollection('comparisons');
+  return comparisons.map((comp) => ({
+    params: { slug: comp.id },
+    props: { comp },
+  }));
+}
+
+const { comp } = Astro.props;
+const { Content } = await render(comp);
+const { title, description, competitor } = comp.data;
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebPage',
+  name: title,
+  description,
+  url: `https://useforge.ai/compare/${comp.id}`,
+  publisher: {
+    '@type': 'Organization',
+    name: 'Initializ',
+    url: 'https://initializ.ai',
+  },
+};
+---
+
+<Base title={`${title} — Forge`} description={description} layout="marketing" jsonLd={jsonLd}>
+  <div class="mx-auto max-w-4xl px-4 py-12 sm:py-20">
+    <!-- Back link -->
+    <a
+      href="/compare"
+      class="inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-white transition-colors mb-8"
+    >
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+        <path d="M19 12H5M12 19l-7-7 7-7" />
+      </svg>
+      Back to Compare
+    </a>
+
+    <!-- Header -->
+    <header class="mb-10">
+      <div class="flex items-center gap-3 mb-4">
+        <span class="text-xs font-medium uppercase tracking-wider text-gray-500">Forge vs</span>
+        <span class="px-2 py-0.5 text-sm font-bold rounded-full border border-dark-border text-forge-orange">
+          {competitor}
+        </span>
+      </div>
+      <h1 class="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4">{title}</h1>
+      <p class="text-lg text-gray-400">{description}</p>
+    </header>
+
+    <!-- Content -->
+    <article class="mb-16">
+      <div class="prose prose-invert prose-orange max-w-none
+        prose-headings:text-white prose-headings:font-bold
+        prose-a:text-forge-orange prose-a:no-underline hover:prose-a:underline
+        prose-code:text-forge-orange/80 prose-code:bg-dark-surface prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded
+        prose-pre:bg-dark-surface prose-pre:border prose-pre:border-dark-border prose-pre:rounded-forge-md
+        prose-table:border-collapse
+        prose-th:text-left prose-th:text-gray-300 prose-th:font-semibold prose-th:border-b prose-th:border-dark-border prose-th:py-2 prose-th:px-3
+        prose-td:border-b prose-td:border-dark-border prose-td:py-2 prose-td:px-3 prose-td:text-gray-400">
+        <Content />
+      </div>
+    </article>
+
+    <!-- CTA -->
+    <div class="bg-dark-surface border border-dark-border rounded-forge-xl p-8 text-center">
+      <h2 class="text-xl font-bold text-white mb-2">Ready to try Forge?</h2>
+      <p class="text-gray-400 text-sm mb-5">
+        Get started in minutes with the Forge CLI.
+      </p>
+      <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
+        <a
+          href="/docs/getting-started/installation"
+          class="inline-flex items-center gap-2 px-5 py-2.5 bg-forge-orange hover:bg-forge-deep text-white text-sm font-medium rounded-forge-md transition-colors"
+        >
+          Get started
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+            <path d="M5 12h14M12 5l7 7-7 7" />
+          </svg>
+        </a>
+        <a
+          href="https://github.com/initializ/forge"
+          target="_blank"
+          rel="noopener"
+          class="inline-flex items-center gap-2 px-5 py-2.5 border border-dark-border hover:border-gray-500 text-gray-300 hover:text-white text-sm font-medium rounded-forge-md transition-colors"
+        >
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" />
+          </svg>
+          View on GitHub
+        </a>
+      </div>
+    </div>
+  </div>
+</Base>
