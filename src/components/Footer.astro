@@ -38,13 +38,13 @@ const columns = [
     <div class="grid grid-cols-2 md:grid-cols-3 gap-8 mb-12">
       {columns.map(col => (
         <div>
-          <h3 class="text-sm font-semibold text-white mb-4">{col.title}</h3>
+          <h3 class="text-sm font-semibold text-heading mb-4">{col.title}</h3>
           <ul class="space-y-2">
             {col.links.map(link => (
               <li>
                 <a
                   href={link.href}
-                  class="text-sm text-gray-400 hover:text-white transition-colors"
+                  class="text-sm text-secondary hover:text-heading transition-colors"
                   {...(link.external ? { target: '_blank', rel: 'noopener' } : {})}
                 >
                   {link.label}
@@ -64,16 +64,17 @@ const columns = [
     <!-- Bottom bar -->
     <div class="border-t border-dark-border pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
       <div class="flex items-center gap-3">
-        <img src="/logos/forge-monogram.svg" alt="Forge" class="h-6 w-6 opacity-50" />
-        <span class="text-sm text-gray-500">
-          Built by Initializ &middot; MIT License &middot; &copy; {year}
+        <img src="/logos/forge-monogram-light.svg" alt="Forge" class="h-6 w-6 opacity-50 dark:hidden" />
+        <img src="/logos/forge-monogram.svg" alt="Forge" class="h-6 w-6 opacity-50 hidden dark:block" />
+        <span class="text-sm text-muted">
+          Built by <a href="https://initializ.ai" target="_blank" rel="noopener" class="hover:text-secondary transition-colors">initializ</a> &middot; MIT License &middot; &copy; {year}
         </span>
       </div>
       <a
         href="https://github.com/initializ/forge/actions"
         target="_blank"
         rel="noopener"
-        class="text-xs text-gray-500 hover:text-gray-400 transition-colors"
+        class="text-xs text-muted hover:text-secondary transition-colors"
       >
         CI Status
       </a>

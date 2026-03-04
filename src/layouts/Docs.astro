@@ -39,7 +39,7 @@ const current = currentIndex >= 0 ? flat[currentIndex] : null;
           <Breadcrumbs section={current.section} page={current.label} />
         )}
 
-        <article class="prose prose-invert max-w-none" data-pagefind-body>
+        <article class="prose max-w-none" data-pagefind-body>
           <slot />
         </article>
 
@@ -50,7 +50,7 @@ const current = currentIndex >= 0 ? flat[currentIndex] : null;
               href={editUrl}
               target="_blank"
               rel="noopener"
-              class="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-forge-orange transition-colors"
+              class="inline-flex items-center gap-1.5 text-sm text-muted hover:text-forge-orange transition-colors"
             >
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                 <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />

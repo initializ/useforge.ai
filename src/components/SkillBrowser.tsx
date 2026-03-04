@@ -17,10 +17,10 @@ interface Props {
 }
 
 const trustBadge: Record<string, { label: string; color: string }> = {
-  trusted: { label: 'Trusted', color: 'bg-green-900/50 text-green-400 border-green-700' },
-  under_review: { label: 'Under Review', color: 'bg-yellow-900/50 text-yellow-400 border-yellow-700' },
-  untrusted: { label: 'Untrusted', color: 'bg-red-900/50 text-red-400 border-red-700' },
-  failed: { label: 'Failed', color: 'bg-red-900/50 text-red-400 border-red-700' },
+  trusted: { label: 'Trusted', color: 'bg-green-100 text-green-700 border-green-300 dark:bg-green-900/50 dark:text-green-400 dark:border-green-700' },
+  under_review: { label: 'Under Review', color: 'bg-yellow-100 text-yellow-700 border-yellow-300 dark:bg-yellow-900/50 dark:text-yellow-400 dark:border-yellow-700' },
+  untrusted: { label: 'Untrusted', color: 'bg-red-100 text-red-700 border-red-300 dark:bg-red-900/50 dark:text-red-400 dark:border-red-700' },
+  failed: { label: 'Failed', color: 'bg-red-100 text-red-700 border-red-300 dark:bg-red-900/50 dark:text-red-400 dark:border-red-700' },
 };
 
 type FilterValue = 'all' | 'trusted' | 'under_review';
@@ -51,7 +51,7 @@ export default function SkillBrowser(props: Props) {
       <div className="flex flex-col sm:flex-row gap-4 mb-8">
         <div className="relative flex-1">
           <svg
-            className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500"
+            className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -65,7 +65,7 @@ export default function SkillBrowser(props: Props) {
             placeholder="Search skills..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 bg-[#111827] border border-[#1F2937] rounded-[10px] text-gray-200 placeholder-gray-500 focus:outline-none focus:border-[#F97316] transition-colors text-sm"
+            className="w-full pl-10 pr-4 py-2.5 bg-dark-surface border border-dark-border rounded-forge-md text-heading placeholder-gray-500 focus:outline-none focus:border-forge-orange transition-colors text-sm"
           />
         </div>
         <div className="flex gap-2">
@@ -73,10 +73,10 @@ export default function SkillBrowser(props: Props) {
             <button
               key={f.value}
               onClick={() => setFilter(f.value)}
-              className={`px-4 py-2 rounded-[10px] text-sm font-medium transition-colors border ${
+              className={`px-4 py-2 rounded-forge-md text-sm font-medium transition-colors border ${
                 filter === f.value
-                  ? 'bg-[#F97316]/10 text-[#F97316] border-[#F97316]/30'
-                  : 'bg-[#111827] text-gray-400 border-[#1F2937] hover:text-white hover:border-gray-500'
+                  ? 'bg-forge-orange/10 text-forge-orange border-forge-orange/30'
+                  : 'bg-dark-surface text-secondary border-dark-border hover:text-heading hover:border-gray-500'
               }`}
             >
               {f.label}
@@ -94,10 +94,10 @@ export default function SkillBrowser(props: Props) {
               <a
                 key={skill.slug}
                 href={`/hub/skills/${skill.slug}`}
-                className="group block p-5 bg-[#111827] border border-[#1F2937] rounded-[16px] hover:border-gray-500 transition-colors"
+                className="group block p-5 bg-dark-surface border border-dark-border rounded-forge-lg hover:border-gray-500 transition-colors"
               >
                 <div className="flex items-start justify-between gap-3 mb-3">
-                  <h3 className="text-white font-bold text-lg group-hover:text-[#F97316] transition-colors">
+                  <h3 className="text-heading font-bold text-lg group-hover:text-forge-orange transition-colors">
                     {skill.name}
                   </h3>
                   <span
@@ -106,11 +106,11 @@ export default function SkillBrowser(props: Props) {
                     {badge.label}
                   </span>
                 </div>
-                <p className="text-gray-400 text-sm mb-4 line-clamp-2">
+                <p className="text-secondary text-sm mb-4 line-clamp-2">
                   {skill.description}
                 </p>
-                <div className="flex items-center justify-between text-xs text-gray-500">
-                  <code className="font-mono bg-[#0B0F1A] px-2 py-1 rounded">
+                <div className="flex items-center justify-between text-xs text-muted">
+                  <code className="font-mono bg-dark-bg px-2 py-1 rounded">
                     forge skills add {skill.slug}
                   </code>
                   {skill.egressDomains.length > 0 && (
@@ -122,9 +122,9 @@ export default function SkillBrowser(props: Props) {
           })}
         </div>
       ) : (
-        <div className="text-center py-16 bg-[#111827] border border-[#1F2937] rounded-[16px]">
-          <p className="text-gray-400 text-lg mb-2">No skills match your search</p>
-          <p className="text-gray-500 text-sm">
+        <div className="text-center py-16 bg-dark-surface border border-dark-border rounded-forge-lg">
+          <p className="text-secondary text-lg mb-2">No skills match your search</p>
+          <p className="text-muted text-sm">
             Try adjusting your search term or filter.
           </p>
         </div>

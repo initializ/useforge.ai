@@ -1,3 +1,45 @@
 ---
-return Astro.redirect('/docs/getting-started/installation');
+import Base from '@/layouts/Base.astro';
+import DocsSidebar from '@/components/docs/DocsSidebar.astro';
+import { docsSidebar } from '@/data/navigation';
 ---
+
+<Base
+  title="Documentation — Forge"
+  description="Explore Forge documentation — getting started, core concepts, security, skills, deployment, and reference guides."
+  layout="docs"
+>
+  <div class="flex min-h-[calc(100vh-4rem)]">
+    <DocsSidebar currentPath="/docs" />
+
+    <div class="flex-1 lg:ml-[280px]">
+      <div class="mx-auto max-w-5xl px-6 py-10 sm:px-8">
+        <h1 class="text-3xl sm:text-4xl font-bold text-heading mb-2">Documentation</h1>
+        <p class="text-secondary mb-10 max-w-2xl">
+          Everything you need to build, deploy, and operate secure AI agents with Forge.
+        </p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {docsSidebar.map((section) => (
+            <a
+              href={section.href}
+              class="group bg-dark-surface border border-dark-border rounded-forge-xl p-5 hover:border-forge-orange/40 transition-colors"
+            >
+              <h2 class="text-lg font-semibold text-heading mb-1 group-hover:text-forge-orange transition-colors">
+                {section.label}
+              </h2>
+              {section.description && (
+                <p class="text-sm text-secondary mb-3">{section.description}</p>
+              )}
+              {section.items && (
+                <span class="text-xs text-muted">
+                  {section.items.length} {section.items.length === 1 ? 'page' : 'pages'}
+                </span>
+              )}
+            </a>
+          ))}
+        </div>
+      </div>
+    </div>
+  </div>
+</Base>

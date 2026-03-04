@@ -2,15 +2,39 @@
 @import "./prose.css";
 @plugin "@tailwindcss/typography";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Theme-switching custom properties */
+:root {
+  --theme-bg: #FAFAF9;
+  --theme-surface: #FFFFFF;
+  --theme-border: #E5E7EB;
+  --theme-hover: #F3F4F6;
+  --theme-text-heading: #111827;
+  --theme-text-body: #374151;
+  --theme-text-secondary: #6B7280;
+  --theme-text-muted: #9CA3AF;
+}
+.dark {
+  --theme-bg: #0B0F1A;
+  --theme-surface: #111827;
+  --theme-border: #1F2937;
+  --theme-hover: #1a2332;
+  --theme-text-heading: #f9fafb;
+  --theme-text-body: #d1d5db;
+  --theme-text-secondary: #9ca3af;
+  --theme-text-muted: #6b7280;
+}
+
 @theme {
   --color-forge-orange: #F97316;
   --color-forge-amber: #FF8C42;
   --color-forge-deep: #D94F00;
 
-  --color-dark-bg: #0B0F1A;
-  --color-dark-surface: #111827;
-  --color-dark-border: #1F2937;
-  --color-dark-hover: #1a2332;
+  --color-dark-bg: var(--theme-bg);
+  --color-dark-surface: var(--theme-surface);
+  --color-dark-border: var(--theme-border);
+  --color-dark-hover: var(--theme-hover);
 
   --color-steel-700: #2D3748;
   --color-steel-800: #1A202C;
@@ -29,6 +53,12 @@
 
   --ease-forge: cubic-bezier(0.22, 1, 0.36, 1);
 }
+
+/* Semantic text utilities */
+@utility text-heading { color: var(--theme-text-heading); }
+@utility text-body { color: var(--theme-text-body); }
+@utility text-secondary { color: var(--theme-text-secondary); }
+@utility text-muted { color: var(--theme-text-muted); }
 
 @font-face {
   font-family: 'DM Sans';
@@ -74,28 +104,51 @@ body::before {
   background-repeat: repeat;
   background-size: 256px 256px;
 }
+:root:not(.dark) body::before {
+  opacity: 0;
+}
 
 /* Selection color */
 ::selection {
   background-color: rgba(249, 115, 22, 0.3);
-  color: #fff;
+  color: var(--theme-text-heading);
 }
 
-/* Dark scrollbar */
+/* Scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #0B0F1A;
+  background: var(--theme-bg);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #1F2937;
+  background: var(--theme-border);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #2D3748;
+  background: var(--theme-hover);
+}
+
+/* Shiki dual-theme: toggle light/dark code blocks based on .dark class */
+html:not(.dark) .shiki,
+html:not(.dark) .astro-code {
+  background-color: var(--theme-surface) !important;
+  color: var(--shiki-light) !important;
+}
+html:not(.dark) .shiki span,
+html:not(.dark) .astro-code span {
+  color: var(--shiki-light) !important;
+}
+html.dark .shiki,
+html.dark .astro-code {
+  background-color: var(--theme-surface) !important;
+  color: var(--shiki-dark) !important;
+}
+html.dark .shiki span,
+html.dark .astro-code span {
+  color: var(--shiki-dark) !important;
 }
