@@ -59,10 +59,10 @@ const layers = [
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
     <!-- Section header -->
     <div class="text-center mb-16">
-      <h2 class="text-3xl sm:text-4xl font-bold text-gray-200 mb-4">
+      <h2 class="text-3xl sm:text-4xl font-bold text-heading mb-4">
         How Forge's Secure Agent Runtime Works
       </h2>
-      <p class="text-gray-400 text-lg max-w-2xl mx-auto">
+      <p class="text-secondary text-lg max-w-2xl mx-auto">
         Four layers that make AI agents enterprise-ready — from skill definition to production governance.
       </p>
     </div>
@@ -77,18 +77,18 @@ const layers = [
               <span class="font-mono text-lg font-bold text-forge-orange">{layer.number}</span>
             </div>
             <div>
-              <h3 class="text-xl font-bold text-gray-200">{layer.title}</h3>
-              <p class="text-sm text-gray-500 font-mono">{layer.subtitle}</p>
+              <h3 class="text-xl font-bold text-heading">{layer.title}</h3>
+              <p class="text-sm text-muted font-mono">{layer.subtitle}</p>
             </div>
           </div>
 
           <!-- Summary -->
-          <p class="text-gray-400 text-sm mb-4">{layer.summary}</p>
+          <p class="text-secondary text-sm mb-4">{layer.summary}</p>
 
           <!-- Points -->
           <ul class="space-y-2 mb-5">
             {layer.points.map(point => (
-              <li class="flex items-start gap-2.5 text-sm text-gray-300">
+              <li class="flex items-start gap-2.5 text-sm text-body">
                 <span class="text-forge-orange mt-1 flex-shrink-0">
                   <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 16 16"><path d="M8 4l4 4-4 4V4z"/></svg>
                 </span>
@@ -98,7 +98,7 @@ const layers = [
           </ul>
 
           <!-- Conclusion -->
-          <p class="text-sm text-gray-500 italic border-t border-dark-border pt-4">
+          <p class="text-sm text-muted italic border-t border-dark-border pt-4">
             {layer.conclusion}
           </p>
         </div>

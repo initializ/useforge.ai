@@ -8,9 +8,9 @@ const { section, page } = Astro.props;
 ---
 
 <nav class="flex items-center gap-1.5 text-sm mb-6" aria-label="Breadcrumb">
-  <a href="/docs" class="text-gray-500 hover:text-white transition-colors">Docs</a>
-  <span class="text-gray-600">&gt;</span>
-  <span class="text-gray-500">{section}</span>
-  <span class="text-gray-600">&gt;</span>
-  <span class="text-gray-300">{page}</span>
+  <a href="/docs" class="text-muted hover:text-heading transition-colors">Docs</a>
+  <span class="text-muted">&gt;</span>
+  <span class="text-muted">{section}</span>
+  <span class="text-muted">&gt;</span>
+  <span class="text-body">{page}</span>
 </nav>

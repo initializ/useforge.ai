@@ -12,10 +12,10 @@ const rows = [
 <section class="py-20 relative">
   <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
     <div class="text-center mb-12">
-      <h2 class="text-3xl sm:text-4xl font-bold text-gray-200 mb-4">
+      <h2 class="text-3xl sm:text-4xl font-bold text-heading mb-4">
         Forge vs Typical Agent Frameworks
       </h2>
-      <p class="text-gray-400 text-lg">
+      <p class="text-secondary text-lg">
         Forge focuses on infrastructure. Not just capability.
       </p>
     </div>
@@ -24,15 +24,15 @@ const rows = [
       <table class="w-full text-sm">
         <thead>
           <tr class="border-b border-dark-border">
-            <th class="text-left px-6 py-4 text-gray-400 font-mono text-xs uppercase tracking-wider">Feature</th>
+            <th class="text-left px-6 py-4 text-secondary font-mono text-xs uppercase tracking-wider">Feature</th>
             <th class="text-center px-6 py-4 text-forge-orange font-mono text-xs uppercase tracking-wider">Forge</th>
-            <th class="text-center px-6 py-4 text-gray-500 font-mono text-xs uppercase tracking-wider">Typical</th>
+            <th class="text-center px-6 py-4 text-muted font-mono text-xs uppercase tracking-wider">Typical</th>
           </tr>
         </thead>
         <tbody>
           {rows.map((row, i) => (
             <tr class:list={[i < rows.length - 1 ? 'border-b border-dark-border/50' : '']}>
-              <td class="px-6 py-3.5 text-gray-300">{row.feature}</td>
+              <td class="px-6 py-3.5 text-body">{row.feature}</td>
               <td class="px-6 py-3.5 text-center">
                 {row.forge === true ? (
                   <span class="text-green-400">&#10003;</span>
@@ -46,7 +46,7 @@ const rows = [
                 ) : row.typical === false ? (
                   <span class="text-red-400/70">&#10007;</span>
                 ) : (
-                  <span class="text-gray-500 text-xs">{row.typical}</span>
+                  <span class="text-muted text-xs">{row.typical}</span>
                 )}
               </td>
             </tr>

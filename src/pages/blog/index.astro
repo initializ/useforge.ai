@@ -41,7 +41,7 @@ const jsonLd = {
           Forge Blog
         </span>
       </h1>
-      <p class="mt-4 text-lg sm:text-xl text-gray-400 max-w-2xl mx-auto">
+      <p class="mt-4 text-lg sm:text-xl text-secondary max-w-2xl mx-auto">
         Tutorials, deep dives, and updates from the Forge team.
       </p>
     </div>
@@ -61,7 +61,7 @@ const jsonLd = {
           {allTags.map((tag) => (
             <button
               data-tag={tag}
-              class="tag-btn px-3 py-1 text-sm font-medium rounded-full border border-dark-border text-gray-400 hover:border-gray-500 hover:text-white transition-colors"
+              class="tag-btn px-3 py-1 text-sm font-medium rounded-full border border-dark-border text-secondary hover:border-gray-500 hover:text-heading transition-colors"
             >
               {tag}
             </button>
@@ -78,7 +78,7 @@ const jsonLd = {
               class="blog-card group bg-dark-surface border border-dark-border rounded-forge-lg p-6 hover:border-gray-500 transition-colors"
               data-tags={post.data.tags.join(',')}
             >
-              <div class="flex items-center gap-2 text-xs text-gray-500 mb-3">
+              <div class="flex items-center gap-2 text-xs text-muted mb-3">
                 <time datetime={post.data.date.toISOString()}>
                   {post.data.date.toLocaleDateString('en-US', {
                     year: 'numeric',
@@ -89,15 +89,15 @@ const jsonLd = {
                 <span>&middot;</span>
                 <span>{post.data.author}</span>
               </div>
-              <h2 class="text-lg font-bold text-white group-hover:text-forge-orange transition-colors mb-2">
+              <h2 class="text-lg font-bold text-heading group-hover:text-forge-orange transition-colors mb-2">
                 {post.data.title}
               </h2>
-              <p class="text-sm text-gray-400 mb-4 line-clamp-3">
+              <p class="text-sm text-secondary mb-4 line-clamp-3">
                 {post.data.description}
               </p>
               <div class="flex flex-wrap gap-1.5">
                 {post.data.tags.map((tag) => (
-                  <span class="px-2 py-0.5 text-xs font-medium rounded-full border border-dark-border text-gray-400">
+                  <span class="px-2 py-0.5 text-xs font-medium rounded-full border border-dark-border text-secondary">
                     {tag}
                   </span>
                 ))}
@@ -108,8 +108,8 @@ const jsonLd = {
       ) : (
         <div class="text-center py-20">
           <div class="bg-dark-surface border border-dark-border rounded-forge-lg p-12 max-w-md mx-auto">
-            <h2 class="text-xl font-bold text-white mb-2">No posts yet</h2>
-            <p class="text-gray-400 text-sm">
+            <h2 class="text-xl font-bold text-heading mb-2">No posts yet</h2>
+            <p class="text-secondary text-sm">
               Blog posts are coming soon. Check back later for tutorials, deep dives, and updates.
             </p>
           </div>
@@ -130,9 +130,9 @@ const jsonLd = {
       // Update button styles
       tagButtons.forEach((b) => {
         b.classList.remove('border-forge-orange', 'text-forge-orange');
-        b.classList.add('border-dark-border', 'text-gray-400');
+        b.classList.add('border-dark-border', 'text-secondary');
       });
-      btn.classList.remove('border-dark-border', 'text-gray-400');
+      btn.classList.remove('border-dark-border', 'text-secondary');
       btn.classList.add('border-forge-orange', 'text-forge-orange');
 
       // Filter cards

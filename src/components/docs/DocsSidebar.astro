@@ -12,7 +12,7 @@ const { currentPath } = Astro.props;
 <button
   type="button"
   id="sidebar-toggle"
-  class="fixed top-20 left-4 z-50 p-2 bg-dark-surface border border-dark-border rounded-forge-md text-gray-400 hover:text-white transition-colors lg:hidden"
+  class="fixed top-20 left-4 z-50 p-2 bg-dark-surface border border-dark-border rounded-forge-md text-secondary hover:text-heading transition-colors lg:hidden"
   aria-label="Toggle sidebar"
 >
   <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
@@ -35,9 +35,9 @@ const { currentPath } = Astro.props;
 
       return section.items ? (
         <details open={isOpen} class="group">
-          <summary class="flex items-center justify-between px-3 py-2 text-sm font-semibold text-gray-300 hover:text-white cursor-pointer select-none list-none">
+          <summary class="flex items-center justify-between px-3 py-2 text-sm font-semibold text-body hover:text-heading cursor-pointer select-none list-none">
             <span>{section.label}</span>
-            <svg class="w-4 h-4 text-gray-500 transition-transform group-open:rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+            <svg class="w-4 h-4 text-muted transition-transform group-open:rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
               <path d="m9 18 6-6-6-6" />
             </svg>
           </summary>
@@ -50,7 +50,7 @@ const { currentPath } = Astro.props;
                     'block px-3 py-1.5 text-sm rounded-forge-sm transition-colors',
                     currentPath === item.href
                       ? 'border-l-2 border-forge-orange text-forge-orange bg-forge-orange/5 font-medium'
-                      : 'text-gray-400 hover:text-white hover:bg-dark-hover border-l-2 border-transparent',
+                      : 'text-secondary hover:text-heading hover:bg-dark-hover border-l-2 border-transparent',
                   ]}
                 >
                   {item.label}
@@ -66,7 +66,7 @@ const { currentPath } = Astro.props;
             'block px-3 py-2 text-sm font-semibold rounded-forge-sm transition-colors',
             currentPath === section.href
               ? 'border-l-2 border-forge-orange text-forge-orange bg-forge-orange/5'
-              : 'text-gray-300 hover:text-white hover:bg-dark-hover border-l-2 border-transparent',
+              : 'text-body hover:text-heading hover:bg-dark-hover border-l-2 border-transparent',
           ]}
         >
           {section.label}

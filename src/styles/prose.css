@@ -1,21 +1,21 @@
-/* Typography / prose overrides for dark theme docs */
+/* Typography / prose overrides — theme-aware */
 .prose {
-  --tw-prose-body: #d1d5db;
-  --tw-prose-headings: #f9fafb;
-  --tw-prose-lead: #9ca3af;
+  --tw-prose-body: var(--theme-text-body);
+  --tw-prose-headings: var(--theme-text-heading);
+  --tw-prose-lead: var(--theme-text-secondary);
   --tw-prose-links: #F97316;
-  --tw-prose-bold: #f9fafb;
-  --tw-prose-counters: #9ca3af;
+  --tw-prose-bold: var(--theme-text-heading);
+  --tw-prose-counters: var(--theme-text-secondary);
   --tw-prose-bullets: #4b5563;
-  --tw-prose-hr: #1F2937;
-  --tw-prose-quotes: #f9fafb;
+  --tw-prose-hr: var(--theme-border);
+  --tw-prose-quotes: var(--theme-text-heading);
   --tw-prose-quote-borders: #F97316;
-  --tw-prose-captions: #9ca3af;
-  --tw-prose-code: #f9fafb;
-  --tw-prose-pre-code: #d1d5db;
-  --tw-prose-pre-bg: #111827;
-  --tw-prose-th-borders: #1F2937;
-  --tw-prose-td-borders: #1F2937;
+  --tw-prose-captions: var(--theme-text-secondary);
+  --tw-prose-code: var(--theme-text-heading);
+  --tw-prose-pre-code: var(--theme-text-body);
+  --tw-prose-pre-bg: var(--theme-surface);
+  --tw-prose-th-borders: var(--theme-border);
+  --tw-prose-td-borders: var(--theme-border);
 }
 
 .prose a {
@@ -29,13 +29,13 @@
 }
 
 .prose code:not(pre code) {
-  background-color: #1F2937;
+  background-color: var(--theme-border);
   padding: 0.125rem 0.375rem;
   border-radius: 4px;
   font-size: 0.875em;
 }
 
 .prose pre {
-  border: 1px solid #1F2937;
+  border: 1px solid var(--theme-border);
   border-radius: 10px;
 }

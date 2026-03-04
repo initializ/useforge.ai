@@ -8,7 +8,7 @@
     <div class="bg-dark-surface border border-dark-border rounded-forge-lg shadow-2xl overflow-hidden">
       <!-- Search input -->
       <div class="flex items-center gap-3 px-4 border-b border-dark-border">
-        <svg class="w-4 h-4 text-gray-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+        <svg class="w-4 h-4 text-muted shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
           <circle cx="11" cy="11" r="8" />
           <path d="m21 21-4.35-4.35" />
         </svg>
@@ -16,17 +16,17 @@
           id="search-input"
           type="text"
           placeholder="Search Forge..."
-          class="flex-1 py-3 bg-transparent text-white placeholder-gray-500 text-sm outline-none"
+          class="flex-1 py-3 bg-transparent text-heading placeholder-gray-500 text-sm outline-none"
           autocomplete="off"
         />
-        <kbd class="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 text-xs text-gray-500 bg-dark-bg border border-dark-border rounded">
+        <kbd class="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 text-xs text-muted bg-dark-bg border border-dark-border rounded">
           Esc
         </kbd>
       </div>
 
       <!-- Results -->
       <div id="search-results" class="max-h-[60vh] overflow-y-auto p-2">
-        <p id="search-empty" class="px-3 py-8 text-sm text-gray-500 text-center">
+        <p id="search-empty" class="px-3 py-8 text-sm text-muted text-center">
           Type to search...
         </p>
       </div>
@@ -130,8 +130,8 @@
           results.innerHTML = items
             .map(function(item) {
               return '<a href="' + item.url + '" class="block px-3 py-2.5 rounded-forge-sm hover:bg-dark-hover transition-colors group">' +
-                '<p class="text-sm text-white group-hover:text-forge-orange transition-colors">' + (item.meta && item.meta.title ? item.meta.title : item.url) + '</p>' +
-                '<p class="text-xs text-gray-500 mt-0.5 line-clamp-2">' + item.excerpt + '</p>' +
+                '<p class="text-sm text-heading group-hover:text-forge-orange transition-colors">' + (item.meta && item.meta.title ? item.meta.title : item.url) + '</p>' +
+                '<p class="text-xs text-muted mt-0.5 line-clamp-2">' + item.excerpt + '</p>' +
                 '</a>';
             })
             .join('');

@@ -58,7 +58,7 @@ const layers = [
     >
       <div class="flex items-center gap-4 px-5 py-4 sm:px-6 sm:py-5 cursor-default">
         {/* Icon */}
-        <div class="shrink-0 text-gray-500 group-hover:text-forge-orange transition-colors duration-300">
+        <div class="shrink-0 text-muted group-hover:text-forge-orange transition-colors duration-300">
           {layer.icon === 'shield' && (
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
               <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
@@ -105,15 +105,15 @@ const layers = [
         {/* Content */}
         <div class="flex-1 min-w-0">
           <div class="flex items-center gap-3">
-            <span class="text-white font-semibold text-sm sm:text-base">{layer.name}</span>
-            <span class="hidden sm:inline text-gray-500 text-xs">—</span>
-            <span class="hidden sm:inline text-gray-400 text-sm truncate">{layer.sublabel}</span>
+            <span class="text-heading font-semibold text-sm sm:text-base">{layer.name}</span>
+            <span class="hidden sm:inline text-muted text-xs">—</span>
+            <span class="hidden sm:inline text-secondary text-sm truncate">{layer.sublabel}</span>
           </div>
-          <p class="sm:hidden text-gray-400 text-xs mt-0.5">{layer.sublabel}</p>
+          <p class="sm:hidden text-secondary text-xs mt-0.5">{layer.sublabel}</p>
         </div>
 
         {/* Expand hint */}
-        <div class="shrink-0 text-gray-600 group-hover:text-gray-400 transition-colors">
+        <div class="shrink-0 text-muted group-hover:text-secondary transition-colors">
           <svg class="w-4 h-4 transition-transform duration-300 group-hover:rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
             <polyline points="9 18 15 12 9 6" />
           </svg>
@@ -123,7 +123,7 @@ const layers = [
       {/* Expanded detail */}
       <div class="max-h-0 group-hover:max-h-40 overflow-hidden transition-all duration-300 ease-forge">
         <div class="px-5 pb-4 sm:px-6 sm:pb-5 pl-14 sm:pl-16">
-          <p class="text-gray-400 text-sm leading-relaxed">{layer.detail}</p>
+          <p class="text-secondary text-sm leading-relaxed">{layer.detail}</p>
         </div>
       </div>
     </div>
