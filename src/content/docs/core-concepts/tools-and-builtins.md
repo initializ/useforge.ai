@@ -13,7 +13,7 @@ This page covers every tool type: the 8 built-in tools, 3 adapter tools, skill-d
 
 ## Builtin Tools
 
-These 8 tools are always available to every Forge agent. They cover the most common operations an LLM agent needs.
+These 9 tools are always available to every Forge agent. They cover the most common operations an LLM agent needs.
 
 | Tool | Purpose | Egress Enforcement |
 |---|---|---|
@@ -25,8 +25,18 @@ These 8 tools are always available to every Forge agent. They cover the most com
 | `math_calculate` | Arithmetic calculations | No |
 | `web_search` | Quick web lookups (Tavily or Perplexity provider) | Yes — EgressClientFromContext |
 | `read_skill` | Load full SKILL.md instructions on demand | No (filesystem only) |
+| `file_create` | Generate downloadable files (written to disk and uploaded to channels) | No (filesystem only) |
 
 Tools that make no network calls have no egress enforcement. Tools that do (`http_request`, `web_search`) are wrapped by the egress enforcer so they can only reach allowed domains.
+
+### file_create
+
+The `file_create` tool generates downloadable files that are both written to disk and uploaded to the user's channel (Slack/Telegram). Files are stored in `.forge/files/`.
+
+- Accepts a filename with extension and full content as text
+- Returns filename, content, MIME type, and absolute disk path
+- Supports common extensions: `.md`, `.json`, `.yaml`, `.py`, `.ts`, `.csv`, `.html`, etc.
+- **Security**: filenames containing path separators or traversal patterns (`..`) are rejected
 
 ## Adapter Tools
 
@@ -68,6 +78,10 @@ These tools are only registered when specific conditions are met:
 | `memory_search` | Long-term memory enabled | Hybrid search over agent memory |
 | `memory_get` | Long-term memory enabled | Read specific memory files |
 | `cli_execute` | Configured or auto-derived from skills | Run allowlisted binaries |
+| `schedule_set` | Scheduling configured | Create or update a recurring cron schedule |
+| `schedule_list` | Scheduling configured | List all active and inactive schedules |
+| `schedule_delete` | Scheduling configured | Remove an LLM-created schedule |
+| `schedule_history` | Scheduling configured | View execution history for scheduled tasks |
 
 Conditional tools are not part of the `builtins.All()` set. They are added to the agent's tool set during compilation based on your configuration and the skills you have installed.
 
@@ -75,12 +89,15 @@ Conditional tools are not part of the `builtins.All()` set. They are added to th
 
 `cli_execute` is the bridge between binary-backed skills and execution. When the LLM reads a binary-backed skill's instructions (via `read_skill`) and decides to act, it invokes `cli_execute` to run the required binary.
 
-Key properties:
+The tool implements seven security layers:
 
-- **No shell** — uses `exec.Command` directly, not `sh -c`. This prevents shell injection.
-- **Binary allowlist** — only binaries listed in `allowed_binaries` can be executed. Any attempt to run an unlisted binary is rejected.
-- **Environment isolation** — only variables listed in `env_passthrough` are available to the subprocess.
-- **Timeout enforcement** — each invocation has a configurable timeout.
+1. **Binary allowlist** — only binaries listed in `allowed_binaries` can be executed
+2. **Path resolution** — binaries are resolved to absolute paths via `exec.LookPath` at startup
+3. **Argument validation** — rejects `$(`, backticks, or newlines to prevent injection
+4. **Timeout enforcement** — configurable per invocation (default: 120s)
+5. **No shell** — uses `exec.CommandContext` directly, not `sh -c` — no shell expansion
+6. **Environment isolation** — only variables listed in `env_passthrough` are available to the subprocess
+7. **Output limits** — prevents memory exhaustion (default: 1MB)
 
 Both `allowed_binaries` and `env_passthrough` are auto-derived from skill metadata. When a skill declares `metadata.forge.requires.bins: [curl]`, Forge automatically adds `curl` to the binary allowlist. When a skill declares required or optional environment variables, those are added to `env_passthrough`. You can also configure these manually in `forge.yaml`.
 

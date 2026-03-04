@@ -92,16 +92,41 @@ All audit event output is protected by a `sync.Mutex`. Multiple goroutines can e
 
 Forge includes built-in guardrails that evaluate content before it reaches the LLM or the user:
 
-| Guardrail | What It Checks | Severity |
+| Guardrail | What It Checks | Detection Method |
 |---|---|---|
-| `content_filter` | Blocked word detection (configurable) | Blocking or warning |
-| `no_pii` | Email, phone, SSN via regex | Blocking or warning |
-| `jailbreak_protection` | Common jailbreak phrases | Blocking or warning |
+| `content_filter` | Blocked words and phrases (configurable word list) | Case-insensitive substring matching |
+| `no_pii` | Email addresses, phone numbers, SSNs | Regex pattern matching |
+| `jailbreak_protection` | Common jailbreak phrases and prompt injection attempts | Pattern matching against known jailbreak templates |
 
-Guardrails are configured via `PolicyScaffold` and run in one of two modes:
+### Modes
 
-- **Enforce** — blocks the request and returns an error
-- **Warn** — logs a warning audit event but allows the request to proceed
+Each guardrail runs in one of two modes:
+
+| Mode | Behavior | Use Case |
+|---|---|---|
+| **Enforce** | Blocks the request and returns an error to the caller | Production environments, compliance-critical agents |
+| **Warn** | Logs a warning audit event (`guardrail_check`) but allows the request to proceed | Development, monitoring, gradual rollout |
+
+### Configuration
+
+Guardrails are configured via `PolicyScaffold` and enabled with the `--enforce-guardrails` flag:
+
+```bash
+# Enforce mode — violations are errors
+forge run --enforce-guardrails
+
+# Warn mode (default) — violations are logged
+forge run
+```
+
+### Audit Events
+
+Guardrail evaluations emit `guardrail_check` audit events:
+
+```json
+{"event":"guardrail_check","correlation_id":"...","fields":{"guardrail":"no_pii","mode":"enforce","result":"blocked","detail":"email address detected"}}
+{"event":"guardrail_check","correlation_id":"...","fields":{"guardrail":"content_filter","mode":"warn","result":"flagged","detail":"blocked word: <word>"}}
+```
 
 ## Note on File-Based Logging
 

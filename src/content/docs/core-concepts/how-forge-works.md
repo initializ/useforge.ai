@@ -114,6 +114,28 @@ Forge is organized into focused modules with clear dependency boundaries:
 
 The dependency direction flows inward: `forge-cli` depends on `forge-core`, which depends on `forge-skills/contract`. No circular dependencies. The core library has no knowledge of CLI concerns, and channels are pluggable without modifying core.
 
+### Key Go Interfaces
+
+| Interface | Purpose |
+|---|---|
+| `llm.Client` | Provider-agnostic LLM client — `Chat()`, `ChatStream()`, `ModelID()` |
+| `runtime.AgentExecutor` | Contract for running agents — `LLMExecutor` is the primary implementation |
+| `tools.Tool` | Tool definition — name, JSON Schema, and execution method |
+| `runtime.ToolExecutor` | Tool execution interface for dependency injection |
+| `channels.ChannelPlugin` | Messaging platform adapter — init, start, stop, event normalization |
+
+### Data Flow
+
+```
+Compilation:
+  ForgeConfig → Validation → Skill Compilation → AgentSpec
+  → Security Policy → Build Artifacts
+
+Runtime:
+  AgentSpec + Tools → LLM Client → Agent Loop
+  (prompt → LLM → tool calls → execution → results → response)
+```
+
 ## Build Outputs
 
 Running `forge build` produces these artifacts in `.forge-output/`:

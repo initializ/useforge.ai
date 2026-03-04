@@ -1,13 +1,13 @@
 ---
 title: Embedded Skills Reference
-description: "The 6 built-in skills that ship with Forge — always available, always trusted, no installation required."
+description: "The 12 built-in skills that ship with Forge — always available, always trusted, no installation required."
 order: 1
 editUrl: https://github.com/initializ/useforge.ai/edit/main/src/content/docs/skills/embedded-skills.md
 ---
 
 # Embedded Skills Reference
 
-Forge ships with 6 embedded skills compiled into the binary via `go:embed`. These skills are always trusted, available offline, and shown in the `forge init` wizard. You never need to install or configure them separately — they are part of every Forge installation.
+Forge ships with 12 embedded skills compiled into the binary via `go:embed`. These skills are always trusted, available offline, and shown in the `forge init` wizard. You never need to install or configure them separately — they are part of every Forge installation.
 
 ## Embedded Skills Registry
 
@@ -19,6 +19,12 @@ Forge ships with 6 embedded skills compiled into the binary via `go:embed`. Thes
 | `tavily-search` | Tavily Web Search | — | `curl`, `jq` | TAVILY_API_KEY | api.tavily.com | Script -> SkillTool |
 | `tavily-research` | Tavily Deep Research | — | `curl`, `jq` | TAVILY_API_KEY | api.tavily.com | Script -> SkillTool (2 tools) |
 | `k8s-incident-triage` | K8s Incident Triage | sre | `kubectl` | none | $K8S_API_DOMAIN | Binary -> system prompt |
+| `k8s-pod-rightsizer` | K8s Pod Rightsizer | sre | `kubectl` | none | $K8S_API_DOMAIN | Binary -> system prompt |
+| `code-review` | Code Review | developer | `curl`, `jq`, `git` | one_of: ANTHROPIC_API_KEY, OPENAI_API_KEY | api.anthropic.com, api.openai.com | Script -> SkillTool |
+| `code-review-standards` | Code Review Standards | developer | `curl`, `jq`, `git` | one_of: ANTHROPIC_API_KEY, OPENAI_API_KEY | api.anthropic.com, api.openai.com | Script -> SkillTool |
+| `code-review-github` | GitHub Code Review | developer | `curl`, `jq`, `git`, `gh` | one_of: ANTHROPIC_API_KEY, OPENAI_API_KEY; GH_TOKEN | api.anthropic.com, api.openai.com, api.github.com | Script -> SkillTool |
+| `codegen-react` | React Code Generator | developer | `curl`, `jq` | one_of: ANTHROPIC_API_KEY, OPENAI_API_KEY | api.anthropic.com, api.openai.com | Script -> SkillTool |
+| `codegen-html` | HTML Code Generator | developer | `curl`, `jq` | one_of: ANTHROPIC_API_KEY, OPENAI_API_KEY | api.anthropic.com, api.openai.com | Script -> SkillTool |
 
 **Registration types:**
 
@@ -154,6 +160,53 @@ The skill includes two scripts in its `scripts/` directory:
 - `tavily-research-poll.sh` — the poll script
 
 Each script corresponds to a `## Tool:` section in the SKILL.md.
+
+## Deep Dive: code-review
+
+The `code-review` skill provides AI-powered code review that analyzes diffs for bugs, security issues, and improvements.
+
+### Variants
+
+| Skill | Description |
+|---|---|
+| `code-review` | Review local diffs and files |
+| `code-review-standards` | Review with configurable coding standards |
+| `code-review-github` | Review GitHub PRs directly via the `gh` CLI |
+
+### Features
+
+- **Read-only analysis** — never modifies code
+- **Structured JSON output** with severity levels (critical, warning, suggestion)
+- **Security scanning** — detects common vulnerabilities (injection, auth bypass, secrets in code)
+- **Supports local diffs and GitHub PRs**
+
+### code-review-github
+
+The GitHub variant adds PR integration:
+
+```bash
+forge skills add code-review-github
+```
+
+Requires `GH_TOKEN` for GitHub API access. Can review open PRs, comment on specific lines, and suggest changes.
+
+## Deep Dive: codegen-react and codegen-html
+
+The code generation skills produce production-ready UI components.
+
+### codegen-react
+
+Generates React components with TypeScript, hooks, and common patterns. Outputs clean, tested code following modern React conventions.
+
+### codegen-html
+
+Generates standalone HTML pages with inline CSS and JavaScript. Useful for prototyping, landing pages, and email templates.
+
+## Skill Builder UI
+
+The [Web Dashboard](/docs/reference/web-dashboard) includes a **Skill Builder** — an AI-powered conversational tool for creating custom skills. Access it via the **Build Skill** button on any agent card.
+
+The Skill Builder uses the agent's own LLM provider to generate valid SKILL.md files and optional helper scripts through a chat conversation. It validates the generated skill against the SKILL.md format before saving.
 
 ## What's Next
 
