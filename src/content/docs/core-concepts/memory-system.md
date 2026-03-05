@@ -23,7 +23,15 @@ The core `Memory` struct holds three things:
 
 ### Character Budget
 
-Each model has a character budget derived from its context window. For example, `gpt-4o` with a 128K token context window gets a character budget of approximately 435K characters (applying an 85% safety margin to account for tokenization variance).
+Each model has a character budget derived from its context window (applying an 85% safety margin for tokenization variance):
+
+| Model | Context Window | Character Budget |
+|---|---|---|
+| `gpt-4o` / `gpt-5` | 128K tokens | ~435K chars |
+| `claude-sonnet` / `claude-opus` | 200K tokens | ~680K chars |
+| `gemini-2.5` | 1M tokens | ~3.4M chars |
+| `llama3` | 8K tokens | ~27K chars |
+| `llama3.1` | 128K tokens | ~435K chars |
 
 The budget ensures your agent never exceeds the model's context window, even with long conversations and large tool outputs.
 
@@ -186,10 +194,14 @@ Before the compactor discards old messages, the `MemoryFlusher` extracts key obs
 
 This ensures important context is not lost when session memory compacts. The flusher applies different extraction limits based on content type:
 
-- **Research results** — up to 5000 characters extracted (research tends to contain dense, valuable information)
+- **Research results** — up to 5000 characters extracted and tagged with `[research][tool:tavily_research]` so research insights persist distinctly across sessions
 - **General conversation** — up to 2000 characters extracted
 
 After flushing, the new observations are chunked and indexed for search.
+
+### MEMORY.md Template
+
+When long-term memory is enabled, Forge creates a `.forge/memory/` directory with a `MEMORY.md` file for curated facts. This file serves as the agent's evergreen knowledge base — both the agent and you can edit it. Content in `MEMORY.md` is exempt from temporal decay in search, making it ideal for persistent facts, user preferences, and project context.
 
 ## Graceful Degradation
 

@@ -17,10 +17,13 @@ Here is a fully annotated `forge.yaml` showing all available sections:
 agent_id: my-agent
 version: 0.1.0
 framework: forge                   # forge (default) | crewai | langchain — "custom" accepted as alias
+registry: ghcr.io/org              # Container registry (optional)
+entrypoint: agent.py               # Required for crewai/langchain, omit for forge
 
 model:
   provider: openai
   name: gpt-4o
+  organization_id: "org-xxx"       # OpenAI Organization ID (enterprise, optional)
   fallbacks:
     - provider: anthropic
       name: claude-sonnet-4-20250514
@@ -72,6 +75,14 @@ egress:
   allowed_domains:
     - custom-api.example.com
     - "*.github.com"
+
+schedules:
+  - id: daily-report
+    cron: "@daily"
+    task: "Generate and send the daily status report"
+    skill: "tavily-research"       # optional: invoke a specific skill
+    channel: telegram              # optional: deliver results to a channel
+    channel_target: "-100123456"   # optional: destination chat/channel ID
 ```
 
 The sections below walk through each block.
@@ -83,6 +94,8 @@ The sections below walk through each block.
 | `agent_id` | string | Unique identifier for your agent. Auto-generated from the name during `forge init`. |
 | `version` | string | Semantic version of your agent configuration. |
 | `framework` | string | Runtime framework. Defaults to `forge`. Accepts `forge`, `crewai`, `langchain`, or `custom` (alias for `forge`). |
+| `registry` | string | Container registry prefix for `forge package` (e.g., `ghcr.io/org`). Optional. |
+| `entrypoint` | string | Entry point script. Required for `crewai`/`langchain` frameworks, omit for `forge`. |
 
 ## Model Providers
 
@@ -92,6 +105,7 @@ The `model` block configures your primary LLM provider and optional fallback cha
 model:
   provider: openai
   name: gpt-4o
+  organization_id: "org-xxxxxxxxxxxxxxxxxxxxxxxx"  # OpenAI enterprise (optional)
   fallbacks:
     - provider: anthropic
       name: claude-sonnet-4-20250514
@@ -301,6 +315,29 @@ forge secret list
 
 The encrypted file is safe to commit to version control. Without `FORGE_PASSPHRASE`, the contents are unreadable.
 
+## Schedules
+
+The `schedules` block configures recurring cron-based tasks. See [Scheduling](/docs/core-concepts/scheduling) for full details.
+
+```yaml
+schedules:
+  - id: daily-report
+    cron: "@daily"
+    task: "Generate and send the daily status report"
+    skill: "tavily-research"
+    channel: telegram
+    channel_target: "-100123456"
+```
+
+| Field | Type | Description |
+|---|---|---|
+| `id` | string | Unique schedule identifier |
+| `cron` | string | Cron expression (`@daily`, `*/15 * * * *`, `@every 5m`) |
+| `task` | string | Task description sent to the agent |
+| `skill` | string | Optional skill to invoke |
+| `channel` | string | Optional channel for result delivery |
+| `channel_target` | string | Destination chat/channel ID |
+
 ## Environment Variable Overrides
 
 Several configuration values can be overridden at runtime using environment variables. This is useful for CI/CD pipelines and container deployments where you do not want to modify `forge.yaml`.
@@ -308,10 +345,18 @@ Several configuration values can be overridden at runtime using environment vari
 | Variable | Overrides | Example |
 |---|---|---|
 | `FORGE_PASSPHRASE` | Secrets encryption passphrase | `export FORGE_PASSPHRASE="my-secret-phrase"` |
+| `FORGE_MODEL_PROVIDER` | `model.provider` | `FORGE_MODEL_PROVIDER=anthropic` |
 | `FORGE_MEMORY_PERSISTENCE` | `memory.persistence` | `FORGE_MEMORY_PERSISTENCE=false` |
 | `FORGE_MEMORY_LONG_TERM` | `memory.long_term` | `FORGE_MEMORY_LONG_TERM=true` |
 | `FORGE_EMBEDDING_PROVIDER` | `memory.embedding_provider` | `FORGE_EMBEDDING_PROVIDER=gemini` |
 | `FORGE_MODEL_FALLBACKS` | `model.fallbacks` | `FORGE_MODEL_FALLBACKS="anthropic:claude-sonnet-4-20250514,gemini:gemini-2.5-flash"` |
+| `OPENAI_ORG_ID` | `model.organization_id` | `OPENAI_ORG_ID=org-xxx` |
+| `TAVILY_API_KEY` | Tavily web search API key | `TAVILY_API_KEY=tvly-...` |
+| `PERPLEXITY_API_KEY` | Perplexity web search API key | `PERPLEXITY_API_KEY=pplx-...` |
+| `WEB_SEARCH_PROVIDER` | Force web search provider | `WEB_SEARCH_PROVIDER=perplexity` |
+| `OPENAI_BASE_URL` | Override OpenAI base URL | `OPENAI_BASE_URL=https://custom.api.com/v1` |
+| `ANTHROPIC_BASE_URL` | Override Anthropic base URL | `ANTHROPIC_BASE_URL=https://custom.api.com` |
+| `OLLAMA_BASE_URL` | Override Ollama base URL | `OLLAMA_BASE_URL=http://localhost:11434` |
 
 Environment variables take precedence over `forge.yaml` values. The original file is not modified.
 
