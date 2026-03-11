@@ -66,3 +66,19 @@ Each channel has different integration requirements, and Forge handles them in a
 Forge is licensed under the Apache 2.0 license and is fully open source.
 
 You are free to modify and distribute the source code under the terms of this license.
+
+## OpenClaw & Alternatives
+
+### Is Forge an OpenClaw alternative?
+
+Forge is often described as "OpenClaw for enterprise environments." While OpenClaw is an excellent personal AI agent framework — with 68,000+ GitHub stars and support for 22+ channels — Forge was built for the security, compliance, and deployment constraints that enterprise organizations require.
+
+For a detailed comparison, see [Forge vs OpenClaw](/compare/forge-vs-openclaw) or the [enterprise comparison page](/openclaw-enterprise).
+
+### What is the difference between OpenClaw and Forge?
+
+The core difference is architectural: OpenClaw uses an inbound gateway model that requires exposed ports or tunnels, while Forge uses outbound-only networking with no exposed ports. Forge focuses on the enterprise deployment constraints that OpenClaw was not designed to address — including egress enforcement, runtime sandboxing, cryptographic build signing, and structured audit logging.
+
+### Can I use OpenClaw skills in Forge?
+
+OpenClaw and Forge use different skill formats. OpenClaw uses framework-specific tool definitions, while Forge uses SKILL.md — a portable, language-agnostic format that declares inputs, outputs, egress domains, and required secrets in a single Markdown file. SKILL.md files can be reviewed, version-controlled, and evaluated by automated trust pipelines, making them better suited for enterprise deployment workflows.
