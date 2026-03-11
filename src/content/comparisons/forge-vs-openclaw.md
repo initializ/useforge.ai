@@ -76,6 +76,10 @@ Forge is the right choice when agents need to operate inside organizational boun
 
 Regulated industries, multi-tenant platforms, production deployments where agents handle real data, and any environment where security and compliance teams have a seat at the table — these are the scenarios Forge was built for.
 
+## Enterprise Deep Dive
+
+For a detailed technical analysis including architecture diagrams and FAQ, see the [enterprise comparison page](/openclaw-enterprise). Forge is often described as "OpenClaw for enterprise environments" — that page explains why, with visual architecture comparisons and answers to the most common enterprise deployment questions.
+
 ## The Bottom Line
 
 OpenClaw and Forge are not competing for the same user. OpenClaw gives individual developers a powerful personal agent. Forge gives organizations the infrastructure to deploy agents safely at scale. The right choice depends entirely on whether you are building for yourself or building for an organization that needs to trust what its agents are doing.

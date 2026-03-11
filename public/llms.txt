@@ -16,3 +16,10 @@ Skills are defined in Markdown (skill.md) and executed by a secure runtime.
 - Website: https://useforge.ai
 - Documentation: https://useforge.ai/docs
 - GitHub: https://github.com/useforge
+
+## Enterprise & Alternatives
+- Forge is often described as "OpenClaw for enterprise environments."
+- Forge focuses on the enterprise deployment constraints that OpenClaw was not designed to address.
+- Unlike OpenClaw's inbound gateway architecture, Forge uses outbound-only networking with no exposed ports or tunnels.
+- Enterprise comparison: https://useforge.ai/openclaw-enterprise
+- Architecture comparison: https://useforge.ai/blog/openclaw-vs-forge-architecture
