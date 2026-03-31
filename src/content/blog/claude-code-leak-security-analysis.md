@@ -4,7 +4,12 @@ description: "Anthropic's Claude Code CLI source was exposed via a source map in
 author: "Forge Team"
 date: 2026-03-31
 tags: ["security", "go", "typescript", "npm", "forge", "agent-skills", "agent-runtime"]
+image: "/blog/claude-code-leak-hero.png"
 ---
+
+> **TLDR:** A single .map file shipped to npm just exposed the full source of Anthropic's Claude Code — 1,800 TypeScript files, 500K lines, 89 feature flags. What it reveals is bigger than the leak itself: Claude Code is quietly evolving from a coding assistant into an agent operating system with autonomous background processes (KAIROS), multi-agent worker spawning (Coordinator Mode), and persistent shared memory that survives across sessions. This isn't just embarrassing — it's a preview of the attack surface every agent runtime will face: memory poisoning that persists for weeks, prompt injection that cascades across agent boundaries, and runtime behavior mutated through feature flags without a code deploy. The irony? Compiled languages like Go eliminate this entire vulnerability class. There's no source map to leak when the binary is the artifact.
+
+![The leak in 60 seconds](/blog/claude-code-leak-tldr.svg)
 
 Today, security researcher Chaofan Shou discovered that Anthropic's Claude Code — their flagship agentic CLI — had its entire source code sitting in plain sight on the npm registry. The culprit? A `.map` file bundled into the published package that mapped straight back to the original TypeScript source. Within hours, the codebase was archived to public GitHub repos, amassing thousands of stars and forks. Over 1,800 TypeScript files. Half a million lines of code. Everything from unreleased feature flags to internal model codenames to anti-distillation countermeasures — all public.
 
