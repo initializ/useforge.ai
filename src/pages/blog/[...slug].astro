@@ -37,6 +37,9 @@ const dateFormatted = date.toLocaleDateString('en-US', {
 });
 
 const postUrl = `https://useforge.ai/blog/${post.id}`;
+const forgeSlug = `blog-${post.id}`;
+const shareText = encodeURIComponent(`${title} — Forge Blog`);
+const shareUrl = encodeURIComponent(postUrl);
 
 const jsonLd = {
   '@context': 'https://schema.org',
@@ -129,9 +132,8 @@ const jsonLd = {
           Copy link
         </button>
         <button
-          id="share-x-btn"
-          data-url={postUrl}
-          data-title={title}
+          data-forge-share="x"
+          data-forge-slug={forgeSlug}
           class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm text-secondary hover:text-heading border border-dark-border hover:border-gray-500 rounded-forge-md transition-colors"
         >
           <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
@@ -140,8 +142,8 @@ const jsonLd = {
           Share on X
         </button>
         <button
-          id="share-li-btn"
-          data-url={postUrl}
+          data-forge-share="li"
+          data-forge-slug={forgeSlug}
           class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm text-secondary hover:text-heading border border-dark-border hover:border-gray-500 rounded-forge-md transition-colors"
         >
           <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
@@ -150,9 +152,8 @@ const jsonLd = {
           Share on LinkedIn
         </button>
         <button
-          id="share-reddit-btn"
-          data-url={postUrl}
-          data-title={title}
+          data-forge-share="reddit"
+          data-forge-slug={forgeSlug}
           class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm text-secondary hover:text-heading border border-dark-border hover:border-gray-500 rounded-forge-md transition-colors"
         >
           <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
@@ -196,17 +197,6 @@ const jsonLd = {
 
 <script>
   const copyBtn = document.getElementById('copy-link-btn');
-  const shareXBtn = document.getElementById('share-x-btn');
-  const shareLiBtn = document.getElementById('share-li-btn');
-  const shareRedditBtn = document.getElementById('share-reddit-btn');
-
-  function buildTrackedUrl(baseUrl: string, channel: string) {
-    const url = new URL(baseUrl);
-    const token = crypto.randomUUID().replace(/-/g, '').slice(0, 6);
-    url.searchParams.set('ref', `share_${channel}_${token}`);
-    return url.toString();
-  }
-
   copyBtn?.addEventListener('click', () => {
     const url = (copyBtn as HTMLElement).dataset.url || window.location.href;
     navigator.clipboard.writeText(url).then(() => {
@@ -216,28 +206,5 @@ const jsonLd = {
         copyBtn.innerHTML = original;
       }, 2000);
     });
-  });
-
-  shareXBtn?.addEventListener('click', () => {
-    const baseUrl = (shareXBtn as HTMLElement).dataset.url || window.location.href;
-    const title = (shareXBtn as HTMLElement).dataset.title || document.title;
-    const trackedUrl = buildTrackedUrl(baseUrl, 'x');
-    const xUrl = `https://x.com/intent/tweet?text=${encodeURIComponent(title)}&url=${encodeURIComponent(trackedUrl)}`;
-    window.open(xUrl, '_blank', 'noopener,noreferrer');
-  });
-
-  shareLiBtn?.addEventListener('click', () => {
-    const baseUrl = (shareLiBtn as HTMLElement).dataset.url || window.location.href;
-    const trackedUrl = buildTrackedUrl(baseUrl, 'li');
-    const liUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(trackedUrl)}`;
-    window.open(liUrl, '_blank', 'noopener,noreferrer');
-  });
-
-  shareRedditBtn?.addEventListener('click', () => {
-    const baseUrl = (shareRedditBtn as HTMLElement).dataset.url || window.location.href;
-    const title = (shareRedditBtn as HTMLElement).dataset.title || document.title;
-    const trackedUrl = buildTrackedUrl(baseUrl, 'reddit');
-    const redditUrl = `https://www.reddit.com/submit?url=${encodeURIComponent(trackedUrl)}&title=${encodeURIComponent(title)}`;
-    window.open(redditUrl, '_blank', 'noopener,noreferrer');
   });
 </script>
