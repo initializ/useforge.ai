@@ -5,8 +5,6 @@ order: 3
 editUrl: https://github.com/initializ/useforge.ai/edit/main/src/content/docs/reference/environment-variables.md
 ---
 
-# Environment Variables
-
 Forge uses environment variables for API keys, configuration overrides, and runtime settings. Environment variables take precedence over `forge.yaml` values where applicable — the original file is never modified.
 
 ## API Keys
@@ -19,6 +17,7 @@ These variables authenticate your agent with LLM providers and external services
 | `ANTHROPIC_API_KEY` | Anthropic API key | Using Anthropic as `model.provider` |
 | `GEMINI_API_KEY` | Google Gemini API key | Using Gemini as `model.provider` or `embedding_provider` |
 | `TAVILY_API_KEY` | Tavily API key | Using Tavily search provider or research-based skills |
+| `PERPLEXITY_API_KEY` | Perplexity web search API key | Using Perplexity search provider |
 | `GH_TOKEN` | GitHub personal access token | Using the GitHub skill for repository operations |
 
 Set API keys in your shell or store them with the secrets provider:
@@ -38,11 +37,13 @@ These variables override corresponding `forge.yaml` settings at runtime. Useful 
 | Variable | Description | Example |
 |---|---|---|
 | `FORGE_PASSPHRASE` | Passphrase for the AES-256-GCM encrypted secrets file | `my-secure-passphrase` |
+| `FORGE_MODEL_PROVIDER` | Override LLM provider | `anthropic` |
+| `FORGE_MODEL_FALLBACKS` | Set fallback providers as comma-separated `provider:model` pairs (overrides `model.fallbacks`) | `openai:gpt-4o,gemini:gemini-2.5-flash` |
 | `FORGE_MEMORY_PERSISTENCE` | Enable or disable session persistence (overrides `memory.persistence`) | `false` |
 | `FORGE_MEMORY_LONG_TERM` | Enable or disable long-term memory (overrides `memory.long_term`) | `true` |
 | `FORGE_EMBEDDING_PROVIDER` | Override embedding provider (overrides `memory.embedding_provider`) | `openai` |
-| `FORGE_MODEL_FALLBACKS` | Set fallback providers as comma-separated `provider:model` pairs (overrides `model.fallbacks`) | `openai:gpt-4o,gemini:gemini-2.5-flash` |
 | `FORGE_THEME` | Override the TUI theme at runtime | (custom theme name) |
+| `WEB_SEARCH_PROVIDER` | Force web search provider | `tavily` or `perplexity` |
 
 Example usage in a Docker environment:
 
@@ -52,6 +53,37 @@ docker run -e FORGE_PASSPHRASE="my-passphrase" \
            -e FORGE_MODEL_FALLBACKS="anthropic:claude-sonnet-4-20250514,gemini:gemini-2.5-flash" \
            my-agent:latest
 ```
+
+## Provider Base URLs
+
+Override base URLs for LLM providers. Useful for proxies, private endpoints, or self-hosted instances.
+
+| Variable | Description | Default |
+|---|---|---|
+| `OPENAI_BASE_URL` | Override OpenAI base URL | (OpenAI default) |
+| `OPENAI_ORG_ID` | OpenAI Organization ID (enterprise); overrides `organization_id` in YAML | — |
+| `ANTHROPIC_BASE_URL` | Override Anthropic base URL | (Anthropic default) |
+| `OLLAMA_BASE_URL` | Override Ollama base URL | `http://localhost:11434` |
+
+## Server & Auth Variables
+
+Variables for configuring the A2A server, CORS, and external authentication.
+
+| Variable | Description | Example |
+|---|---|---|
+| `FORGE_CORS_ORIGINS` | Comma-separated CORS allowed origins for A2A server | `https://app.example.com,https://admin.example.com` |
+| `FORGE_AUTH_URL` | External auth provider URL for token validation | `https://auth.example.com/validate` |
+| `FORGE_AUTH_ORG_ID` | Organization ID sent to external auth provider | `org-xxx` |
+
+## Guardrails Variables
+
+Variables for database-backed guardrails configuration and audit logging.
+
+| Variable | Description | Example |
+|---|---|---|
+| `FORGE_GUARDRAILS_DB` | MongoDB URI for DB-backed guardrails config + audit | `mongodb://localhost:27017/forge` |
+| `FORGE_AGENT_ID` | Agent identifier for DB guardrails (falls back to `agent_id` in YAML) | `my-agent` |
+| `FORGE_ORG_ID` | Organization identifier for DB guardrails | `org-xxx` |
 
 ## Skill-Specific Variables
 

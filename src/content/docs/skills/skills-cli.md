@@ -5,9 +5,24 @@ order: 3
 editUrl: https://github.com/initializ/useforge.ai/edit/main/src/content/docs/skills/skills-cli.md
 ---
 
-# Skills CLI Commands
-
 Forge provides a full set of CLI commands for managing skills throughout their lifecycle — from discovery and validation to trust management and security auditing. All skills commands live under the `forge skills` subcommand.
+
+## Skill Registry
+
+Forge ships with a built-in skill registry. Add skills to your project with a single command:
+
+```bash
+# Add a skill from the registry
+forge skills add tavily-research
+
+# Validate skill requirements
+forge skills validate
+
+# Audit skill security
+forge skills audit --embedded
+```
+
+`forge skills add` copies the skill's SKILL.md and any associated scripts into your project's `skills/` directory. It validates binary and environment requirements, checks for existing values in your environment, `.env` file, and encrypted secrets, and prompts only for truly missing values with a suggestion to use `forge secrets set` for sensitive keys.
 
 ## forge skills list
 
@@ -50,6 +65,30 @@ k8s-incident-triage   trusted    embedded   sre       kubectl
 Tags use AND semantics — a skill must have all specified tags to appear in the results.
 
 **When to use:** To see what skills are available, check their trust status, or filter by category and tags before running your agent.
+
+## forge skills add \<name\>
+
+Add a skill from the embedded registry to your project. Copies the SKILL.md and all scripts into your project's `skills/` directory, checks for required environment variables, and deduplicates `.env` entries.
+
+**Usage:**
+
+```bash
+forge skills add <name>
+```
+
+**Example:**
+
+```bash
+$ forge skills add weather
+Adding weather to skills/weather/...
+  Copied SKILL.md
+  Checking requirements...
+    curl: found at /usr/bin/curl
+  No required environment variables.
+Done. Run 'forge build' to include weather in your agent.
+```
+
+**When to use:** To add a built-in skill to your project. This is the quickest way to give your agent new capabilities.
 
 ## forge skills validate
 
@@ -234,30 +273,6 @@ Blocked suspicious-skill: trusted -> failed
 
 **When to use:** When you need to immediately disable a skill due to security concerns, unexpected behavior, or policy violations.
 
-## forge skills add \<name\>
-
-Add a skill from the embedded registry to your project. Copies the SKILL.md and all scripts into your project's `skills/` directory, checks for required environment variables, and deduplicates `.env` entries.
-
-**Usage:**
-
-```bash
-forge skills add <name>
-```
-
-**Example:**
-
-```bash
-$ forge skills add weather
-Adding weather to skills/weather/...
-  Copied SKILL.md
-  Checking requirements...
-    curl: found at /usr/bin/curl
-  No required environment variables.
-Done. Run 'forge build' to include weather in your agent.
-```
-
-**When to use:** To add a built-in skill to your project. This is the quickest way to give your agent new capabilities.
-
 ## forge skills audit
 
 Run a security audit across all skills. Produces risk scores, policy checks, and actionable findings. Use `--format json` for machine-readable output.
@@ -359,6 +374,16 @@ Keep the private key secure. Share the public key with skill consumers.
 ```
 
 **When to use:** Before signing skills for the first time. You only need to generate a key pair once.
+
+## CLI Workflow
+
+```bash
+# Initialize a project with skills support
+forge init my-agent --from-skills
+
+# Build compiles skills automatically
+forge build
+```
 
 ## forge validate
 

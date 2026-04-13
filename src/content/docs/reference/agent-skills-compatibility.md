@@ -48,6 +48,7 @@ Forge extends the standard through the `metadata.forge` namespace. Other runtime
 | `metadata.forge.denied_tools` | Tools to exclude when this skill is active. Prevents conflicting tool usage. |
 | `metadata.forge.timeout_hint` | Execution timeout in seconds. Propagated to the `SkillCommandExecutor`. Default: `120`. |
 | `metadata.forge.trust_hints` | Capability declarations (`requires_network`, `requires_filesystem`, `requires_shell`, `max_execution_seconds`). Verified by the autowire security analyzer — never trusted blindly. |
+| `metadata.forge.guardrails` | Domain-specific guardrails (`deny_commands`, `deny_output`, `deny_prompts`, `deny_responses`) that enforce security policies at runtime — blocking unauthorized commands, redacting sensitive output, and preventing capability enumeration. |
 
 Other namespaces (e.g., `metadata.clawdbot`, `metadata.langchain`) are tolerated and ignored by Forge. Your skill can include metadata for multiple runtimes simultaneously.
 

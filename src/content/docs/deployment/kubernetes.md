@@ -5,19 +5,19 @@ order: 2
 editUrl: https://github.com/initializ/useforge.ai/edit/main/src/content/docs/deployment/kubernetes.md
 ---
 
-# Kubernetes
+Every `forge build` generates container-ready artifacts:
 
-`forge build` generates Kubernetes manifests in `.forge-output/k8s/`. These manifests cover the core resources you need to run your agent in a cluster — a Deployment, a Service, and a NetworkPolicy for egress enforcement.
+| Artifact | Purpose |
+|----------|---------|
+| `guardrails.json` | Guardrail policy config (copied from project root if present) |
+| `Dockerfile` | Container image with minimal attack surface |
+| `deployment.yaml` | Kubernetes Deployment manifest |
+| `service.yaml` | Kubernetes Service manifest |
+| `network-policy.yaml` | NetworkPolicy restricting pod egress to allowed domains |
+| `egress_allowlist.json` | Machine-readable domain allowlist |
+| `checksums.json` | SHA-256 checksums + Ed25519 signature |
 
-## Generated Manifests
-
-| Manifest | Purpose |
-|---|---|
-| `deployment.yaml` | Runs the agent container with environment variable references for secrets |
-| `service.yaml` | Exposes the agent on port 8080 within the cluster |
-| `networkpolicy.yaml` | Restricts pod egress to allowed domains on ports 80 and 443 |
-
-You can apply them directly with `kubectl`:
+You can apply the manifests directly with `kubectl`:
 
 ```bash
 kubectl apply -f .forge-output/k8s/
@@ -120,12 +120,33 @@ spec:
 
 Telegram uses long polling by default, so it does not require an inbound port or Ingress. The agent makes outbound requests to the Telegram API to fetch updates.
 
+## Air-Gap Deployments
+
+Forge can run entirely offline with local models:
+
+1. Use `ollama` as the LLM provider with a locally-hosted model
+2. Set egress mode to `deny-all` to block all outbound traffic
+3. Pre-install all binary dependencies in the container image
+4. Use environment variables for secrets (no passphrase prompting needed)
+
+```yaml
+model:
+  provider: ollama
+  name: llama3
+egress:
+  mode: deny-all
+```
+
 ## Initializ Command Export
 
 Forge agents can be exported for direct import into Initializ Command, the managed deployment platform.
 
 ```bash
-forge export
+# Export with embedded schemas
+forge export --pretty --include-schemas
+
+# Simulate Command import
+forge export --simulate-import
 ```
 
 This generates an AgentSpec JSON file that Command can import. The full pipeline looks like this:
@@ -135,13 +156,15 @@ This generates an AgentSpec JSON file that Command can import. The full pipeline
 forge build
 
 # 2. Export agent specification
-forge export
+forge export --pretty --include-schemas
 
 # 3. Import into Initializ Command
 # (done through the Command UI or CLI)
 ```
 
 Command handles container registry, secrets injection, networking, and scaling. The exported AgentSpec carries all the metadata Command needs to deploy your agent without additional configuration.
+
+See [Command Integration](command-integration.md) for the full integration guide.
 
 ## What's Next
 

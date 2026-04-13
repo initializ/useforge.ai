@@ -4,55 +4,28 @@ description: Install Forge and verify it's working — single binary, no runtime
 order: 1
 ---
 
-# Installation
+Forge can be installed via Homebrew, pre-built binary, or manual download on Windows.
 
-Forge is a single statically-linked Go binary. No runtime dependencies, no npm, no Docker required for local development.
-
-## System Requirements
-
-- **macOS** — arm64 (Apple Silicon) or amd64 (Intel)
-- **Linux** — amd64 or arm64
-
-## Homebrew (Recommended)
-
-The fastest way to install Forge on macOS or Linux:
+## macOS (Homebrew)
 
 ```bash
 brew install initializ/tap/forge
 ```
 
-This installs from the [Initializ Homebrew tap](https://github.com/initializ/homebrew-tap) and keeps Forge up to date with `brew upgrade`.
+## Linux / macOS (Script)
 
-## curl
-
-Download the latest release directly:
+Installs or upgrades Forge automatically:
 
 ```bash
-curl -sSL https://github.com/initializ/forge/releases/latest/download/forge-$(uname -s)-$(uname -m).tar.gz | tar xz
-sudo mv forge /usr/local/bin/
+curl -sSL https://raw.githubusercontent.com/initializ/forge/main/install.sh | bash
 ```
 
-The archive names match `uname` output — e.g., `forge-Darwin-arm64.tar.gz`, `forge-Linux-x86_64.tar.gz`.
+## Windows
 
-## Build from Source
+Download the latest `.zip` from [GitHub Releases](https://github.com/initializ/forge/releases/latest) and add to your PATH.
 
-Requires Go 1.25 or later:
-
-```bash
-git clone https://github.com/initializ/forge.git
-cd forge
-go build -o forge ./forge-cli/
-sudo mv forge /usr/local/bin/
-```
-
-## Verify Installation
+## Verify
 
 ```bash
 forge --version
 ```
-
-You should see the installed version number. If you get a "command not found" error, make sure `/usr/local/bin` is in your `PATH`.
-
-## Next Steps
-
-Once installed, head to the [Quick Start](/docs/getting-started/quick-start) guide to create your first agent.

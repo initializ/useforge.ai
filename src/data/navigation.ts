@@ -44,6 +44,7 @@ export const docsSidebar: NavItem[] = [
       { label: 'Secret Management', href: '/docs/security/secret-management' },
       { label: 'Build Signing', href: '/docs/security/build-signing' },
       { label: 'Audit Logging', href: '/docs/security/audit-logging' },
+      { label: 'Content Guardrails', href: '/docs/security/guardrails' },
     ],
   },
   {

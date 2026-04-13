@@ -5,132 +5,249 @@ order: 3
 editUrl: https://github.com/initializ/useforge.ai/edit/main/src/content/docs/core-concepts/tools-and-builtins.md
 ---
 
-# Tools & Builtins
+Tools are capabilities that an LLM agent can invoke during execution. Forge provides a pluggable tool system with built-in tools, adapter tools, development tools, and custom tools.
 
-Tools are the agent's hands. Every action your Forge agent takes in the world — fetching a URL, parsing data, searching the web, running a script — goes through the tool system. Tools have structured inputs (JSON Schema), structured outputs, and consistent enforcement of egress rules and timeouts.
+## Tool Categories
 
-This page covers every tool type: the 8 built-in tools, 3 adapter tools, skill-derived tools, and conditional tools.
+| Category | Code | Description |
+|----------|------|-------------|
+| **Builtin** | `builtin` | Core tools shipped with Forge |
+| **Adapter** | `adapter` | External service integrations via webhook, MCP, or OpenAPI |
+| **Dev** | `dev` | Development-only tools, filtered in production builds |
+| **Custom** | `custom` | User-defined tools discovered from the project |
 
-## Builtin Tools
+## Built-in Tools
 
-These 9 tools are always available to every Forge agent. They cover the most common operations an LLM agent needs.
+| Tool | Description |
+|------|-------------|
+| `http_request` | Make HTTP requests (GET, POST, PUT, DELETE). Strips credentials on cross-origin redirects |
+| `json_parse` | Parse and query JSON data |
+| `csv_parse` | Parse CSV data into structured records |
+| `datetime_now` | Get current date and time |
+| `uuid_generate` | Generate UUID v4 identifiers |
+| `math_calculate` | Evaluate mathematical expressions |
+| `web_search` | Search the web for quick lookups and recent information |
+| `file_create` | Create a downloadable file, written to the agent's `.forge/files/` directory |
+| `read_skill` | Load full instructions for an available skill on demand |
+| `memory_search` | Search long-term memory (when enabled) |
+| `memory_get` | Read memory files (when enabled) |
+| `cli_execute` | Execute pre-approved CLI binaries |
+| `schedule_set` | Create or update a recurring cron schedule |
+| `schedule_list` | List all active and inactive schedules |
+| `schedule_delete` | Remove an LLM-created schedule |
+| `schedule_history` | View execution history for scheduled tasks |
 
-| Tool | Purpose | Egress Enforcement |
-|---|---|---|
-| `http_request` | GET/POST/PUT/DELETE with headers, body, timeout | Yes — EgressTransportFromContext |
-| `json_parse` | Parse JSON strings | No |
-| `csv_parse` | Parse CSV data | No |
-| `datetime_now` | Current timestamp in configurable format/timezone | No |
-| `uuid_generate` | Generate UUIDs | No |
-| `math_calculate` | Arithmetic calculations | No |
-| `web_search` | Quick web lookups (Tavily or Perplexity provider) | Yes — EgressClientFromContext |
-| `read_skill` | Load full SKILL.md instructions on demand | No (filesystem only) |
-| `file_create` | Generate downloadable files (written to disk and uploaded to channels) | No (filesystem only) |
+Register all builtins with `builtins.RegisterAll(registry)`.
 
-Tools that make no network calls have no egress enforcement. Tools that do (`http_request`, `web_search`) are wrapped by the egress enforcer so they can only reach allowed domains.
+## Code-Agent Tools
 
-### file_create
+When the `code-agent` skill is active, Forge registers additional tools for autonomous code generation and modification. These tools are **not** registered by default — they are conditionally added when the skill requires them.
 
-The `file_create` tool generates downloadable files that are both written to disk and uploaded to the user's channel (Slack/Telegram). Files are stored in `.forge/files/`.
+All code-agent tools use a `PathValidator` that confines resolved paths within the agent's working directory, preventing directory traversal attacks.
 
-- Accepts a filename with extension and full content as text
-- Returns filename, content, MIME type, and absolute disk path
-- Supports common extensions: `.md`, `.json`, `.yaml`, `.py`, `.ts`, `.csv`, `.html`, etc.
-- **Security**: filenames containing path separators or traversal patterns (`..`) are rejected
+| Tool | Description |
+|------|-------------|
+| `file_read` | Read file contents with optional line offset/limit, or list directory entries |
+| `file_write` | Create or overwrite files in the project directory |
+| `file_edit` | Edit files by exact string matching with unified diff output |
+| `file_patch` | Batch file operations (add, update, delete, move) in a single call |
+| `glob_search` | Find files by glob pattern (e.g., `**/*.go`), sorted by modification time |
+| `grep_search` | Search file contents with regex; uses `rg` if available, falls back to Go |
+| `directory_tree` | Display tree-formatted directory listing (default max depth: 3) |
+
+### Registration Groups
+
+Code-agent tools are registered in layered groups, allowing skills to request only the capabilities they need:
+
+| Group | Tools | Purpose |
+|-------|-------|---------|
+| `CodeAgentSearchTools` | `grep_search`, `glob_search`, `directory_tree` | Read-only exploration |
+| `CodeAgentReadTools` | `file_read` + search tools | Safe reading |
+| `CodeAgentWriteTools` | `file_write`, `file_edit`, `file_patch` | Modification |
+| `CodeAgentTools` | All read + write tools | Full code-agent capability |
+
+### Path Validation
+
+All file tools use `PathValidator` (from `pathutil.go`):
+
+- All resolved paths must stay within the configured `workDir`
+- Directory traversal via `..` is caught after symlink resolution
+- Standard directories are excluded from search: `.git`, `node_modules`, `vendor`, `__pycache__`, `.venv`, `dist`, `build`
 
 ## Adapter Tools
 
-Adapters bridge your agent to external tool ecosystems. Each adapter handles protocol translation and applies egress enforcement to outbound requests.
+| Adapter | Description |
+|---------|-------------|
+| `mcp_call` | Call tools on MCP servers via JSON-RPC |
+| `webhook_call` | POST JSON payloads to webhook URLs. Strips credentials on cross-origin redirects |
+| `openapi_call` | Call OpenAPI-described endpoints |
 
-| Tool | Purpose | Egress Enforcement |
-|---|---|---|
-| `mcp_call` | Call tools on MCP servers via JSON-RPC | Yes |
-| `webhook_call` | POST JSON payloads to webhook URLs | Yes |
-| `openapi_call` | Call OpenAPI-described endpoints | Yes |
+Adapter tools bridge external services into the agent's tool set.
 
-Adapters let you connect your agent to existing infrastructure without writing custom tool code. For example, `mcp_call` speaks the Model Context Protocol so your agent can use tools exposed by any MCP-compatible server.
-
-## Skill Tool Auto-Registration
-
-Script-backed skills are automatically registered as first-class LLM tools at runtime. This is how your custom scripts become callable tools without any glue code.
-
-The registration process works like this:
-
-1. During autowire, Forge discovers skills with a `scripts/` directory
-2. Each script is wrapped in a `SkillTool` that handles invocation, timeout, and environment isolation
-3. The `InputSpec` table in the SKILL.md is converted to a JSON Schema via `InputSpecToSchema`, giving the LLM a structured definition of what arguments the tool accepts
-4. The tool is registered with the agent's tool set, alongside builtins
-
-**Naming convention:** Tool names use underscores (e.g., `tavily_research`), while script filenames use hyphens (e.g., `tavily-research.sh`). Forge maps between them automatically.
-
-Each skill tool runs through the `SkillCommandExecutor`, which provides:
-
-- **Timeout enforcement** — configurable per-skill via `metadata.forge.timeout_hint` (default: 120s)
-- **Environment isolation** — only explicitly declared environment variables are passed to the script
-- **Structured I/O** — input is passed as JSON on stdin, output is read from stdout
-
-## Conditional Tools
-
-These tools are only registered when specific conditions are met:
-
-| Tool | Condition | Purpose |
-|---|---|---|
-| `memory_search` | Long-term memory enabled | Hybrid search over agent memory |
-| `memory_get` | Long-term memory enabled | Read specific memory files |
-| `cli_execute` | Configured or auto-derived from skills | Run allowlisted binaries |
-| `schedule_set` | Scheduling configured | Create or update a recurring cron schedule |
-| `schedule_list` | Scheduling configured | List all active and inactive schedules |
-| `schedule_delete` | Scheduling configured | Remove an LLM-created schedule |
-| `schedule_history` | Scheduling configured | View execution history for scheduled tasks |
-
-Conditional tools are not part of the `builtins.All()` set. They are added to the agent's tool set during compilation based on your configuration and the skills you have installed.
-
-## cli_execute
-
-`cli_execute` is the bridge between binary-backed skills and execution. When the LLM reads a binary-backed skill's instructions (via `read_skill`) and decides to act, it invokes `cli_execute` to run the required binary.
-
-The tool implements seven security layers:
-
-1. **Binary allowlist** — only binaries listed in `allowed_binaries` can be executed
-2. **Path resolution** — binaries are resolved to absolute paths via `exec.LookPath` at startup
-3. **Argument validation** — rejects `$(`, backticks, or newlines to prevent injection
-4. **Timeout enforcement** — configurable per invocation (default: 120s)
-5. **No shell** — uses `exec.CommandContext` directly, not `sh -c` — no shell expansion
-6. **Environment isolation** — only variables listed in `env_passthrough` are available to the subprocess
-7. **Output limits** — prevents memory exhaustion (default: 1MB)
-
-Both `allowed_binaries` and `env_passthrough` are auto-derived from skill metadata. When a skill declares `metadata.forge.requires.bins: [curl]`, Forge automatically adds `curl` to the binary allowlist. When a skill declares required or optional environment variables, those are added to `env_passthrough`. You can also configure these manually in `forge.yaml`.
-
-## web_search
+## Web Search Providers
 
 The `web_search` tool supports two providers:
 
-| Provider | Style | Default |
-|---|---|---|
-| **Tavily** | Structured results with titles, URLs, snippets | Yes |
-| **Perplexity** | Conversational, synthesized answers | No |
+| Provider | API Key Env Var | Endpoint |
+|----------|----------------|----------|
+| Tavily (recommended) | `TAVILY_API_KEY` | `api.tavily.com/search` |
+| Perplexity | `PERPLEXITY_API_KEY` | `api.perplexity.ai/chat/completions` |
 
-The tool's description is crafted to guide the LLM toward `tavily_research` (a skill tool from the Tavily skill) for in-depth research tasks, while using `web_search` for quick lookups. This distinction helps the LLM choose the right tool for the job — `web_search` for a fast factual check, `tavily_research` for deep multi-source investigation.
+Provider selection: `WEB_SEARCH_PROVIDER` env var, or auto-detect from available API keys (Tavily first).
 
-## denied_tools
+## CLI Execute
 
-Skills can declare tools that should be removed from the agent's tool set when that skill is active. This is useful for skills that need tight control over the agent's behavior.
+The `cli_execute` tool provides security-hardened command execution with 13 security layers:
 
-For example, the `k8s-incident-triage` skill denies `http_request` and `web_search` to prevent the agent from making arbitrary network calls during incident response. The agent should use only the skill's own tools and `cli_execute` with `kubectl`.
+```yaml
+tools:
+  - name: cli_execute
+    config:
+      allowed_binaries: ["git", "curl", "jq", "python3"]
+      env_passthrough: ["GITHUB_TOKEN"]
+      timeout: 120
+      max_output_bytes: 1048576
+```
 
-Denied tools are specified in the skill's SKILL.md frontmatter and enforced during AgentSpec compilation.
+| # | Layer | Detail |
+|---|-------|--------|
+| 1 | **Shell denylist** | Shell interpreters (`bash`, `sh`, `zsh`, `dash`, `ksh`, `csh`, `tcsh`, `fish`) are filtered out at construction time and unconditionally blocked at execution — they defeat the no-shell design |
+| 2 | **Binary allowlist** | Only pre-approved binaries can execute |
+| 3 | **Binary resolution** | Binaries are resolved to absolute paths via `exec.LookPath` at startup |
+| 4 | **Argument validation** | Rejects arguments containing `$(`, backticks, newlines, or `file://` URLs |
+| 5 | **File protocol blocking** | Arguments containing `file://` (case-insensitive) are blocked to prevent filesystem traversal via `curl file:///etc/passwd` (see [File Protocol Blocking](security/guardrails.md#file-protocol-blocking)) |
+| 6 | **Path confinement** | Path arguments inside `$HOME` but outside `workDir` are blocked (see [Path Containment](security/guardrails.md#path-containment)) |
+| 7 | **Timeout** | Configurable per-command timeout (default: 120s) |
+| 8 | **No shell** | Uses `exec.CommandContext` directly — no shell expansion |
+| 9 | **Working directory** | `cmd.Dir` set to `workDir` so relative paths resolve within the agent directory |
+| 10 | **Environment isolation** | Only `PATH`, `HOME`, `LANG`, explicit passthrough vars, proxy vars, `OPENAI_ORG_ID` (when set), `GH_CONFIG_DIR` (auto-set to real `~/.config/gh` **only for `gh`**), and `KUBECONFIG`/`NO_PROXY` (**only for `kubectl`/`helm`** — see below). `HOME` is overridden to `workDir` to prevent `~` expansion from reaching the real home directory |
+| 11 | **Output limits** | Configurable max output size (default: 1MB) to prevent memory exhaustion |
+| 12 | **Skill guardrails** | Skill-declared `deny_commands` and `deny_output` patterns block/redact command inputs and outputs (see [Skill Guardrails](security/guardrails.md#skill-guardrails)) |
+| 13 | **Custom tool entrypoint validation** | Custom tool entrypoints are validated: rejects empty, absolute, or `..`-containing paths; resolves symlinks and verifies the target stays within the project directory and is a regular file |
 
-## Egress Enforcement
+### KUBECONFIG and NO_PROXY Scoping
 
-All tools that make HTTP requests are subject to egress enforcement. The mechanism works at the transport layer:
+When `HOME` is overridden to `workDir`, `kubectl` and `helm` lose access to `~/.kube/config`. For these two binaries only, `cli_execute` auto-sets:
 
-- **`EgressTransportFromContext`** — wraps `http.RoundTripper`. Used by `http_request` and adapter tools. Every outbound request is checked against the allowlist before the connection is established.
-- **`EgressClientFromContext`** — provides an `*http.Client` with the egress transport already configured. Used by `web_search`.
+| Env Var | Value | Purpose |
+|---------|-------|---------|
+| `KUBECONFIG` | Explicit `KUBECONFIG` if set, else `<real-home>/.kube/config` | Passes through the active kubeconfig |
+| `NO_PROXY` | K8s API server hostname(s) | Bypasses the egress proxy for cluster connections |
 
-When no egress enforcer is set in the context (e.g., during testing), tools fall back to `http.DefaultTransport` with no domain restrictions.
+If `KUBECONFIG` is explicitly set in the environment (e.g., via `docker run -e KUBECONFIG=...` or after [KUBECONFIG materialization](runtime.md#kubeconfig-materialization)), that value is passed through directly. Otherwise, `cli_execute` falls back to the real `~/.kube/config`. `NO_PROXY` is extracted from the kubeconfig's `clusters[].cluster.server` field. Other binaries do not receive these variables.
 
-This means egress enforcement is always-on in production but opt-in during development, giving you a safe default without friction in local workflows.
+## File Create
 
-## What's Next
+The `file_create` tool generates downloadable files that are both written to disk and uploaded to the user's channel (Slack/Telegram).
 
-- [Channels](/docs/core-concepts/channels) — connect your agent to Slack and Telegram
+| Field | Description |
+|-------|-------------|
+| `filename` | Name with extension (e.g., `patches.yaml`, `report.json`) |
+| `content` | Full file content as text |
+
+**Output JSON** includes `filename`, `content`, `mime_type`, and `path`. The `path` field contains the absolute disk location, allowing other tools (e.g., `kubectl apply -f <path>`) to reference the file.
+
+**File location:** Files are written to the agent's `.forge/files/` directory (under `WorkDir`). The runtime injects this path via `FilesDir` in the executor context. When running outside the full runtime (e.g., tests), falls back to `$TMPDIR/forge-files/`.
+
+**Allowed extensions:**
+
+| Extension | MIME Type |
+|-----------|-----------|
+| `.md` | `text/markdown` |
+| `.json` | `application/json` |
+| `.yaml`, `.yml` | `text/yaml` |
+| `.txt`, `.log` | `text/plain` |
+| `.csv` | `text/csv` |
+| `.sh` | `text/x-shellscript` |
+| `.xml` | `text/xml` |
+| `.html` | `text/html` |
+| `.py` | `text/x-python` |
+| `.ts` | `text/typescript` |
+
+Filenames with path separators (`/`, `\`) or traversal patterns (`..`) are rejected.
+
+## Memory Tools
+
+When [long-term memory](memory.md) is enabled, two additional tools are registered:
+
+- **`memory_search`** — Hybrid vector + keyword search across stored memory files
+- **`memory_get`** — Read specific memory files by path
+
+These tools allow the agent to recall information from previous sessions.
+
+## Development Tools
+
+Development tools (`local_shell`, `local_file_browser`, `debug_console`, `test_runner`) are available during `forge run --dev` but are **automatically filtered out** in production builds by the `ToolFilterStage`.
+
+## Tool Interface
+
+All tools implement the `tools.Tool` interface:
+
+```go
+type Tool interface {
+    Name() string
+    Description() string
+    Category() Category
+    InputSchema() json.RawMessage
+    Execute(ctx context.Context, args json.RawMessage) (string, error)
+}
+```
+
+## Writing a Custom Tool
+
+Custom tools are discovered from the project directory. Create a Python or TypeScript file with a docstring schema:
+
+```python
+"""
+Tool: my_custom_tool
+Description: Does something useful.
+
+Input:
+  query (str): The search query.
+  limit (int): Maximum results.
+
+Output:
+  results (list): The search results.
+"""
+
+import json
+import sys
+
+def execute(args: dict) -> str:
+    query = args.get("query", "")
+    return json.dumps({"results": [f"Result for: {query}"]})
+
+if __name__ == "__main__":
+    input_data = json.loads(sys.stdin.read())
+    print(execute(input_data))
+```
+
+Custom tools can also be added by placing scripts in a `tools/` directory in your project. TypeScript tools run via `npx --no-install ts-node` to prevent automatic package downloads.
+
+### Custom Tool Entrypoint Validation
+
+Custom tool entrypoints are validated at registration time:
+
+- Empty or absolute paths are rejected
+- Paths containing `..` after `filepath.Clean` are rejected
+- Symlinks are resolved and the target must remain within the project directory
+- The entrypoint must be a regular file (not a directory or device)
+
+## Tool Commands
+
+```bash
+# List all registered tools
+forge tool list
+
+# Show details for a specific tool
+forge tool describe web_search
+```
+
+## Build Pipeline
+
+The `ToolFilterStage` runs during `forge build`:
+
+1. Annotates each tool with its category (builtin, adapter, dev, custom)
+2. Sets `tool_interface_version` to `"1.0"` on the AgentSpec
+3. In production mode (`--prod`), removes all dev-category tools
+4. Counts tools per category for the build manifest

@@ -5,8 +5,6 @@ order: 8
 editUrl: https://github.com/initializ/useforge.ai/edit/main/src/content/docs/core-concepts/scheduling.md
 ---
 
-# Cron Scheduling
-
 Forge includes a built-in cron scheduler for recurring tasks, configurable in `forge.yaml` or created dynamically by the agent at runtime.
 
 ## Configuration
@@ -43,6 +41,7 @@ The agent has four built-in tools for managing schedules at runtime:
 Schedules can also be managed via the CLI:
 
 ```bash
+# List all schedules
 forge schedule list
 ```
 

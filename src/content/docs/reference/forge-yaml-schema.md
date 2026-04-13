@@ -5,244 +5,115 @@ order: 2
 editUrl: https://github.com/initializ/useforge.ai/edit/main/src/content/docs/reference/forge-yaml-schema.md
 ---
 
-# forge.yaml Schema
+All Forge agent configuration lives in `forge.yaml` at the project root.
 
-This is the complete field-by-field reference for `forge.yaml`. Every configuration option is listed with its type, default value, and description. For a guided walkthrough with context, see [Configuration](/docs/getting-started/configuration).
-
-## Top-Level Fields
-
-| Field | Type | Default | Description |
-|---|---|---|---|
-| `agent_id` | string | — | Unique identifier for the agent. Generated from the project name during `forge init`. |
-| `version` | string | — | Semantic version of the agent (e.g., `0.1.0`). |
-| `framework` | string | `"forge"` | Runtime framework. `"forge"` (default), `"crewai"`, `"langchain"`. `"custom"` is accepted as a backward-compatible alias for `"forge"`. |
-
-## `model.*`
-
-Configure the primary LLM provider and automatic failover chain.
-
-| Field | Type | Default | Description |
-|---|---|---|---|
-| `model.provider` | string | — | LLM provider: `openai`, `anthropic`, `gemini`, `ollama`. |
-| `model.name` | string | provider default | Model name (e.g., `gpt-4o`, `claude-sonnet-4-20250514`). If omitted, the provider's default model is used. |
-| `model.fallbacks` | list | `[]` | Ordered list of fallback providers. Tried sequentially when the primary provider fails. |
-| `model.fallbacks[*].provider` | string | — | Fallback provider name (`openai`, `anthropic`, `gemini`, `ollama`). |
-| `model.fallbacks[*].name` | string | — | Fallback model name. |
-
-Example:
+## Full Schema
 
 ```yaml
-model:
-  provider: openai
-  name: gpt-4o
-  fallbacks:
-    - provider: anthropic
-      name: claude-sonnet-4-20250514
-    - provider: gemini
-      name: gemini-2.5-flash
-```
-
-## `memory.*`
-
-Session persistence and long-term cross-session memory.
-
-| Field | Type | Default | Description |
-|---|---|---|---|
-| `memory.persistence` | bool | `true` | Enable session memory persistence. When `true`, conversation history survives agent restarts. |
-| `memory.sessions_dir` | string | `.forge/sessions` | Directory where session files are stored. |
-| `memory.trigger_ratio` | float | `0.6` | Compaction trigger threshold. When the conversation fills this fraction of the context budget, older messages are summarized. |
-| `memory.char_budget` | int | `0` (auto) | Character budget for session context. `0` means auto-detect from the model's context window. |
-| `memory.long_term` | bool | `false` | Enable long-term cross-session memory. Uses embedding-based vector search combined with keyword matching. |
-| `memory.memory_dir` | string | `.forge/memory` | Directory where long-term memory data is stored. |
-| `memory.embedding_provider` | string | auto | Embedding provider for long-term memory. Auto-detected from the configured LLM provider if not set. |
-| `memory.embedding_model` | string | `""` | Specific embedding model. Empty string uses the provider's default embedding model. |
-| `memory.vector_weight` | float | `0.7` | Weight for vector similarity in hybrid retrieval scoring. Must sum to 1.0 with `keyword_weight`. |
-| `memory.keyword_weight` | float | `0.3` | Weight for keyword overlap in hybrid retrieval scoring. Must sum to 1.0 with `vector_weight`. |
-| `memory.decay_half_life_days` | int | `7` | Temporal decay half-life in days for daily memory logs. Older memories score progressively lower. |
-
-Example:
-
-```yaml
-memory:
-  persistence: true
-  sessions_dir: .forge/sessions
-  trigger_ratio: 0.6
-  char_budget: 0
-  long_term: true
-  memory_dir: .forge/memory
-  embedding_provider: openai
-  embedding_model: ""
-  vector_weight: 0.7
-  keyword_weight: 0.3
-  decay_half_life_days: 7
-```
-
-## `skills.*`
-
-| Field | Type | Default | Description |
-|---|---|---|---|
-| `skills.path` | string | `SKILL.md` | Path to the top-level skill file. This is the root skill that the agent loads on startup. Individual skills live in `skills/<name>/SKILL.md`. |
-
-Example:
-
-```yaml
-skills:
-  path: SKILL.md
-```
-
-## `tools[*].*`
-
-Built-in tools your agent can invoke. Each entry has a name and optional tool-specific configuration.
-
-| Field | Type | Default | Description |
-|---|---|---|---|
-| `tools[*].name` | string | — | Tool name. Built-in tools: `cli_execute`, `web_search`, `http_request`, `json_parse`, `read_skill`. |
-| `tools[*].config` | object | `{}` | Tool-specific configuration. Contents vary by tool. |
-| `tools[*].config.allowed_binaries` | list | auto | (`cli_execute` only) Allowed binary names. Skills that declare `requires.bins` are merged automatically during `forge build`. |
-| `tools[*].config.timeout` | string | `120s` | (`cli_execute` only) Maximum execution time for a single command invocation. |
-| `tools[*].config.provider` | string | `tavily` | (`web_search` only) Search provider: `tavily` or `perplexity`. |
-
-Example:
-
-```yaml
-tools:
-  - name: cli_execute
-    config:
-      allowed_binaries: [summarize, curl]
-      timeout: 120s
-  - name: web_search
-    config:
-      provider: tavily
-  - name: http_request
-  - name: json_parse
-```
-
-## `channels`
-
-| Field | Type | Default | Description |
-|---|---|---|---|
-| `channels` | list | `[]` | Channel connectors to enable. Supported values: `slack`, `telegram`. Channels run alongside the agent via `forge serve --with <channel>`. |
-
-Example:
-
-```yaml
-channels:
-  - slack
-  - telegram
-```
-
-## `secrets.*`
-
-| Field | Type | Default | Description |
-|---|---|---|---|
-| `secrets.providers` | list | `["encrypted-file", "env"]` | Secret provider chain, checked in order. The first provider that has the requested secret wins. |
-
-Supported providers:
-
-| Provider | Storage | Description |
-|---|---|---|
-| `encrypted-file` | `.forge/secrets.enc` | AES-256-GCM encrypted file. Requires `FORGE_PASSPHRASE`. |
-| `env` | Environment variables | Falls back to reading from the process environment. |
-
-Example:
-
-```yaml
-secrets:
-  providers:
-    - encrypted-file
-    - env
-```
-
-## `egress.*`
-
-Network-level domain control for outbound requests.
-
-| Field | Type | Default | Description |
-|---|---|---|---|
-| `egress.profile` | string | `standard` | Security posture: `strict` (deny by default), `standard` (balanced, allow known domains), `permissive` (minimal restriction for development). |
-| `egress.mode` | string | profile default | Enforcement mode: `deny-all` (block all non-localhost), `allowlist` (permit computed allowlist only), `dev-open` (allow all, rejected by `--prod`). |
-| `egress.capabilities` | list | `[]` | Capability bundles that auto-expand to domain sets. For example, `slack` adds `slack.com`, `hooks.slack.com`, and `api.slack.com`. |
-| `egress.allowed_domains` | list | `[]` | Explicit domain allowlist. Supports wildcard subdomains (e.g., `*.github.com`). |
-
-Example:
-
-```yaml
-egress:
-  profile: standard
-  mode: allowlist
-  capabilities:
-    - slack
-    - telegram
-  allowed_domains:
-    - custom-api.example.com
-    - "*.github.com"
-```
-
-## Full Example
-
-A complete `forge.yaml` using every section:
-
-```yaml
-agent_id: my-agent
-version: 0.1.0
-framework: forge
+agent_id: "my-agent"                # Required
+version: "1.0.0"                    # Required
+framework: "forge"                  # forge (default), crewai, langchain
+registry: "ghcr.io/org"             # Container registry
+entrypoint: "agent.py"              # Required for crewai/langchain, omit for forge
 
 model:
-  provider: openai
-  name: gpt-4o
-  fallbacks:
-    - provider: anthropic
-      name: claude-sonnet-4-20250514
-    - provider: gemini
-      name: gemini-2.5-flash
-
-memory:
-  persistence: true
-  sessions_dir: .forge/sessions
-  trigger_ratio: 0.6
-  char_budget: 0
-  long_term: true
-  memory_dir: .forge/memory
-  embedding_provider: openai
-  embedding_model: ""
-  vector_weight: 0.7
-  keyword_weight: 0.3
-  decay_half_life_days: 7
-
-skills:
-  path: SKILL.md
+  provider: "openai"                # openai, anthropic, gemini, ollama, custom
+  name: "gpt-4o"                    # Model name
+  organization_id: "org-xxx"        # OpenAI Organization ID (enterprise, optional)
+  fallbacks:                        # Fallback providers (optional)
+    - provider: "anthropic"
+      name: "claude-sonnet-4-20250514"
+      organization_id: ""           # Per-fallback org ID override (optional)
 
 tools:
-  - name: cli_execute
+  - name: "web_search"
+  - name: "cli_execute"
     config:
-      allowed_binaries: [summarize, curl, kubectl]
-      timeout: 120s
-  - name: web_search
-    config:
-      provider: tavily
-  - name: http_request
-  - name: json_parse
+      allowed_binaries: ["git", "curl"]
+      env_passthrough: ["GITHUB_TOKEN"]
 
 channels:
-  - slack
-  - telegram
-
-secrets:
-  providers:
-    - encrypted-file
-    - env
+  - "telegram"
+  - "slack"
 
 egress:
-  profile: standard
-  mode: allowlist
-  capabilities:
-    - slack
-    - telegram
-  allowed_domains:
-    - custom-api.example.com
+  profile: "strict"                 # strict, standard, permissive
+  mode: "allowlist"                 # deny-all, allowlist, dev-open
+  allowed_domains:                  # Explicit domains
+    - "api.example.com"
     - "*.github.com"
+  capabilities:                     # Capability bundles
+    - "slack"
+  allow_private_ips: false          # Allow RFC 1918 IPs (auto: true in containers)
+
+cors_origins:                       # CORS allowed origins for A2A server
+  - "https://app.example.com"      # (default: localhost variants)
+
+package:
+  alpine: false                     # Prefer Alpine base image
+  slim: false                       # Minimize image size
+  bin_overrides:                    # Per-binary install overrides
+    forge:
+      local: "/path/to/linux/forge" # Host path to local binary file
+    jq:
+      apt: "jq"                     # APT package name
+    custom-tool:
+      url: "https://example.com/tool.tar.gz"  # Direct download URL
+      dest: "/usr/local/bin/custom-tool"       # Install destination
+      chmod: "0755"                            # File permissions
+
+secrets:
+  providers:                        # Secret providers (order matters)
+    - "encrypted-file"              # AES-256-GCM encrypted file
+    - "env"                         # Environment variables
+
+memory:
+  persistence: true                 # Session persistence (default: true)
+  sessions_dir: ".forge/sessions"
+  char_budget: 200000               # Context budget override
+  trigger_ratio: 0.6                # Compaction trigger ratio
+  long_term: false                  # Long-term memory (default: false)
+  memory_dir: ".forge/memory"
+  embedding_provider: ""            # Auto-detect from LLM provider
+  embedding_model: ""               # Provider default
+  vector_weight: 0.7                # Hybrid search vector weight
+  keyword_weight: 0.3               # Hybrid search keyword weight
+  decay_half_life_days: 7           # Temporal decay half-life
+
+guardrails_path: "guardrails.json"  # Path to guardrails config (default: "guardrails.json")
+
+schedules:                          # Recurring scheduled tasks (optional)
+  - id: "daily-report"
+    cron: "@daily"
+    task: "Generate daily status report"
+    skill: ""                       # Optional skill to invoke
+    channel: "telegram"             # Optional channel for delivery
+    channel_target: "-100123456"    # Destination chat/channel ID
 ```
 
-## What's Next
+## Environment Variables
 
-- [Environment Variables](/docs/reference/environment-variables) — complete reference for API keys, config overrides, and channel tokens
+| Variable | Description |
+|----------|-------------|
+| `FORGE_MODEL_PROVIDER` | Override LLM provider |
+| `FORGE_MODEL_FALLBACKS` | Fallback chain (e.g., `"anthropic:claude-sonnet-4,gemini"`) |
+| `FORGE_MEMORY_PERSISTENCE` | Set `false` to disable session persistence |
+| `FORGE_MEMORY_LONG_TERM` | Set `true` to enable long-term memory |
+| `FORGE_EMBEDDING_PROVIDER` | Override embedding provider |
+| `OPENAI_API_KEY` | OpenAI API key |
+| `OPENAI_ORG_ID` | OpenAI Organization ID (enterprise); overrides `organization_id` in YAML |
+| `ANTHROPIC_API_KEY` | Anthropic API key |
+| `GEMINI_API_KEY` | Google Gemini API key |
+| `TAVILY_API_KEY` | Tavily web search API key |
+| `PERPLEXITY_API_KEY` | Perplexity web search API key |
+| `WEB_SEARCH_PROVIDER` | Force web search provider (`tavily` or `perplexity`) |
+| `OPENAI_BASE_URL` | Override OpenAI base URL |
+| `ANTHROPIC_BASE_URL` | Override Anthropic base URL |
+| `OLLAMA_BASE_URL` | Override Ollama base URL (default: `http://localhost:11434`) |
+| `FORGE_CORS_ORIGINS` | Comma-separated CORS allowed origins for A2A server |
+| `FORGE_AUTH_URL` | External auth provider URL for token validation |
+| `FORGE_AUTH_ORG_ID` | Organization ID sent to external auth provider |
+| `FORGE_GUARDRAILS_DB` | MongoDB URI for DB-backed guardrails config + audit |
+| `FORGE_AGENT_ID` | Agent identifier for DB guardrails (falls back to `agent_id` in YAML) |
+| `FORGE_ORG_ID` | Organization identifier for DB guardrails |
+| `FORGE_PASSPHRASE` | Passphrase for encrypted secrets file |

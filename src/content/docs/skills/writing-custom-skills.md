@@ -5,8 +5,6 @@ order: 2
 editUrl: https://github.com/initializ/useforge.ai/edit/main/src/content/docs/skills/writing-custom-skills.md
 ---
 
-# Writing Custom Skills
-
 A skill is a directory containing a `SKILL.md` file and an optional `scripts/` directory. The SKILL.md combines YAML frontmatter (metadata for the runtime) with a markdown body (instructions for the LLM). Skills are directories, not code changes — you never need to edit a central index or registry file.
 
 ```
@@ -16,6 +14,47 @@ my-skill/
     ├── my-tool.sh
     └── my-other-tool.sh
 ```
+
+## SKILL.md Format
+
+Skills are defined in Markdown files inside `skills/<skill-name>/SKILL.md`. Each file supports optional YAML frontmatter and two body formats.
+
+```markdown
+---
+name: weather
+icon: 🌤️
+category: utilities
+tags:
+  - weather
+  - forecast
+  - api
+description: Weather data skill
+metadata:
+  forge:
+    requires:
+      bins:
+        - curl
+      env:
+        required: []
+        one_of: []
+        optional: []
+---
+## Tool: weather_current
+
+Get current weather for a location.
+
+**Input:** location (string) - City name or coordinates
+**Output:** Current temperature, conditions, humidity, and wind speed
+
+## Tool: weather_forecast
+
+Get weather forecast for a location.
+
+**Input:** location (string), days (integer: 1-7)
+**Output:** Daily forecast with high/low temperatures and conditions
+```
+
+Each `## Tool:` heading defines a tool the agent can call. The frontmatter declares binary dependencies and environment variable requirements. Skills compile into JSON artifacts and prompt text during `forge build`.
 
 ## Two Execution Paths
 
@@ -31,48 +70,38 @@ If your skill has no `scripts/` directory, the full SKILL.md body is injected in
 
 This is the **progressive disclosure** model — the LLM only loads detailed skill instructions when it actually needs them, keeping the system prompt compact.
 
-## Complete SKILL.md Frontmatter Reference
+### Legacy List Format
 
-Every field you can use in the YAML frontmatter:
+```markdown
+# Agent Skills
 
-### `name` (required)
-
-Unique identifier for the skill. Used for resolution, trust reports, CLI commands, and directory naming.
-
-```yaml
-name: weather
+- translate
+- summarize
+- classify
 ```
 
-### `description` (required)
+Single-word list items (no spaces, max 64 characters) create name-only skill entries. This format is simpler but provides less metadata.
 
-Human-readable description. Shown in `forge skills list` and the init wizard.
+## YAML Frontmatter Reference
 
-```yaml
-description: Get current weather and forecasts
-```
+### Top-Level Fields
 
-### `category` (optional)
+| Field | Required | Description |
+|-------|----------|-------------|
+| `name` | yes | Skill identifier (kebab-case) |
+| `icon` | yes | Emoji displayed in the TUI skill picker |
+| `category` | yes | Grouping for `forge skills list --category` (e.g., `sre`, `developer`, `research`, `utilities`) |
+| `tags` | yes | Discovery keywords for `forge skills list --tags` (kebab-case) |
+| `description` | yes | One-line summary |
 
-Lowercase kebab-case string. Used for filtering with `forge skills list --category <name>`.
+### `metadata.forge.requires` Block
 
-```yaml
-category: sre
-```
+The `metadata.forge.requires` block declares runtime dependencies:
 
-### `tags` (optional)
-
-Lowercase kebab-case list. Deduplicated automatically. Used for filtering with `forge skills list --tags a,b`.
-
-```yaml
-tags:
-  - kubernetes
-  - incident-response
-  - triage
-```
-
-### `metadata.forge.requires.bins`
-
-Binary dependencies checked via `exec.LookPath` at build time. If a required binary is missing, the skill fails validation.
+- **`bins`** — Binary dependencies that must be in `$PATH` at runtime. Checked via `exec.LookPath` at build time. If a required binary is missing, the skill fails validation.
+- **`env.required`** — Environment variables that must be set. Missing any one blocks the skill from running.
+- **`env.one_of`** — At least one of these environment variables must be set. Useful for multi-provider skills where you need any one API key.
+- **`env.optional`** — Optional environment variables for extended functionality. The skill works without them.
 
 ```yaml
 metadata:
@@ -81,38 +110,15 @@ metadata:
       bins:
         - curl
         - jq
-```
-
-### `metadata.forge.requires.env.required`
-
-Environment variables that must be set. Missing any one blocks the skill from running.
-
-```yaml
-env:
-  required:
-    - DATABASE_URL
-```
-
-### `metadata.forge.requires.env.one_of`
-
-At least one of these must be set. Useful for multi-provider skills where you need any one API key.
-
-```yaml
-env:
-  one_of:
-    - OPENAI_API_KEY
-    - ANTHROPIC_API_KEY
-    - GEMINI_API_KEY
-```
-
-### `metadata.forge.requires.env.optional`
-
-Enhance functionality if present, but the skill works without them.
-
-```yaml
-env:
-  optional:
-    - FIRECRAWL_API_KEY
+      env:
+        required:
+          - DATABASE_URL
+        one_of:
+          - OPENAI_API_KEY
+          - ANTHROPIC_API_KEY
+          - GEMINI_API_KEY
+        optional:
+          - FIRECRAWL_API_KEY
 ```
 
 ### `metadata.forge.egress_domains`
@@ -135,7 +141,7 @@ denied_tools:
   - web_search
 ```
 
-For example, `k8s-incident-triage` denies `http_request` and `web_search` to force all cluster interaction through `kubectl`.
+For example, `k8s-incident-triage` denies `http_request` and `web_search` to force all cluster interaction through `kubectl`. Without this, the LLM might attempt to reach the Kubernetes API directly via HTTP instead of using `kubectl`, bypassing the read-only safety constraints.
 
 ### `metadata.forge.timeout_hint`
 
@@ -164,7 +170,7 @@ trust_hints:
   max_execution_seconds: 30
 ```
 
-Trust is computed, not declared. If you declare `requires_network: false` but list egress domains, the autowire pipeline flags a trust violation.
+Trust is computed, not declared. If you declare `requires_network: false` but list egress domains, the autowire pipeline flags a trust violation. Declaring `requires_filesystem: false` while scripts write to the filesystem is a violation. Declaring `requires_shell: false` while the skill depends on shell binaries is a violation. Mismatches result in a trust violation that blocks the skill from reaching `Trusted` status.
 
 ## Markdown Body
 
@@ -241,15 +247,29 @@ curl -s "https://wttr.in/${LOCATION}?format=j1" | jq '{
 }'
 ```
 
-## Category and Tags
+## Skill Categories & Tags
 
-Both `category` and `tags` use lowercase kebab-case. You can filter skills by both:
+All embedded skills must declare `category`, `tags`, and `icon` in their frontmatter. Categories and tags must be lowercase kebab-case.
+
+```markdown
+---
+name: k8s-incident-triage
+icon: ☸️
+category: sre
+tags:
+  - kubernetes
+  - incident-response
+  - triage
+---
+```
+
+Use categories and tags to filter skills:
 
 ```bash
-# List skills in the sre category
+# List skills by category
 forge skills list --category sre
 
-# List skills with specific tags (AND semantics)
+# Filter by tags (AND semantics — skill must have all listed tags)
 forge skills list --tags kubernetes,incident-response
 
 # Combine both
@@ -257,30 +277,6 @@ forge skills list --category sre --tags kubectl,oncall
 ```
 
 Tags are deduplicated automatically. If you add the same tag twice in the YAML, it appears only once.
-
-## denied_tools
-
-Use `denied_tools` to remove specific tools from the LLM's registry when your skill is active. This is a security measure that prevents the LLM from bypassing the skill's intended interaction path.
-
-For example, `k8s-incident-triage` denies `http_request` and `web_search`:
-
-```yaml
-denied_tools:
-  - http_request
-  - web_search
-```
-
-Without this, the LLM might attempt to reach the Kubernetes API directly via HTTP instead of using `kubectl`, bypassing the read-only safety constraints.
-
-## trust_hints Verification
-
-When you declare `trust_hints`, the autowire pipeline verifies them against the skill's actual contents:
-
-- Declaring `requires_network: false` while listing `egress_domains` is a violation
-- Declaring `requires_filesystem: false` while scripts write to the filesystem is a violation
-- Declaring `requires_shell: false` while the skill depends on shell binaries is a violation
-
-Mismatches result in a trust violation that blocks the skill from reaching `Trusted` status. Trust is computed, not declared — hints are a transparency mechanism, not a bypass.
 
 ## Async Two-Tool Pattern
 
