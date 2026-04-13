@@ -5,143 +5,228 @@ order: 4
 editUrl: https://github.com/initializ/useforge.ai/edit/main/src/content/docs/core-concepts/channels.md
 ---
 
-# Channels
+Channel adapters bridge messaging platforms (Slack, Telegram) to your A2A-compliant agent. Each adapter normalizes platform-specific events into a common `ChannelEvent` format, forwards them to the agent's A2A server, and delivers responses back to the originating platform.
 
-Channels connect your agent to messaging platforms. Instead of interacting through the CLI or HTTP API, your users talk to the agent in Slack or Telegram, and the agent responds in the same thread.
-
-Channels run **with** the agent process — they are not separate services. You start them with `forge run --with <channel>` or `forge channel serve <channel>`.
-
-## Channel Overview
-
-| Channel | Mode | Default Port | Features |
-|---|---|---|---|
-| Slack | Socket Mode | 3000 | Outbound-only WebSocket, mention-aware filtering, processing indicators, file upload for large responses |
-| Telegram | Polling (default), Webhook | 3001 | Long polling (30s timeout), typing indicator, markdown-to-HTML conversion, document upload for large responses |
-
-Both channels are designed for outbound-first operation — no public URLs or webhooks required. Your agent connects outbound to the platform's API.
-
-## Slack
-
-The Slack channel uses **Socket Mode** — an outbound WebSocket connection to Slack's servers. This eliminates the need for public URLs, webhooks, or inbound tunnels.
-
-### Setup
-
-```bash
-forge channel add slack
+```
+  Slack/Telegram  ──→  Channel Plugin  ──→  Router  ──→  A2A Server
+       ↑                                                      │
+       └──────────────── SendResponse ←────────────────────────┘
 ```
 
-This runs an interactive setup that:
-1. Creates a Slack App with Socket Mode enabled
-2. Generates an app-level token with `connections:write` scope
-3. Enables event subscriptions for `message.channels`, `message.im`, and `app_mention`
-4. Adds bot token scopes: `app_mentions:read`, `chat:write`, `channels:history`, `im:history`, `files:write`, `reactions:write`
-5. Validates tokens against the Slack API
-6. Writes configuration to `forge.yaml` and secrets to `.env`
+Both channels use **outbound-only connections** — no public URLs, no ngrok, no inbound webhooks. Telegram webhook mode binds to `127.0.0.1` only with secret token verification.
 
-### Required Environment Variables
+## Supported Channels
 
-| Variable | Purpose |
-|---|---|
-| `SLACK_BOT_TOKEN` | OAuth token for sending messages and uploading files |
-| `SLACK_APP_TOKEN` | App-level token for Socket Mode connection |
+| Channel | Adapter | Mode | Default Port |
+|---------|---------|------|-------------|
+| Slack | `slack.Plugin` | Socket Mode | 3000 |
+| Telegram | `telegram.Plugin` | Polling or Webhook | 3001 |
 
-### Mention-Aware Filtering
+> **Note:** Slack uses Socket Mode — an outbound WebSocket connection from the agent to Slack's servers. No public URL or ngrok is needed for local development.
 
-The bot uses intelligent message filtering:
-
-- **Channel messages** — only responds to @mentions
-- **Threads** — responds to all messages in threads it participates in
-- **Direct messages** — responds to all messages
-
-### Processing Indicators
-
-For queries that take more than a few seconds, the bot provides visual feedback:
-
-- **Eyes reaction** — added to the message when processing starts
-- **Status messages** — interim status updates posted for queries exceeding 15 seconds
-
-## Telegram
-
-The Telegram channel uses long polling by default on port 3001. It periodically fetches new updates from the Telegram Bot API, so you do not need to expose a public URL.
-
-### Features
-
-- **Long polling** — fetches updates with a 30-second timeout, keeping latency low without constant requests
-- **Typing indicator** — sends a "typing..." indicator every 4 seconds while the agent is processing a response
-- **Markdown-to-HTML conversion** — the agent's markdown responses are converted to Telegram-compatible HTML
-
-### Required Environment Variables
-
-| Variable | Purpose |
-|---|---|
-| `TELEGRAM_BOT_TOKEN` | Bot token from BotFather |
-
-### Setup
+## Adding a Channel
 
 ```bash
+# Add Slack adapter to your project
+forge channel add slack
+
+# Add Telegram adapter
 forge channel add telegram
 ```
 
-This runs an interactive setup that prompts you for your bot token, validates it against the Telegram Bot API, and writes the configuration to `forge.yaml` and the secret to `.env`.
+This command:
+1. Generates `{adapter}-config.yaml` with placeholder settings
+2. Updates `.env` with required environment variables
+3. Adds the channel to `forge.yaml`'s `channels` list
+4. Prints setup instructions
 
 ## Running with Channels
 
-Start your agent with a channel connector:
+### Alongside the Agent
 
 ```bash
-forge run --with slack
-```
-
-```bash
-forge run --with telegram
-```
-
-The channel starts **with** the agent as part of the same process. There is no separate channel service to deploy or manage. The agent listens on port 8080 for HTTP/SSE traffic and the channel listens on its own port (3000 for Slack, 3001 for Telegram).
-
-You can run multiple channels simultaneously:
-
-```bash
+# Start agent with Slack and Telegram adapters
 forge run --with slack,telegram
 ```
 
+This starts the A2A dev server and all specified channel adapters in the same process.
+
 ### Standalone Mode
 
-Run a channel adapter separately from the agent:
-
 ```bash
+# Run adapter separately (requires AGENT_URL)
 export AGENT_URL=http://localhost:8080
 forge channel serve slack
 ```
 
-This is useful when you want to run the agent and channel adapters as separate processes, for example in different containers.
+Standalone mode is useful for running adapters as separate services in production. Each adapter connects to the agent's A2A server via HTTP.
+
+## Slack App Setup
+
+Before running the Slack adapter, create and configure a Slack App:
+
+1. **Create a Slack App** at https://api.slack.com/apps -> "Create New App" -> "From scratch"
+2. **Enable Socket Mode** — Settings -> Socket Mode -> toggle **On**
+3. **Generate an App-Level Token** — Basic Information -> "App-Level Tokens" -> "Generate Token and Scopes" -> add the `connections:write` scope -> copy the `xapp-...` token
+4. **Enable Event Subscriptions** — Features -> Event Subscriptions -> toggle **On** -> Subscribe to bot events:
+   - `message.channels` — messages in public channels
+   - `message.im` — direct messages
+   - `app_mention` — @mentions of your bot
+5. **Set Bot Token Scopes** — Features -> OAuth & Permissions -> Bot Token Scopes -> add:
+   - `app_mentions:read`
+   - `chat:write`
+   - `channels:history`
+   - `im:history`
+   - `files:write` (for large response file uploads)
+   - `reactions:write` (for processing indicators)
+6. **Install the App** — Settings -> Install App -> "Install to Workspace" -> copy the `xoxb-...` Bot Token
+7. **Add tokens to `.env`**:
+   ```
+   SLACK_APP_TOKEN=xapp-1-...
+   SLACK_BOT_TOKEN=xoxb-...
+   ```
+8. **Invite the bot** to any channel where you want it active: `/invite @YourBot`
+
+### Mention-Aware Filtering
+
+The Slack adapter resolves the bot's own user ID at startup via `auth.test` and uses it for intelligent message filtering:
+
+- **Channel messages** — the bot only responds when explicitly @mentioned (e.g. `@ForgeBot what's the status?`)
+- **Thread replies** — the bot responds to all messages in a thread it's participating in, unless the message @mentions a different user
+- **Direct messages** — all DMs are processed
+- Bot mentions are stripped from the message text before passing to the LLM, so it sees clean input
+
+### Processing Indicators
+
+When the Slack adapter receives a message:
+
+1. An :eyes: reaction is added immediately to acknowledge receipt
+2. If the handler takes longer than 15 seconds, an interim message is posted: _"Researching, I'll post the result shortly..."_
+3. The :eyes: reaction is removed when the response is ready
+
+This gives users visual feedback that their message is being processed, especially for long-running research queries.
+
+### Telegram Processing Indicators
+
+The Telegram adapter mirrors Slack's processing feedback:
+
+1. A typing indicator ("typing...") is sent immediately and refreshed every 4 seconds
+2. If the handler takes longer than 15 seconds, an interim message is posted: _"Working on it — I'll send the result when ready."_
+3. The typing indicator stops when the response is ready
+
+**Context isolation:** Each handler goroutine runs with an independent context (10-minute timeout), detached from the polling loop. This prevents in-flight tasks from being cancelled if the polling context is interrupted during server restarts or errors.
+
+## Configuration
+
+### Slack (`slack-config.yaml`)
+
+```yaml
+adapter: slack
+settings:
+  app_token_env: SLACK_APP_TOKEN
+  bot_token_env: SLACK_BOT_TOKEN
+```
+
+Environment variables:
+- `SLACK_APP_TOKEN` — Socket Mode app-level token (`xapp-...`)
+- `SLACK_BOT_TOKEN` — Bot user OAuth token (`xoxb-...`)
+
+### Telegram (`telegram-config.yaml`)
+
+```yaml
+adapter: telegram
+webhook_port: 3001
+webhook_path: /telegram/webhook
+settings:
+  bot_token: TELEGRAM_BOT_TOKEN
+  mode: polling
+```
+
+Environment variables:
+- `TELEGRAM_BOT_TOKEN` — Bot token from @BotFather
+
+Mode options:
+- `polling` (default) — Long-polling via `getUpdates`
+- `webhook` — Receives updates via HTTP webhook (loopback-only binding with secret token verification)
+
+### Telegram Webhook Security
+
+When running in webhook mode, the Telegram adapter applies multiple security controls:
+
+| Control | Detail |
+|---------|--------|
+| **Loopback binding** | Webhook server binds to `127.0.0.1:<port>` instead of `0.0.0.0`, preventing direct internet exposure |
+| **Secret token verification** | A 32-byte random secret is generated at startup and registered with Telegram's `setWebhook` API. Incoming requests must include the matching `X-Telegram-Bot-Api-Secret-Token` header; mismatches return 401 |
+| **Content-Type enforcement** | Only `application/json` requests are accepted; others return 415 |
+| **Request body limit** | Bodies are limited to 1 MiB via `http.MaxBytesReader`; oversized payloads return 413 |
+
+### Slack Event Deduplication
+
+The Slack adapter deduplicates events by envelope ID to prevent processing the same message multiple times (common during reconnections or network retries):
+
+- Each envelope ID is recorded in an in-memory cache on first receipt
+- Subsequent envelopes with the same ID are silently skipped after acknowledgment
+- Cache entries older than 5 minutes are evicted automatically every 60 seconds
+- Empty envelope IDs are never considered duplicates
 
 ## Large Response Handling
 
-When an agent response exceeds 4096 characters, Forge uses a split-and-upload strategy instead of dumping a wall of text into the chat.
+When an agent response exceeds 4096 characters (common with research reports), channel adapters automatically split it into a **summary message** and a **file attachment**:
 
-### How It Works
+1. A brief summary (first paragraph, up to 600 characters) is sent as a regular message
+2. The full report is uploaded as a downloadable Markdown file (`research-report.md`)
 
-1. **`SplitSummaryAndReport`** extracts the first paragraph (up to 600 characters) as a summary
-2. The summary is sent as a regular chat message
-3. The full response is uploaded as a file:
-   - **Slack** — uses `files.upload` to send `research-report.md`
-   - **Telegram** — uses `sendDocument` with multipart upload
-4. If the file upload fails, Forge falls back to **chunked messages** — splitting the response into chunks (4000 characters for Slack, 4096 for Telegram) and sending them sequentially
+This works on both Slack (via `files.getUploadURLExternal`) and Telegram (via `sendDocument`). If file upload fails, adapters fall back to chunked messages. Markdown is converted to platform-native formatting (Slack mrkdwn or Telegram HTML).
 
-Large tool outputs are tracked and attached separately to preserve complete, untruncated data.
+Additionally, the runtime tracks large tool outputs (>8000 characters) and attaches them as file parts in the A2A response. This ensures channel adapters receive the complete, untruncated tool output even when the LLM's text summary is truncated by output token limits. JSON tool outputs (e.g. Tavily Research/Search results) are automatically unwrapped into readable markdown before delivery.
 
-### Telegram Retry Logic
+## Container Deployment
 
-If `sendDocument` fails on Telegram, Forge retries without reply context (in case the original message was deleted or inaccessible). If that also fails, it falls back to chunked text messages.
+When channels are configured in `forge.yaml`, the build pipeline automatically:
 
-## Router Timeout
+1. **Includes channel config files** — `slack-config.yaml`, `telegram-config.yaml`, etc. are copied into the Docker build context alongside `forge.yaml`
+2. **Adds `--with` to the entrypoint** — The container entrypoint becomes `["forge", "run", "--host", "0.0.0.0", "--with", "slack,telegram"]`
+3. **Handles auth loopback** — When [external auth](runtime.md#external-authentication) is configured, channel adapters authenticate to the A2A server using an internal token, bypassing the external auth provider
 
-The channel router uses a 360-second timeout to accommodate long-running skills. Skills like deep research or incident triage can take several minutes, and the default HTTP timeout would cut them off.
+Pass channel secrets via environment variables:
 
-## Custom Adapters
+```bash
+docker run \
+  -e SLACK_APP_TOKEN=xapp-... \
+  -e SLACK_BOT_TOKEN=xoxb-... \
+  -e FORGE_AUTH_URL=https://auth.example.com/verify \
+  my-agent
+```
 
-Developers can create custom channel adapters by implementing the `ChannelPlugin` interface with methods for initialization, starting, stopping, event normalization, and response delivery.
+## Docker Compose Integration
 
-## What's Next
+```bash
+# Package agent with channel adapter sidecars
+forge package --with-channels
+```
 
-- [Memory System](/docs/core-concepts/memory-system) — session memory for within-task context and long-term memory for cross-session knowledge
+This generates a `docker-compose.yaml` with:
+- An `agent` service running the A2A server
+- Adapter services (e.g., `slack-adapter`, `telegram-adapter`) connecting to the agent
+
+## Writing a Custom Channel Adapter
+
+Implement the `channels.ChannelPlugin` interface:
+
+```go
+type ChannelPlugin interface {
+    Name() string
+    Init(cfg ChannelConfig) error
+    Start(ctx context.Context, handler EventHandler) error
+    Stop() error
+    NormalizeEvent(raw []byte) (*ChannelEvent, error)
+    SendResponse(event *ChannelEvent, response *a2a.Message) error
+}
+```
+
+### Steps
+
+1. Create a new package under `forge-plugins/channels/yourplatform/`.
+2. Implement `ChannelPlugin`.
+3. Register the plugin in the channel registry.
+4. Add config generation in `generateChannelConfig()` and env vars in `generateEnvVars()`.

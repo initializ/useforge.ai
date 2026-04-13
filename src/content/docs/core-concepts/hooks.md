@@ -5,8 +5,6 @@ order: 7
 editUrl: https://github.com/initializ/useforge.ai/edit/main/src/content/docs/core-concepts/hooks.md
 ---
 
-# Hook System
-
 The hook system allows custom logic to run at key points in the LLM agent loop. Hooks can observe, modify context, or block execution.
 
 ## Overview
@@ -24,7 +22,7 @@ Hooks fire synchronously during the agent loop and can:
 | `BeforeLLMCall` | Before each LLM API call | `Messages`, `TaskID`, `CorrelationID` |
 | `AfterLLMCall` | After each LLM API call | `Messages`, `Response`, `TaskID`, `CorrelationID` |
 | `BeforeToolExec` | Before each tool execution | `ToolName`, `ToolInput`, `TaskID`, `CorrelationID` |
-| `AfterToolExec` | After each tool execution | `ToolName`, `ToolInput`, `ToolOutput`, `Error`, `TaskID`, `CorrelationID` |
+| `AfterToolExec` | After each tool execution | `ToolName`, `ToolInput`, `ToolOutput` (mutable), `Error`, `TaskID`, `CorrelationID` |
 | `OnError` | When an LLM call fails | `Error`, `TaskID`, `CorrelationID` |
 | `OnProgress` | During tool execution | `Phase`, `ToolName`, `StatusMessage` |
 
@@ -77,6 +75,34 @@ hooks.Register(engine.BeforeToolExec, func(ctx context.Context, hctx *engine.Hoo
     return nil
 })
 ```
+
+## Output Redaction
+
+`AfterToolExec` hooks can modify `hctx.ToolOutput` to redact sensitive content before it enters the LLM context. The agent loop reads back `ToolOutput` from the `HookContext` after all hooks fire.
+
+The runner registers a guardrail hook that scans tool output for secrets and PII patterns. The hook passes `hctx.ToolName` to the guardrail engine, enabling per-tool exemptions via `allow_tools` config. See [Tool Output Scanning](security/guardrails.md#tool-output-scanning) for details.
+
+```go
+hooks.Register(engine.AfterToolExec, func(ctx context.Context, hctx *engine.HookContext) error {
+    hctx.ToolOutput = strings.ReplaceAll(hctx.ToolOutput, secret, "[REDACTED]")
+    return nil
+})
+```
+
+## Skill Guardrail Hooks
+
+When skills declare guardrails in their `SKILL.md` frontmatter, the runner registers four hooks that enforce skill-specific security policies across the entire agent loop:
+
+| Hook Point | Guardrail Type | Behavior |
+|------------|---------------|----------|
+| `BeforeLLMCall` | `deny_prompts` | Blocks user messages that probe agent capabilities (e.g., "what tools can you run") |
+| `AfterLLMCall` | `deny_responses` | Replaces LLM responses that enumerate internal binary names |
+| `BeforeToolExec` | `deny_commands` | Blocks `cli_execute` commands matching deny patterns (e.g., `kubectl get secrets`) |
+| `AfterToolExec` | `deny_output` | Blocks or redacts `cli_execute` output matching deny patterns (e.g., Secret manifests) |
+
+These hooks complement the global guardrail hooks (secrets/PII scanning) and fire in addition to them. Skill guardrails are loaded from build artifacts or parsed at runtime from `SKILL.md` — no `forge build` step is required.
+
+For pattern syntax and configuration, see [Skill Guardrails](security/guardrails.md#skill-guardrails).
 
 ## Audit Logging
 

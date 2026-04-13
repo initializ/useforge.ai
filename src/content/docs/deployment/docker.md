@@ -5,25 +5,49 @@ order: 1
 editUrl: https://github.com/initializ/useforge.ai/edit/main/src/content/docs/deployment/docker.md
 ---
 
-# Docker
+Forge agents can be packaged as container images and deployed to Docker, Kubernetes, or air-gapped environments.
 
-`forge build` generates a Dockerfile alongside other build artifacts in `.forge-output/`. You use standard container tooling to build and run the image — Forge handles the Dockerfile authoring so you do not need to write one yourself.
-
-## Building the Container
+## Building Container Images
 
 `forge package` builds your agent into a container image using Docker, Podman, or Buildah — whichever is available on your system. It reads the generated Dockerfile from `.forge-output/` and produces a tagged image.
 
 ```bash
+# Build a container image (auto-detects Docker/Podman/Buildah)
 forge package
+
+# Production build (rejects dev tools and dev-open egress)
+forge package --prod
+
+# Build and push to registry
+forge package --registry ghcr.io/myorg --push
+
+# Generate docker-compose with channel sidecars
+forge package --with-channels
+
+# Export for Initializ Command platform
+forge export --pretty --include-schemas
 ```
 
-For production deployments, use the `--prod` flag:
+`forge package` generates a Dockerfile, Kubernetes manifests, and NetworkPolicy. Use `--prod` to strip dev tools and enforce strict egress. Use `--verify` to smoke-test the built container.
+
+## Production Build Checks
+
+Production builds (`--prod`) enforce:
+
+- No `dev-open` egress mode
+- No dev-only tools (`local_shell`, `local_file_browser`)
+- Secret provider chain must include `env` (not just `encrypted-file`)
+- `.dockerignore` must exist if a Dockerfile is generated
+
+## Docker Compose
 
 ```bash
-forge package --prod
+forge package --with-channels
 ```
 
-The `--prod` flag enforces production safety checks. If your agent is configured with `dev-open` egress mode, the build is rejected. You must use `strict` or `standard` egress profiles before packaging for production.
+This generates a `docker-compose.yaml` with:
+- An `agent` service running the A2A server
+- Adapter services (e.g., `slack-adapter`, `telegram-adapter`) connecting to the agent
 
 ## Secrets in Containers
 

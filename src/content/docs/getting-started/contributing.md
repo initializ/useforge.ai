@@ -5,8 +5,6 @@ order: 5
 editUrl: https://github.com/initializ/useforge.ai/edit/main/src/content/docs/getting-started/contributing.md
 ---
 
-# Contributing to Forge
-
 ## Development Setup
 
 ### Prerequisites
@@ -122,10 +120,17 @@ Test fixtures live in `testdata/` at the project root:
 ### Running Tests
 
 ```bash
-make test              # All unit tests
-make test-integration  # Integration tests
-make cover             # Coverage report
-go test -v ./internal/pipeline/...  # Specific package
+# All unit tests
+make test
+
+# Integration tests
+make test-integration
+
+# Coverage report
+make cover
+
+# Specific package
+go test -v ./internal/pipeline/...
 ```
 
 ## Code Style

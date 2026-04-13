@@ -5,208 +5,366 @@ order: 1
 editUrl: https://github.com/initializ/useforge.ai/edit/main/src/content/docs/skills/embedded-skills.md
 ---
 
-# Embedded Skills Reference
+Skills are a progressive disclosure mechanism for defining agent capabilities in a structured, human-readable format. They compile into container artifacts during `forge build`.
 
-Forge ships with 12 embedded skills compiled into the binary via `go:embed`. These skills are always trusted, available offline, and shown in the `forge init` wizard. You never need to install or configure them separately — they are part of every Forge installation.
+Skills bridge the gap between high-level capability descriptions and the tool-calling system. Each skill lives in its own subdirectory under `skills/` with a `SKILL.md` file that defines what the agent can do. Forge compiles these into JSON artifacts and prompt text for the container.
 
-## Embedded Skills Registry
+## Built-in Skills
 
-| ID | Name | Category | Bins | Keys | Egress | Registration |
-|---|---|---|---|---|---|---|
-| `summarize` | Summarize | — | `summarize` | one_of: OPENAI_API_KEY, ANTHROPIC_API_KEY, XAI_API_KEY, GEMINI_API_KEY | (via model provider) | Script -> SkillTool |
-| `github` | GitHub | — | `gh` | GH_TOKEN | api.github.com | Binary -> system prompt |
-| `weather` | Weather | — | `curl` | none | wttr.in, api.open-meteo.com | Binary -> system prompt |
-| `tavily-search` | Tavily Web Search | — | `curl`, `jq` | TAVILY_API_KEY | api.tavily.com | Script -> SkillTool |
-| `tavily-research` | Tavily Deep Research | — | `curl`, `jq` | TAVILY_API_KEY | api.tavily.com | Script -> SkillTool (2 tools) |
-| `k8s-incident-triage` | K8s Incident Triage | sre | `kubectl` | none | $K8S_API_DOMAIN | Binary -> system prompt |
-| `k8s-pod-rightsizer` | K8s Pod Rightsizer | sre | `kubectl` | none | $K8S_API_DOMAIN | Binary -> system prompt |
-| `code-review` | Code Review | developer | `curl`, `jq`, `git` | one_of: ANTHROPIC_API_KEY, OPENAI_API_KEY | api.anthropic.com, api.openai.com | Script -> SkillTool |
-| `code-review-standards` | Code Review Standards | developer | `curl`, `jq`, `git` | one_of: ANTHROPIC_API_KEY, OPENAI_API_KEY | api.anthropic.com, api.openai.com | Script -> SkillTool |
-| `code-review-github` | GitHub Code Review | developer | `curl`, `jq`, `git`, `gh` | one_of: ANTHROPIC_API_KEY, OPENAI_API_KEY; GH_TOKEN | api.anthropic.com, api.openai.com, api.github.com | Script -> SkillTool |
-| `codegen-react` | React Code Generator | developer | `curl`, `jq` | one_of: ANTHROPIC_API_KEY, OPENAI_API_KEY | api.anthropic.com, api.openai.com | Script -> SkillTool |
-| `codegen-html` | HTML Code Generator | developer | `curl`, `jq` | one_of: ANTHROPIC_API_KEY, OPENAI_API_KEY | api.anthropic.com, api.openai.com | Script -> SkillTool |
+| Skill | Icon | Category | Description | Scripts |
+|-------|------|----------|-------------|---------|
+| `github` | :octopus: | developer | Clone repos, create issues/PRs, query GitHub API, and manage git workflows | `github-clone.sh`, `github-checkout.sh`, `github-commit.sh`, `github-push.sh`, `github-create-pr.sh`, `github-status.sh`, `github-list-prs.sh`, `github-get-user.sh`, `github-list-stargazers.sh`, `github-list-forks.sh`, `github-pr-author-profiles.sh`, `github-stargazer-profiles.sh` |
+| `code-agent` | :robot: | developer | Autonomous code generation, modification, and project scaffolding | — (builtin tools) |
+| `weather` | :sun_behind_small_cloud: | utilities | Get weather data for a location | — (binary-backed) |
+| `tavily-search` | :mag: | research | Search the web using Tavily AI search API | `tavily-search.sh` |
+| `tavily-research` | :microscope: | research | Deep multi-source research via Tavily API | `tavily-research.sh`, `tavily-research-poll.sh` |
+| `k8s-incident-triage` | :wheel_of_dharma: | sre | Read-only Kubernetes incident triage using kubectl | — (binary-backed) |
+| `k8s-cost-visibility` | :moneybag: | sre | Estimate K8s infrastructure costs (compute, storage, LoadBalancer) with cost attribution reports | `k8s-cost-visibility.sh` |
+| `k8s-pod-rightsizer` | :balance_scale: | sre | Analyze workload metrics and produce CPU/memory rightsizing recommendations | — (binary-backed) |
+| `code-review` | :mag_right: | developer | AI-powered code review for diffs and files (supports Anthropic API, OpenAI Chat Completions, and OpenAI Responses/Codex API with streaming) | `code-review-diff.sh`, `code-review-file.sh` |
+| `code-review-standards` | :straight_ruler: | developer | Initialize and manage code review standards | — (template-based) |
+| `code-review-github` | :octopus: | developer | Post code review results to GitHub PRs | — (binary-backed) |
+| `codegen-react` | :atom_symbol: | developer | Scaffold and iterate on Vite + React apps | `codegen-react-scaffold.sh`, `codegen-react-read.sh`, `codegen-react-write.sh`, `codegen-react-run.sh` |
+| `codegen-html` | :globe_with_meridians: | developer | Scaffold standalone Preact + HTM apps (zero dependencies) | `codegen-html-scaffold.sh`, `codegen-html-read.sh`, `codegen-html-write.sh` |
 
-**Registration types:**
+## Skills as First-Class Tools
 
-- **Script -> SkillTool** — the skill has a `scripts/` directory. Each `## Tool:` section in SKILL.md becomes a named tool the LLM calls directly.
-- **Binary -> system prompt** — the skill's full SKILL.md body is injected into the system prompt catalog. The LLM loads instructions on demand via `read_skill` and invokes actions through `cli_execute`.
+Script-backed skills are automatically registered as **first-class LLM tools** at runtime. When a skill has scripts in `skills/scripts/`, Forge:
 
-## Adding Embedded Skills
+1. Parses the skill's SKILL.md for tool definitions, descriptions, and input schemas
+2. Creates a named tool for each `## Tool:` entry (e.g., `tavily_research` becomes a tool the LLM can call directly)
+3. Executes the skill's shell script with JSON input when the LLM invokes it
 
-To add any embedded skill to your project, use `forge skills add`:
+This means the LLM sees skill tools alongside builtins like `web_search` and `http_request` — no generic `cli_execute` indirection needed.
 
-```bash
-forge skills add weather
+For skills **without** scripts (binary-backed skills like `k8s-incident-triage`), Forge injects the full skill instructions into the system prompt. The complete SKILL.md body — including triage steps, detection heuristics, output structure, and safety constraints — is included inline so the LLM follows the skill protocol without needing an extra tool call. Skills are invoked via `cli_execute` with the declared binary dependencies.
+
+```
+┌─────────────────────────────────────────────────┐
+│                LLM Tool Registry                │
+├─────────────────┬───────────────────────────────┤
+│  Builtins       │  web_search, http_request     │
+│  Skill Tools    │  tavily_research, codegen_*   │  ← auto-registered from scripts
+│  read_skill     │  load any SKILL.md on demand  │
+│  cli_execute    │  run approved binaries        │
+├─────────────────┴───────────────────────────────┤
+│  System Prompt: full skill instructions inline  │  ← binary-backed skills
+└─────────────────────────────────────────────────┘
 ```
 
-This copies the SKILL.md and all scripts into your project's `skills/` directory, checks for required environment variables, and deduplicates `.env` entries. You can then customize the skill's instructions or extend it with additional tools.
+## Skill Execution Security
 
-To see all available embedded skills:
+Skill scripts run in a restricted environment via `SkillCommandExecutor`:
 
-```bash
-forge skills list
-```
+- **Isolated environment**: Only `PATH`, `HOME`, and explicitly declared env vars are passed through
+- **OAuth token resolution**: When `OPENAI_API_KEY` is set to `__oauth__`, the executor resolves OAuth credentials and injects the access token, `OPENAI_BASE_URL`, and the configured model as `REVIEW_MODEL`
+- **Configurable timeout**: Each skill declares a `timeout_hint` in its YAML frontmatter (e.g., 300s for research)
+- **No shell execution**: Scripts run via `bash <script> <json-input>`, not through a shell interpreter
+- **Egress proxy enforcement**: When egress mode is `allowlist` or `deny-all`, a local HTTP/HTTPS proxy is started and `HTTP_PROXY`/`HTTPS_PROXY` env vars are injected into subprocess environments, ensuring `curl`, `wget`, Python `requests`, and other HTTP clients route through the same domain allowlist used by in-process tools
 
-## Deep Dive: k8s-incident-triage
+### Symlink Escape Detection
 
-The `k8s-incident-triage` skill is the most complex embedded skill. It provides a structured Kubernetes incident triage workflow designed for on-call engineers and SREs.
+The skill scanner validates symlinks when a filesystem root path is available. Symlinks that resolve outside the root directory are skipped with a warning log. This prevents malicious symlinks in skill directories from escaping the project boundary. The scanner exposes `ScanWithRoot(fsys, rootPath)` for callers that need symlink validation, while the original `Scan(fsys)` remains backward-compatible.
 
-### Metadata
+### Trust Policy Defaults
 
-- **Category:** sre
-- **Tags:** kubernetes, incident-response, triage, reliability, observability, kubectl, oncall, runbooks
+The default trust policy requires checksum verification (`RequireChecksum: true`). Skills loaded without a signature emit a warning log at scan time. Signature verification remains opt-in (`RequireSignature: false`).
 
-### Environment Variables
+## Skill Guardrails
 
-All environment variables are optional — the skill works with kubectl defaults when they are not set.
+Skills can declare domain-specific guardrails in their `SKILL.md` frontmatter to enforce security policies at runtime. These guardrails operate at four interception points in the agent loop, preventing unauthorized commands, data exfiltration, capability enumeration, and binary name disclosure.
 
-| Variable | Description |
-|---|---|
-| `KUBECONFIG` | Path to kubeconfig file |
-| `K8S_API_DOMAIN` | Kubernetes API server domain (used for dynamic egress) |
-| `DEFAULT_NAMESPACE` | Namespace to triage if none specified |
-| `TRIAGE_MAX_PODS` | Maximum number of pods to inspect (limits scope) |
-| `TRIAGE_LOG_LINES` | Number of log lines to retrieve per container |
+### Configuration
 
-### Dynamic Egress
-
-The `K8S_API_DOMAIN` variable is expanded at runtime and added to the egress allowlist. This means the skill works with any Kubernetes cluster without hardcoding API server domains in the allowlist.
-
-### Denied Tools
-
-The skill declares two denied tools:
+Add a `guardrails` block under `metadata.forge` in `SKILL.md`:
 
 ```yaml
-denied_tools:
-  - http_request
-  - web_search
+metadata:
+  forge:
+    guardrails:
+      deny_commands:
+        - pattern: '\bget\s+secrets?\b'
+          message: "Listing Kubernetes secrets is not permitted"
+      deny_output:
+        - pattern: 'kind:\s*Secret'
+          action: block
+        - pattern: 'token:\s*[A-Za-z0-9+/=]{40,}'
+          action: redact
+      deny_prompts:
+        - pattern: '\b(approved|allowed|available)\b.{0,40}\b(tools?|binaries)\b'
+          message: "I help with K8s cost analysis. Ask about cluster costs."
+      deny_responses:
+        - pattern: '\b(kubectl|jq|awk|bc|curl)\b.*\b(kubectl|jq|awk|bc|curl)\b.*\b(kubectl|jq|awk|bc|curl)\b'
+          message: "I can analyze cluster costs. What would you like to know?"
 ```
 
-This prevents the LLM from bypassing `kubectl` to reach the Kubernetes API directly or searching the web for cluster information. All cluster interaction must go through `kubectl`.
+### Guardrail Types
 
-### 7-Step Triage Workflow
+| Type | Direction | Purpose |
+|------|-----------|---------|
+| `deny_commands` | Input | Block `cli_execute` commands matching patterns (e.g., `kubectl get secrets`) |
+| `deny_output` | Output | Block or redact tool output matching patterns (e.g., Secret manifests, tokens) |
+| `deny_prompts` | Input | Block user messages probing agent capabilities (e.g., "what tools can you run") |
+| `deny_responses` | Output | Replace LLM responses that enumerate internal binary names |
 
-The skill guides the LLM through a structured 7-step triage process:
+### Capability Enumeration Prevention
 
-1. **Preconditions** — verify kubectl is available and the target namespace exists
-2. **Health snapshot** — `kubectl get pods` to identify unhealthy pods
-3. **Events** — `kubectl get events --sort-by=.lastTimestamp` to find recent issues
-4. **Describe** — `kubectl describe pod` on flagged pods for detailed status
-5. **Node diagnostics** — `kubectl describe node` if pods are in Pending or node-related states
-6. **Logs** — `kubectl logs` on crashing or restarting containers
-7. **Metrics** — `kubectl top pods` to check resource consumption
+The `deny_prompts` and `deny_responses` guardrails form a layered defense against capability enumeration attacks:
 
-### Detection Heuristics
+1. **Input-side** (`deny_prompts`) — Intercepts user messages that probe for available tools, binaries, or commands and redirects to the skill's functional description
+2. **Output-side** (`deny_responses`) — Catches LLM responses that list 3+ binary names and replaces the entire response with a functional capability description
 
-The skill recognizes these common failure patterns:
+Additionally, skill `Description()` methods and system prompt catalog entries use generic descriptions instead of listing binary names.
 
-- **CrashLoop** — containers in CrashLoopBackOff
-- **OOMKilled** — containers killed by the OOM killer
-- **Image Pull** — ImagePullBackOff or ErrImagePull
-- **Scheduling** — pods stuck in Pending due to resource constraints
-- **Probe Failure** — readiness or liveness probes failing
-- **PVC/Volume** — volume mount failures or pending PVCs
-- **Node Pressure** — MemoryPressure, DiskPressure, or PIDPressure conditions
-- **Rollout Stuck** — deployments with unavailable replicas
+## Tavily Research Skill
 
-### Dual Input
-
-The skill accepts both natural language and structured JSON input:
-
-```
-triage payments-prod
-```
-
-```json
-{"namespace": "payments-prod", "max_pods": 20, "log_lines": 100}
-```
-
-### Safety Constraints
-
-The skill is strictly read-only. It uses only these kubectl operations:
-
-- `get`, `describe`, `logs`, `top`
-
-It never executes:
-
-- `apply`, `patch`, `delete`, `exec`, `port-forward`, `scale`, `rollout restart`
-
-It never prints Secret values. All output is safe to share in incident channels.
-
-## Deep Dive: tavily-research
-
-The `tavily-research` skill demonstrates the async two-tool pattern — a design for skills that perform long-running operations without blocking the LLM.
-
-### Two-Tool Architecture
-
-The skill registers two tools:
-
-1. **`tavily_research`** — submits a research request and returns a `request_id` immediately
-2. **`tavily_research_poll`** — handles internal polling (10-second intervals, up to 280 seconds) and returns the complete report
-
-### How It Works
-
-When the LLM calls `tavily_research`, the submit script fires a request to the Tavily API and returns a `request_id`. The LLM then calls `tavily_research_poll` with that `request_id`. The poll script blocks internally, checking for results every 10 seconds for up to 280 seconds. The LLM calls `tavily_research_poll` once and receives the complete research report when it finishes.
-
-### Timeout Handling
-
-The skill declares `timeout_hint: 300` in its frontmatter. This tells the `SkillCommandExecutor` to allow up to 300 seconds before killing the process, preventing premature termination of the poll script.
-
-### Scripts
-
-The skill includes two scripts in its `scripts/` directory:
-
-- `tavily-research.sh` — the submit script
-- `tavily-research-poll.sh` — the poll script
-
-Each script corresponds to a `## Tool:` section in the SKILL.md.
-
-## Deep Dive: code-review
-
-The `code-review` skill provides AI-powered code review that analyzes diffs for bugs, security issues, and improvements.
-
-### Variants
-
-| Skill | Description |
-|---|---|
-| `code-review` | Review local diffs and files |
-| `code-review-standards` | Review with configurable coding standards |
-| `code-review-github` | Review GitHub PRs directly via the `gh` CLI |
-
-### Features
-
-- **Read-only analysis** — never modifies code
-- **Structured JSON output** with severity levels (critical, warning, suggestion)
-- **Security scanning** — detects common vulnerabilities (injection, auth bypass, secrets in code)
-- **Supports local diffs and GitHub PRs**
-
-### code-review-github
-
-The GitHub variant adds PR integration:
+The `tavily-research` skill demonstrates the **async two-tool pattern** for long-running operations:
 
 ```bash
-forge skills add code-review-github
+forge skills add tavily-research
 ```
 
-Requires `GH_TOKEN` for GitHub API access. Can review open PRs, comment on specific lines, and suggest changes.
+This registers two tools:
 
-## Deep Dive: codegen-react and codegen-html
+| Tool | Purpose | Behavior |
+|------|---------|----------|
+| `tavily_research` | Submit a research query | Returns immediately with a `request_id` |
+| `tavily_research_poll` | Wait for results | Polls internally for up to ~5 minutes, returns complete report |
 
-The code generation skills produce production-ready UI components.
+The LLM uses them in sequence: submit the research request, inform the user that research is in progress, then call the poll tool which handles all waiting internally. The complete report (1000-3000 words with sources) is returned to the LLM and delivered to the user.
 
-### codegen-react
+**Research models:**
 
-Generates React components with TypeScript, hooks, and common patterns. Outputs clean, tested code following modern React conventions.
+| Model | Speed | Use Case |
+|-------|-------|----------|
+| `mini` | ~30s | Quick overviews, simple topics |
+| `pro` | ~300s | Comprehensive analysis, complex topics |
+| `auto` | Varies | Let the API choose based on query complexity |
 
-### codegen-html
+Requires: `curl`, `jq`, `TAVILY_API_KEY` environment variable.
 
-Generates standalone HTML pages with inline CSS and JavaScript. Useful for prototyping, landing pages, and email templates.
+## Kubernetes Incident Triage Skill
 
-## Skill Builder UI
+The `k8s-incident-triage` skill performs read-only triage of Kubernetes workloads using `kubectl`:
 
-The [Web Dashboard](/docs/reference/web-dashboard) includes a **Skill Builder** — an AI-powered conversational tool for creating custom skills. Access it via the **Build Skill** button on any agent card.
+```bash
+forge skills add k8s-incident-triage
+```
 
-The Skill Builder uses the agent's own LLM provider to generate valid SKILL.md files and optional helper scripts through a chat conversation. It validates the generated skill against the SKILL.md format before saving.
+This registers a single tool:
+
+| Tool | Purpose | Behavior |
+|------|---------|----------|
+| `k8s_triage` | Diagnose unhealthy workloads, pods, or namespaces | Runs read-only kubectl commands, produces a structured triage report |
+
+The skill accepts two input modes:
+
+- **Human mode** — natural language like `"triage payments-prod"` or `"why are pods pending in checkout-prod?"`
+- **Automation mode** — structured JSON with namespace, workload, pod, and diagnostic options
+
+**Triage process:**
+
+1. Verify cluster access (kubectl version, cluster-info)
+2. Fast health snapshot (pods, deployments, statefulsets)
+3. Events timeline (FailedScheduling, probe failures, evictions)
+4. Describe pods & workloads (container state, restart counts, probes)
+5. Node diagnostics (optional — NotReady, memory/disk pressure)
+6. Logs (optional — with previous container logs for CrashLoopBackOff)
+7. Metrics (optional — via metrics-server)
+
+**Detection heuristics** classify issues into: CrashLoop, OOMKilled, Image Pull Failure, Scheduling Constraint, Probe Failure, PVC/Volume Failure, Node Pressure/Eviction, Rollout Stuck. Each finding includes a hypothesis, evidence, confidence score (0.0-1.0), and recommended next commands.
+
+**Safety:** This skill is strictly read-only. It never executes `apply`, `patch`, `delete`, `exec`, `port-forward`, `scale`, or `rollout restart`. It never prints Secret values.
+
+Requires: `kubectl`, optional `KUBECONFIG`, `K8S_API_DOMAIN`, `DEFAULT_NAMESPACE` environment variables.
+
+## Kubernetes Pod Rightsizer Skill
+
+The `k8s-pod-rightsizer` skill analyzes real workload metrics (Prometheus or metrics-server fallback) and produces policy-constrained CPU/memory rightsizing recommendations:
+
+```bash
+forge skills add k8s-pod-rightsizer
+```
+
+This skill operates in three modes:
+
+| Mode | Purpose | Mutates Cluster |
+|------|---------|-----------------|
+| `dry-run` | Report recommendations only (default) | No |
+| `plan` | Generate strategic merge patch YAMLs | No |
+| `apply` | Execute patches with rollback bundle | Yes (requires `i_accept_risk: true`) |
+
+**Key features:**
+
+- Deterministic formulas — no LLM-based guessing for recommendations
+- Policy model with per-namespace and per-workload overrides (safety factors, min/max bounds, step constraints)
+- Prometheus p95 metrics with metrics-server fallback
+- Automatic rollback bundle generation in apply mode
+- Workload classification: over-provisioned, under-provisioned, right-sized, limit-bound, insufficient-data
+
+**Apply workflow:** The skill's built-in `mode=apply` handles rollback bundles, strategic merge patches via `kubectl patch`, and rollout verification. Do not manually run `kubectl apply -f` — use `mode=apply` with `i_accept_risk: true` instead.
+
+Requires: `bash`, `kubectl`, `jq`, `curl`. Optional: `KUBECONFIG`, `K8S_API_DOMAIN`, `PROMETHEUS_URL`, `PROMETHEUS_TOKEN`, `POLICY_FILE`, `DEFAULT_NAMESPACE`.
+
+## Kubernetes Cost Visibility Skill
+
+The `k8s-cost-visibility` skill estimates Kubernetes infrastructure costs by querying cluster node, pod, PVC/PV, and LoadBalancer data via `kubectl`, applying cloud pricing models, and producing cost attribution reports:
+
+```bash
+forge skills add k8s-cost-visibility
+```
+
+This registers a single tool:
+
+| Tool | Purpose | Behavior |
+|------|---------|----------|
+| `k8s_cost_visibility` | Estimate cluster costs and produce attribution reports | Queries nodes, pods, PVCs, PVs, and services; applies pricing; returns cost breakdown |
+
+**Cost dimensions tracked:**
+
+| Dimension | Source | Default Rate |
+|-----------|--------|-------------|
+| Compute (CPU + memory) | Node instance types, pod resource requests | Auto-detected from cloud CLI or $0.031611/vCPU-hr |
+| Storage (PVC/PV) | PVC capacities, storage classes | $0.10/GiB/month |
+| LoadBalancer | Services with `type: LoadBalancer` | $18.25/month each |
+| Waste | Unbound Persistent Volumes | Flagged with estimated monthly waste |
+
+**Grouping modes:** `namespace` (includes storage + LB columns), `workload`, `node`, `label:<key>`, `annotation:<key>`.
+
+**Pricing modes:** `auto` (detect cloud CLI), `aws`, `gcp`, `azure`, `static` (built-in rates), `custom:<file.json>` (user-provided rates).
+
+**Safety:** This skill is strictly read-only. It only uses `kubectl get` commands (nodes, pods, pvc, pv, svc) — never `apply`, `delete`, `patch`, `exec`, or `scale`.
+
+Requires: `kubectl`, `jq`, `awk`, `bc`. Optional: `KUBECONFIG`, `K8S_API_DOMAIN`, `DEFAULT_NAMESPACE`, `AWS_REGION`, `AZURE_SUBSCRIPTION_ID`, `GCP_PROJECT`.
+
+## Codegen React Skill
+
+The `codegen-react` skill scaffolds and iterates on **Vite + React** applications with Tailwind CSS:
+
+```bash
+forge skills add codegen-react
+```
+
+This registers four tools:
+
+| Tool | Purpose | Behavior |
+|------|---------|----------|
+| `codegen_react_scaffold` | Create a new project | Generates package.json, Vite config, React components with Tailwind CSS and Forge dark theme |
+| `codegen_react_run` | Start the dev server | Runs `npm install` + `npm run dev`, auto-opens browser, returns server URL and PID |
+| `codegen_react_read` | Read project files | Returns file content or directory listing (excludes `node_modules/`, `.git/`) |
+| `codegen_react_write` | Write/update files | Creates or updates files with path traversal prevention; Vite hot-reloads automatically |
+
+**Iteration workflow:**
+
+1. Scaffold the project with `codegen_react_scaffold`
+2. Start the dev server with `codegen_react_run` — installs deps, opens browser
+3. Read/write files with `codegen_react_read` / `codegen_react_write` — Vite hot-reloads on save
+4. Repeat step 3 to iterate on the UI
+
+**Scaffold output:** `package.json` (React 19, Vite 6), `vite.config.js`, `index.html` (with Tailwind CDN), `src/main.jsx`, `src/App.jsx` (Tailwind utility classes), `src/App.css`, `.gitignore`.
+
+**Safety:** Output directories must be under `$HOME` or `/tmp`. Path traversal (`..`, absolute paths) is rejected. Non-empty directories require `force: true`.
+
+Requires: `node`, `npx`, `jq`. Egress: `registry.npmjs.org`, `cdn.jsdelivr.net`, `cdn.tailwindcss.com`.
+
+## Codegen HTML Skill
+
+The `codegen-html` skill scaffolds standalone **Preact + HTM** applications with zero local dependencies:
+
+```bash
+forge skills add codegen-html
+```
+
+This registers three tools:
+
+| Tool | Purpose | Behavior |
+|------|---------|----------|
+| `codegen_html_scaffold` | Create a new project | Generates HTML with Preact + HTM via CDN and Tailwind CSS; supports single-file and multi-file modes |
+| `codegen_html_read` | Read project files | Returns file content or directory listing |
+| `codegen_html_write` | Write/update files | Creates or updates files with path traversal prevention |
+
+**Two scaffold modes:**
+
+| Mode | Files | Use Case |
+|------|-------|----------|
+| `single-file` | One `index.html` with inline JS | Quick prototypes, shareable demos |
+| `multi-file` | `index.html`, `app.js`, `components/Counter.js` | Larger apps with component separation |
+
+**Key differences from codegen-react:** No Node.js required. No build step. No `npm install`. Just open `index.html` in a browser. Uses `class` (not `className`) since HTM maps directly to DOM attributes.
+
+**Safety:** Same restrictions as codegen-react — output under `$HOME` or `/tmp`, path traversal prevention, `force: true` for non-empty directories.
+
+Requires: `jq`. Egress: `cdn.tailwindcss.com`, `esm.sh`.
+
+## GitHub Skill
+
+The `github` skill provides a complete git + GitHub workflow through script-backed tools:
+
+```bash
+forge skills add github
+```
+
+This registers fourteen tools:
+
+| Tool | Purpose |
+|------|---------|
+| `github_clone` | Clone a repository and create a feature branch |
+| `github_checkout` | Switch to or create a branch |
+| `github_status` | Show git status for a cloned project |
+| `github_commit` | Stage and commit changes |
+| `github_push` | Push a feature branch to the remote |
+| `github_create_pr` | Create a pull request |
+| `github_create_issue` | Create a GitHub issue |
+| `github_list_issues` | List open issues for a repository |
+| `github_list_prs` | List pull requests with state filter and pagination |
+| `github_get_user` | Get a GitHub user's public profile |
+| `github_list_stargazers` | List stargazers for a repository with pagination |
+| `github_list_forks` | List forks of a repository with pagination |
+| `github_pr_author_profiles` | List PR authors and fetch their full profiles (compound 2-step) |
+| `github_stargazer_profiles` | List stargazers and fetch their full profiles (compound 2-step) |
+
+**Workflow:** Clone -> explore -> edit -> status -> commit -> push -> create PR. The skill's system prompt enforces this sequence and prevents raw `git` commands via `cli_execute`.
+
+**Pagination:** List tools (`github_list_prs`, `github_list_stargazers`, `github_list_forks`, `github_pr_author_profiles`, `github_stargazer_profiles`) support `page` (1-based) and `per_page` (default 30, max 100) parameters. Responses include `pagination.has_next_page` to indicate more results are available.
+
+**PII exemption:** Profile-returning tools (`github_get_user`, `github_pr_author_profiles`, `github_stargazer_profiles`) are pre-configured in the default policy scaffold's `no_pii` `allow_tools` list, so they can return public profile data (emails, bios) without triggering PII guardrails.
+
+Requires: `gh`, `git`, `jq`. Optional: `GH_TOKEN`. Egress: `api.github.com`, `github.com`.
+
+## Code-Agent Skill
+
+The `code-agent` skill enables autonomous code generation and modification using builtin code-agent tools:
+
+```bash
+forge skills add code-agent
+```
+
+This registers eight tools:
+
+| Tool | Purpose |
+|------|---------|
+| `code_agent_scaffold` | Bootstrap a new project (Vite, Express, FastAPI, Go, Spring Boot, etc.) |
+| `code_agent_write` | Create or update files |
+| `code_agent_edit` | Surgical text replacement in existing files |
+| `code_agent_read` | Read a file or list directory contents |
+| `code_agent_run` | Install dependencies, start a server, open a browser |
+| `grep_search` | Search file contents by regex |
+| `glob_search` | Find files by name pattern |
+| `directory_tree` | Show project directory tree |
+
+The skill uses **denied tools** (`file_write`, `file_edit`, `file_patch`, `file_read`, `schedule_*`) to ensure the LLM uses the skill's own tool wrappers instead of raw builtins. All file operations are confined to the agent's working directory via `PathValidator`.
+
+Requires: `bash`, `jq`. Egress: `registry.npmjs.org`, `cdn.tailwindcss.com`, `pypi.org`, `files.pythonhosted.org`, `proxy.golang.org`, `sum.golang.org`, `storage.googleapis.com`, `repo.maven.apache.org`, `repo1.maven.org`.
+
+## Skill Instructions in System Prompt
+
+Forge injects the **full body** of each skill's SKILL.md into the LLM system prompt. This means all detailed operational instructions — triage steps, detection heuristics, output structure, safety constraints — are directly available in the LLM's context without requiring an extra `read_skill` tool call.
+
+For skills with extensive instructions (like `k8s-incident-triage` with ~150 lines of triage procedures), this ensures the LLM follows the complete skill protocol from the first interaction.
+
+## Skill Builder (Web UI)
+
+The Web Dashboard includes an AI-powered Skill Builder that generates valid SKILL.md files and helper scripts through a conversational interface. It uses the agent's own LLM provider and includes server-side validation before saving to the agent's `skills/` directory.
 
 ## What's Next
 

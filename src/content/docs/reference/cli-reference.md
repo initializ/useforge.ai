@@ -5,9 +5,7 @@ order: 1
 editUrl: https://github.com/initializ/useforge.ai/edit/main/src/content/docs/reference/cli-reference.md
 ---
 
-# CLI Reference
-
-Forge is a single binary with subcommands for every stage of the agent lifecycle. Default port for `forge run` is **8080**.
+Complete reference for all Forge CLI commands.
 
 ## Global Flags
 
@@ -17,13 +15,17 @@ Forge is a single binary with subcommands for every stage of the agent lifecycle
 | `--verbose` | `-v` | `false` | Enable verbose output |
 | `--output-dir` | `-o` | `.` | Output directory |
 
+---
+
 ## `forge init`
 
 Initialize a new agent project.
 
-```bash
+```
 forge init [name] [flags]
 ```
+
+### Flags
 
 | Flag | Short | Default | Description |
 |------|-------|---------|-------------|
@@ -39,6 +41,20 @@ forge init [name] [flags]
 | `--from-skills` | | | Path to a SKILL.md file for auto-configuration |
 | `--non-interactive` | | `false` | Skip interactive prompts |
 
+### Generated Files
+
+`forge init` generates these key files:
+
+| File | Purpose |
+|------|---------|
+| `forge.yaml` | Agent configuration |
+| `guardrails.json` | Guardrail policy config (PII, security, secret patterns, gate config) |
+| `SKILL.md` | Agent skill definition |
+| `.env` | Environment variables |
+| `.gitignore` | Includes `guardrails.json`, `.env`, `.forge/` |
+
+### Examples
+
 ```bash
 # Interactive mode (default)
 forge init my-agent
@@ -50,6 +66,9 @@ forge init my-agent \
   --model-provider openai \
   --channels slack,telegram \
   --non-interactive
+
+# From a skills file
+forge init my-agent --from-skills SKILL.md
 
 # With builtin tools and registry skills
 forge init my-agent \
@@ -68,36 +87,84 @@ forge init my-agent \
   --non-interactive
 ```
 
+---
+
 ## `forge build`
 
 Build the agent container artifact. Runs the full 8-stage build pipeline.
 
-```bash
+```
 forge build [flags]
 ```
 
 Uses global `--config` and `--output-dir` flags. Output is written to `.forge-output/` by default.
 
+### Flags
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--signing-key` | | Path to Ed25519 private key for signing build output |
+| `--slim` | `false` | Minimize image size (skip heavy/optional binaries) |
+| `--alpine` | `false` | Prefer Alpine base image |
+| `--local-bin` | | Local binary override as `name=/path/to/file` (repeatable) |
+
+### Examples
+
+```bash
+# Build with default config
+forge build
+
+# Build with custom config and output
+forge build --config agent.yaml --output-dir ./build
+
+# Build with a local binary override
+forge build --local-bin forge=/path/to/linux/forge
+
+# Build with Alpine base and slim image
+forge build --alpine --slim
+```
+
+---
+
 ## `forge validate`
 
 Validate agent spec and forge.yaml.
 
-```bash
+```
 forge validate [flags]
 ```
+
+### Flags
 
 | Flag | Default | Description |
 |------|---------|-------------|
 | `--strict` | `false` | Treat warnings as errors |
 | `--command-compat` | `false` | Check Command platform import compatibility |
 
+### Examples
+
+```bash
+# Basic validation
+forge validate
+
+# Strict mode
+forge validate --strict
+
+# Check Command compatibility
+forge validate --command-compat
+```
+
+---
+
 ## `forge run`
 
 Run the agent locally with an A2A-compliant dev server.
 
-```bash
+```
 forge run [flags]
 ```
+
+### Flags
 
 | Flag | Default | Description |
 |------|---------|-------------|
@@ -106,10 +173,14 @@ forge run [flags]
 | `--shutdown-timeout` | `0` (immediate) | Graceful shutdown timeout |
 | `--mock-tools` | `false` | Use mock runtime instead of subprocess |
 | `--enforce-guardrails` | `false` | Enforce guardrail violations as errors |
-| `--model` | | Override model name |
-| `--provider` | | LLM provider: `openai`, `anthropic`, `gemini`, or `ollama` |
+| `--model` | | Override model name (sets `MODEL_NAME` env var) |
+| `--provider` | | LLM provider: `openai`, `anthropic`, or `ollama` |
 | `--env` | `.env` | Path to .env file |
-| `--with` | | Channel adapters (e.g., `slack,telegram`) |
+| `--with` | | Comma-separated channel adapters (e.g., `slack,telegram`) |
+| `--auth-url` | | External auth provider URL for token validation |
+| `--cors-origins` | localhost | Comma-separated CORS allowed origins (e.g., `https://app.example.com,https://admin.example.com`). Use `*` to allow all origins |
+
+### Examples
 
 ```bash
 # Run with defaults
@@ -119,19 +190,29 @@ forge run
 forge run --port 9090 --mock-tools
 
 # Run with LLM provider and channels
-forge run --provider openai --model gpt-4o --with slack
+forge run --provider openai --model gpt-4 --with slack
 
 # Container deployment
 forge run --host 0.0.0.0 --shutdown-timeout 30s
+
+# Run with guardrails enforced
+forge run --enforce-guardrails --env .env.production
+
+# Run with custom CORS origins (for K8s ingress)
+forge run --cors-origins 'https://app.example.com,https://admin.example.com'
 ```
+
+---
 
 ## `forge serve`
 
 Manage the agent as a background daemon process.
 
-```bash
+```
 forge serve [start|stop|status|logs] [flags]
 ```
+
+### Subcommands
 
 | Subcommand | Description |
 |------------|-------------|
@@ -140,14 +221,19 @@ forge serve [start|stop|status|logs] [flags]
 | `status` | Show PID, listen address, health check |
 | `logs` | Tail `.forge/serve.log` |
 
+### Flags (start)
+
 | Flag | Default | Description |
 |------|---------|-------------|
 | `--port` | `8080` | HTTP server port |
 | `--host` | `127.0.0.1` | Bind address (secure default) |
 | `--with` | | Channel adapters |
+| `--cors-origins` | localhost | Comma-separated CORS allowed origins |
+
+### Examples
 
 ```bash
-# Start daemon (secure defaults)
+# Start daemon (secure defaults: 127.0.0.1, 30s shutdown timeout)
 forge serve
 
 # Start on custom port
@@ -159,19 +245,23 @@ forge serve stop
 # Check status (PID, uptime, health)
 forge serve status
 
-# View recent logs
+# View recent logs (last 100 lines)
 forge serve logs
 ```
 
 The daemon forks `forge run` in the background with `setsid`, writes state to `.forge/serve.json`, and redirects output to `.forge/serve.log`.
 
+---
+
 ## `forge export`
 
 Export agent spec for Command platform import.
 
-```bash
+```
 forge export [flags]
 ```
+
+### Flags
 
 | Flag | Default | Description |
 |------|---------|-------------|
@@ -180,6 +270,8 @@ forge export [flags]
 | `--include-schemas` | `false` | Embed tool schemas inline |
 | `--simulate-import` | `false` | Print simulated import result |
 | `--dev` | `false` | Include dev-category tools in export |
+
+### Examples
 
 ```bash
 # Export with defaults
@@ -192,13 +284,17 @@ forge export --pretty --include-schemas
 forge export --simulate-import
 ```
 
+---
+
 ## `forge package`
 
 Build a container image for the agent.
 
-```bash
+```
 forge package [flags]
 ```
+
+### Flags
 
 | Flag | Default | Description |
 |------|---------|-------------|
@@ -212,6 +308,11 @@ forge package [flags]
 | `--builder` | | Force builder: `docker`, `podman`, or `buildah` |
 | `--skip-build` | `false` | Skip re-running forge build |
 | `--with-channels` | `false` | Generate docker-compose.yaml with channel adapters |
+| `--slim` | `false` | Minimize image size (skip heavy/optional binaries) |
+| `--alpine` | `false` | Prefer Alpine base image |
+| `--local-bin` | | Local binary override as `name=/path/to/file` (repeatable) |
+
+### Examples
 
 ```bash
 # Build image with auto-detected builder
@@ -220,34 +321,175 @@ forge package
 # Build and push to registry
 forge package --registry ghcr.io/myorg --push
 
-# Production build
-forge package --prod
+# Build for specific platform with no cache
+forge package --platform linux/amd64 --no-cache
 
 # Generate docker-compose with channels
 forge package --with-channels
+
+# Package with a local binary override
+forge package --local-bin forge=/path/to/linux/forge
+
+# Package with slim Alpine image
+forge package --alpine --slim
 ```
+
+---
 
 ## `forge schedule`
 
 Manage cron schedules.
 
-```bash
+```
 forge schedule list
 ```
 
-Lists all configured cron schedules (both YAML-defined and LLM-created). See [Scheduling](/docs/core-concepts/scheduling) for configuration details.
+Lists all configured cron schedules (both YAML-defined and LLM-created).
+
+---
 
 ## `forge tool`
 
 Manage and inspect agent tools.
 
-```bash
-# List all available tools
-forge tool list
+### `forge tool list`
 
-# Show tool details and input schema
+List all available tools.
+
+```bash
+forge tool list
+```
+
+### `forge tool describe`
+
+Show tool details and input schema.
+
+```bash
 forge tool describe <name>
 ```
+
+---
+
+## `forge channel`
+
+Manage agent communication channels.
+
+### `forge channel add`
+
+Add a channel adapter to the project.
+
+```bash
+forge channel add <slack|telegram>
+```
+
+### `forge channel serve`
+
+Run a standalone channel adapter.
+
+```bash
+forge channel serve <slack|telegram>
+```
+
+Requires the `AGENT_URL` environment variable to be set.
+
+### `forge channel list`
+
+List available channel adapters.
+
+```bash
+forge channel list
+```
+
+### `forge channel status`
+
+Show configured channels from `forge.yaml`.
+
+```bash
+forge channel status
+```
+
+---
+
+## `forge secret`
+
+Manage encrypted secrets.
+
+```bash
+# Store a secret (prompts for value securely)
+forge secret set OPENAI_API_KEY
+
+# Store with inline value
+forge secret set SLACK_BOT_TOKEN xoxb-...
+
+# Retrieve a secret (shows source)
+forge secret get OPENAI_API_KEY
+
+# List all secret keys
+forge secret list
+
+# Delete a secret
+forge secret delete OLD_KEY
+
+# Agent-local secret
+forge secret set API_KEY --local
+```
+
+---
+
+## `forge key`
+
+Manage Ed25519 signing keys.
+
+```bash
+# Generate an Ed25519 signing keypair
+forge key generate
+
+# Generate with a custom name
+forge key generate --name ci-key
+
+# Add a public key to the trusted keyring
+forge key trust ~/.forge/signing-key.pub
+
+# List signing and trusted keys
+forge key list
+```
+
+---
+
+## `forge skills`
+
+Manage agent skills.
+
+```bash
+# Add a skill from the registry
+forge skills add <skill-name>
+
+# List available skills
+forge skills list
+
+# Filter by category
+forge skills list --category sre
+
+# Filter by tags
+forge skills list --tags kubernetes,incident-response
+
+# Validate skill requirements
+forge skills validate
+
+# Audit skill security
+forge skills audit --embedded
+
+# Sign a skill
+forge skills sign
+
+# Generate a signing key
+forge skills keygen
+
+# Generate trust report
+forge skills trust-report
+```
+
+---
 
 ## `forge ui`
 
@@ -265,92 +507,3 @@ forge ui --no-open
 ```
 
 See [Web Dashboard](/docs/reference/web-dashboard) for full documentation.
-
-## Skills Commands
-
-| Command | Description |
-|---|---|
-| `forge skills add <name>` | Add a skill from the embedded registry |
-| `forge skills list` | List all skills with trust levels and source tier |
-| `forge skills list --category sre` | Filter by category |
-| `forge skills list --tags kubernetes` | Filter by tags |
-| `forge skills validate` | Per-skill requirement validation (runs the autowire pipeline) |
-| `forge skills validate <path>` | Validate a single skill directory |
-| `forge skills trust-report <name>` | Show the full trust report for a specific skill |
-| `forge skills autowire [--dry-run]` | Run the autowire pipeline explicitly |
-| `forge skills refresh` | Re-scan local skills and re-fetch remote skills |
-| `forge skills promote <name>` | Admin action: promote an `under_review` skill to `trusted` |
-| `forge skills block <name>` | Admin action: force a skill to `failed` status |
-| `forge skills audit` | Run a security audit with risk scores and policy checks |
-| `forge skills audit --format json` | Machine-readable audit output |
-| `forge skills sign --key <path>` | Sign a skill directory with an Ed25519 key |
-| `forge skills keygen <name>` | Generate an Ed25519 key pair in `~/.forge/keys/` |
-
-## Channel Commands
-
-| Command | Description |
-|---|---|
-| `forge channel add slack` | Interactive Slack setup — prompts for tokens and validates |
-| `forge channel add telegram` | Interactive Telegram setup — prompts for bot token and validates |
-| `forge channel serve <channel>` | Run a standalone channel adapter (requires `AGENT_URL` env var) |
-| `forge channel list` | List available channel adapters |
-| `forge channel status` | Show configured channels from `forge.yaml` |
-
-Channels run **with** the agent via `forge run --with <channel>`, not as separate processes.
-
-## Secret Commands
-
-| Command | Description |
-|---|---|
-| `forge secret set <KEY> [VALUE]` | Store a secret in the encrypted file (prompts for value if omitted) |
-| `forge secret get <KEY>` | Retrieve a secret (shows source: encrypted-file or env) |
-| `forge secret list` | List all stored secret keys |
-| `forge secret delete <KEY>` | Delete a secret from the encrypted file |
-
-Add `--local` to any secret command to operate on the agent-local secret file (`<cwd>/.forge/secrets.enc`) instead of the global one (`~/.forge/secrets.enc`).
-
-## Key Commands
-
-| Command | Description |
-|---|---|
-| `forge key generate [--name X]` | Generate an Ed25519 signing keypair |
-| `forge key trust <pubkey-file>` | Add a public key to the trusted keyring |
-| `forge key list` | List signing and trusted keys |
-
-## Security Commands
-
-| Command | Description |
-|---|---|
-| `forge security egress show` | Display the derived egress allowlist with source annotations |
-
-## Common Workflows
-
-### Create and run an agent
-
-```bash
-forge init my-agent
-cd my-agent
-forge run
-```
-
-### Build and serve with Slack
-
-```bash
-forge build
-forge serve --with slack
-```
-
-### Add a skill and rebuild
-
-```bash
-forge skills add summarize
-forge build
-forge run
-```
-
-### Audit skills and check egress
-
-```bash
-forge skills audit
-forge security egress show
-```

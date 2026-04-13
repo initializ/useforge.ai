@@ -4,156 +4,229 @@ description: The anatomy of a SKILL.md file — YAML frontmatter for metadata an
 order: 2
 ---
 
-# SKILL.md Format
+Skills are a progressive disclosure mechanism for defining agent capabilities in a structured, human-readable format. They compile into container artifacts during `forge build`.
 
-Every Forge skill is defined by a `SKILL.md` file. It combines YAML frontmatter (metadata for the runtime) with a markdown body (instructions for the LLM).
+## Overview
 
-## Structure
+Skills bridge the gap between high-level capability descriptions and the tool-calling system. Each skill lives in its own subdirectory under `skills/` with a `SKILL.md` file that defines what the agent can do. Forge compiles these into JSON artifacts and prompt text for the container.
 
-A SKILL.md has two parts:
+## SKILL.md Format
 
-1. **YAML frontmatter** — declares the skill's name, requirements, egress domains, and trust hints
-2. **Markdown body** — the actual instructions the LLM reads to understand how to use the skill
+Skills are defined in Markdown files inside `skills/<skill-name>/SKILL.md`. Each file supports optional YAML frontmatter and two body formats.
 
-## Complete Example
-
-Here's a fully annotated SKILL.md for the built-in `summarize` skill:
-
-```yaml
+```markdown
 ---
-name: summarize
-description: Summarize URLs, files, PDFs, YouTube videos.
+name: weather
+icon: 🌤️
+category: utilities
+tags:
+  - weather
+  - forecast
+  - api
+description: Weather data skill
 metadata:
   forge:
     requires:
       bins:
-        - summarize
+        - curl
       env:
         required: []
-        one_of:
-          - OPENAI_API_KEY
-          - ANTHROPIC_API_KEY
-          - GEMINI_API_KEY
-        optional:
-          - FIRECRAWL_API_KEY
-    egress:
-      - api.openai.com
-    trust_hints:
-      requires_network: true
-      requires_filesystem: false
-      requires_shell: false
-      max_execution_seconds: 30
+        one_of: []
+        optional: []
 ---
+## Tool: weather_current
 
-# Summarize
+Get current weather for a location.
 
-You can summarize content from URLs, local files, and PDFs.
+**Input:** location (string) - City name or coordinates
+**Output:** Current temperature, conditions, humidity, and wind speed
 
-## Constraints
+## Tool: weather_forecast
 
-- Always provide a concise summary (3-5 bullet points)
-- Include key takeaways and action items
-- Cite sources when summarizing web content
+Get weather forecast for a location.
+
+**Input:** location (string), days (integer: 1-7)
+**Output:** Daily forecast with high/low temperatures and conditions
 ```
 
-## Frontmatter Fields
+Each `## Tool:` heading defines a tool the agent can call. The frontmatter declares binary dependencies and environment variable requirements. Skills compile into JSON artifacts and prompt text during `forge build`.
 
-### `name` (required)
+### YAML Frontmatter
 
-The skill's unique identifier. Used for resolution, trust reports, and CLI commands.
+Top-level fields:
 
-### `description` (required)
+| Field | Required | Description |
+|-------|----------|-------------|
+| `name` | yes | Skill identifier (kebab-case) |
+| `icon` | yes | Emoji displayed in the TUI skill picker |
+| `category` | yes | Grouping for `forge skills list --category` (e.g., `sre`, `developer`, `research`, `utilities`) |
+| `tags` | yes | Discovery keywords for `forge skills list --tags` (kebab-case) |
+| `description` | yes | One-line summary |
 
-A short human-readable description. Shown in `forge skills list` and the init wizard.
+The `metadata.forge.requires` block declares runtime dependencies:
 
-### `metadata.forge.requires`
+- **`bins`** — Binary dependencies that must be in `$PATH` at runtime
+- **`env.required`** — Environment variables that must be set
+- **`env.one_of`** — At least one of these environment variables must be set
+- **`env.optional`** — Optional environment variables for extended functionality
 
-Declares what the skill needs to run:
+Frontmatter is parsed by `ParseWithMetadata()` in `forge-skills/parser/parser.go` and feeds into the compilation pipeline.
 
-- **`bins`** — binary dependencies checked via `exec.LookPath` at build time. If a required binary is missing, the skill fails validation.
-- **`env.required`** — environment variables that must be set. Missing any one blocks the skill.
-- **`env.one_of`** — at least one of these must be set. Used for multi-provider skills.
-- **`env.optional`** — enhance functionality if present, but not required.
+### Legacy List Format
 
-### `metadata.forge.egress`
+```markdown
+# Agent Skills
 
-List of domains the skill needs to reach. These are added to the egress allowlist during `forge build` and enforced at runtime.
+- translate
+- summarize
+- classify
+```
+
+Single-word list items (no spaces, max 64 characters) create name-only skill entries. This format is simpler but provides less metadata.
+
+## Skills as First-Class Tools
+
+Script-backed skills are automatically registered as **first-class LLM tools** at runtime. When a skill has scripts in `skills/scripts/`, Forge:
+
+1. Parses the skill's SKILL.md for tool definitions, descriptions, and input schemas
+2. Creates a named tool for each `## Tool:` entry (e.g., `tavily_research` becomes a tool the LLM can call directly)
+3. Executes the skill's shell script with JSON input when the LLM invokes it
+
+This means the LLM sees skill tools alongside builtins like `web_search` and `http_request` — no generic `cli_execute` indirection needed.
+
+For skills **without** scripts (binary-backed skills like `k8s-incident-triage`), Forge injects the full skill instructions into the system prompt. The complete SKILL.md body — including triage steps, detection heuristics, output structure, and safety constraints — is included inline so the LLM follows the skill protocol without needing an extra tool call. Skills are invoked via `cli_execute` with the declared binary dependencies.
+
+```
+┌─────────────────────────────────────────────────┐
+│                LLM Tool Registry                │
+├─────────────────┬───────────────────────────────┤
+│  Builtins       │  web_search, http_request     │
+│  Skill Tools    │  tavily_research, codegen_*   │  ← auto-registered from scripts
+│  read_skill     │  load any SKILL.md on demand  │
+│  cli_execute    │  run approved binaries        │
+├─────────────────┴───────────────────────────────┤
+│  System Prompt: full skill instructions inline  │  ← binary-backed skills
+└─────────────────────────────────────────────────┘
+```
+
+## Skill Execution Security
+
+Skill scripts run in a restricted environment via `SkillCommandExecutor`:
+
+- **Isolated environment**: Only `PATH`, `HOME`, and explicitly declared env vars are passed through
+- **OAuth token resolution**: When `OPENAI_API_KEY` is set to `__oauth__`, the executor resolves OAuth credentials and injects the access token, `OPENAI_BASE_URL`, and the configured model as `REVIEW_MODEL`
+- **Configurable timeout**: Each skill declares a `timeout_hint` in its YAML frontmatter (e.g., 300s for research)
+- **No shell execution**: Scripts run via `bash <script> <json-input>`, not through a shell interpreter
+- **Egress proxy enforcement**: When egress mode is `allowlist` or `deny-all`, a local HTTP/HTTPS proxy is started and `HTTP_PROXY`/`HTTPS_PROXY` env vars are injected into subprocess environments, ensuring `curl`, `wget`, Python `requests`, and other HTTP clients route through the same domain allowlist used by in-process tools (see [Egress Security](security/egress.md))
+
+### Symlink Escape Detection
+
+The skill scanner validates symlinks when a filesystem root path is available. Symlinks that resolve outside the root directory are skipped with a warning log. This prevents malicious symlinks in skill directories from escaping the project boundary. The scanner exposes `ScanWithRoot(fsys, rootPath)` for callers that need symlink validation, while the original `Scan(fsys)` remains backward-compatible.
+
+### Trust Policy Defaults
+
+The default trust policy requires checksum verification (`RequireChecksum: true`). Skills loaded without a signature emit a warning log at scan time. Signature verification remains opt-in (`RequireSignature: false`).
+
+## Skill Categories & Tags
+
+All embedded skills must declare `category`, `tags`, and `icon` in their frontmatter. Categories and tags must be lowercase kebab-case.
+
+```markdown
+---
+name: k8s-incident-triage
+icon: ☸️
+category: sre
+tags:
+  - kubernetes
+  - incident-response
+  - triage
+---
+```
+
+Use categories and tags to filter skills:
+
+```bash
+# List skills by category
+forge skills list --category sre
+
+# Filter by tags (AND semantics — skill must have all listed tags)
+forge skills list --tags kubernetes,incident-response
+```
+
+## Skill Guardrails
+
+Skills can declare domain-specific guardrails in their `SKILL.md` frontmatter to enforce security policies at runtime. These guardrails operate at four interception points in the agent loop, preventing unauthorized commands, data exfiltration, capability enumeration, and binary name disclosure.
+
+### Configuration
+
+Add a `guardrails` block under `metadata.forge` in `SKILL.md`:
 
 ```yaml
-egress:
-  - api.openai.com
-  - api.tavily.com
+metadata:
+  forge:
+    guardrails:
+      deny_commands:
+        - pattern: '\bget\s+secrets?\b'
+          message: "Listing Kubernetes secrets is not permitted"
+      deny_output:
+        - pattern: 'kind:\s*Secret'
+          action: block
+        - pattern: 'token:\s*[A-Za-z0-9+/=]{40,}'
+          action: redact
+      deny_prompts:
+        - pattern: '\b(approved|allowed|available)\b.{0,40}\b(tools?|binaries)\b'
+          message: "I help with K8s cost analysis. Ask about cluster costs."
+      deny_responses:
+        - pattern: '\b(kubectl|jq|awk|bc|curl)\b.*\b(kubectl|jq|awk|bc|curl)\b.*\b(kubectl|jq|awk|bc|curl)\b'
+          message: "I can analyze cluster costs. What would you like to know?"
 ```
 
-### `metadata.forge.trust_hints` (optional)
+### Guardrail Types
 
-Contributor-declared capability hints. The autowire security analyzer **verifies** these against actual skill contents — they're never trusted blindly.
+| Type | Direction | Purpose |
+|------|-----------|---------|
+| `deny_commands` | Input | Block `cli_execute` commands matching patterns (e.g., `kubectl get secrets`) |
+| `deny_output` | Output | Block or redact tool output matching patterns (e.g., Secret manifests, tokens) |
+| `deny_prompts` | Input | Block user messages probing agent capabilities (e.g., "what tools can you run") |
+| `deny_responses` | Output | Replace LLM responses that enumerate internal binary names |
 
-| Field | Type | Description |
-|---|---|---|
-| `requires_network` | boolean | Whether the skill makes network calls |
-| `requires_filesystem` | boolean | Whether the skill reads/writes files |
-| `requires_shell` | boolean | Whether the skill executes shell commands |
-| `max_execution_seconds` | integer | Expected maximum execution time |
+### Capability Enumeration Prevention
 
-A mismatch (e.g., declaring `requires_network: false` while having egress domains) is a trust violation that blocks the skill.
+The `deny_prompts` and `deny_responses` guardrails form a layered defense against capability enumeration attacks:
 
-### `metadata.forge.timeout_hint`
+1. **Input-side** (`deny_prompts`) — Intercepts user messages that probe for available tools, binaries, or commands and redirects to the skill's functional description
+2. **Output-side** (`deny_responses`) — Catches LLM responses that list 3+ binary names and replaces the entire response with a functional capability description
 
-Integer (seconds). Tells the runtime how long the skill's tools may take. Propagated to the `SkillCommandExecutor` timeout. Research skills typically use `300`. Default: `120`.
+Additionally, skill `Description()` methods and system prompt catalog entries use generic descriptions instead of listing binary names.
 
-## Markdown Body
+For full details on guardrail types, pattern syntax, and runtime behavior, see [Content Guardrails — Skill Guardrails](security/guardrails.md#skill-guardrails).
 
-The markdown body is what the LLM reads to know how to use the skill. Write it as clear instructions.
+## Skill Instructions in System Prompt
 
-Common sections include:
+Forge injects the **full body** of each skill's SKILL.md into the LLM system prompt. This means all detailed operational instructions — triage steps, detection heuristics, output structure, safety constraints — are directly available in the LLM's context without requiring an extra `read_skill` tool call.
 
-- **`# Skill Name`** — top-level heading matching the skill name
-- **`## Constraints`** — rules and guardrails for the LLM
-- **`## Tool: tool_name`** — for script-backed skills, each tool section describes a callable tool
+For skills with extensive instructions (like `k8s-incident-triage` with ~150 lines of triage procedures), this ensures the LLM follows the complete skill protocol from the first interaction.
 
-## Two Execution Paths
+## Compilation Pipeline
 
-### Script-backed Skills
+The skill compilation pipeline has three stages:
 
-Skills with a `scripts/` directory are automatically registered as **first-class LLM tools** at runtime. Each `## Tool:` section in SKILL.md becomes a named tool (e.g., `tavily_research`) with its own description and JSON schema. The LLM calls them directly, just like built-in tools.
+1. **Parse** — Reads `SKILL.md` and extracts `SkillEntry` values with name, description, input spec, and output spec. When YAML frontmatter is present, `ParseWithMetadata()` additionally extracts `SkillMetadata` and `SkillRequirements` (binary deps, env vars).
 
-```
-my-skill/
-├── SKILL.md
-└── scripts/
-    ├── my-tool.sh
-    └── my-other-tool.sh
-```
+2. **Compile** — Converts entries into `CompiledSkills` with:
+   - A JSON-serializable skill list
+   - A human-readable prompt catalog
+   - Version identifier (`agentskills-v1`)
 
-**Naming convention:** Tool names use underscores (`tavily_research`), script filenames use hyphens (`tavily-research.sh`).
+3. **Write Artifacts** — Outputs to the build directory:
+   - `compiled/skills/skills.json` — Machine-readable skill definitions
+   - `compiled/prompt.txt` — LLM-readable skill catalog
 
-Skills can have multiple scripts. For example, `tavily-research` has both a submit script and a poll script, registered as two separate tools.
+## Build Stage Integration
 
-### Binary-backed Skills
+The `SkillsStage` runs as part of the build pipeline:
 
-Skills without scripts are listed in the system prompt catalog. The LLM uses the `read_skill` built-in tool to load the full SKILL.md instructions on demand, then invokes actions via `cli_execute`.
-
-This is the **progressive disclosure** model — the LLM only loads detailed skill instructions when it needs them, keeping the system prompt compact.
-
-## Adding Skills to Your Agent
-
-### From the Embedded Registry
-
-```bash
-forge skills add summarize
-```
-
-This copies the SKILL.md and all scripts into your project's `skills/` directory, checks for required environment variables, and deduplicates `.env` entries.
-
-### Custom Skills
-
-Create a directory in `skills/` with a `SKILL.md`:
-
-```bash
-mkdir -p skills/my-skill
-# Write your SKILL.md
-forge build   # Autowire discovers and evaluates the skill
-```
-
-If the skill passes trust evaluation, it's available in `forge run` and `forge serve`. If it's flagged as `under_review`, use `forge skills promote my-skill` to approve it.
+1. Scans the `skills/` subdirectory for `SKILL.md` files in each subdirectory
+2. Parses, compiles, and writes artifacts
+3. Updates the `AgentSpec` with `skills_spec_version` and `forge_skills_ext_version`
+4. Records generated files in the build manifest

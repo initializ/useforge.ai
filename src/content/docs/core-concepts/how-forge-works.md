@@ -5,152 +5,360 @@ order: 1
 editUrl: https://github.com/initializ/useforge.ai/edit/main/src/content/docs/core-concepts/how-forge-works.md
 ---
 
-# How Forge Works
+Forge is a portable runtime for building and running secure AI agents from simple skill definitions.
 
-Forge turns a SKILL.md into a portable, secure, runnable AI agent. This page walks you through every stage of that pipeline — from directory scanning to the running agent loop — so you understand exactly what happens when you run `forge build` and `forge run`.
-
-## Core Pipeline
-
-The full pipeline from source to running agent looks like this:
+## At a Glance
 
 ```
-SKILL.md → autowire (scan → parse → security → trust)
-         → discover tools + requirements
-         → compile AgentSpec → apply egress security
-         → secret safety check → checksum + sign artifacts
-         → decrypt secrets → run LLM agent loop
+SKILL.md --> Parse --> Discover tools/requirements --> Compile AgentSpec
+                                                            |
+                                                            v
+                                                    Apply security policy
+                                                            |
+                                                            v
+                                                    Run LLM agent loop
+                                               (tool calling + memory + cron)
 ```
 
-Each stage is deterministic and auditable. Nothing is hidden behind magic defaults — you can inspect every intermediate artifact in `.forge-output/`.
-
-## Autowire
-
-Autowire is the build-time pipeline that discovers, validates, and evaluates your skills. It runs automatically during `forge build` and consists of four stages:
-
-### 1. Directory Scanner
-
-The scanner walks your `skills/` directory looking for `SKILL.md` files. Each directory containing a SKILL.md is treated as a skill. The top-level `SKILL.md` in your project root is also discovered as the primary skill.
-
-### 2. Frontmatter Parser
-
-Each SKILL.md is split into YAML frontmatter and a markdown body. The parser extracts structured metadata — name, description, requirements, egress domains, trust hints — and validates it against the expected schema. Malformed frontmatter fails the build.
-
-### 3. Security Analyzer
-
-The security analyzer verifies that a skill's declared trust hints match its actual contents. For example:
-
-- Declaring `requires_network: false` while listing egress domains is a contradiction
-- Declaring `requires_shell: false` while requiring binaries is a contradiction
-- Declaring `requires_filesystem: true` when nothing in the skill touches the filesystem is a warning
-
-These checks ensure trust hints are honest. Mismatches produce findings that feed into the next stage.
-
-### 4. Trust Evaluator
-
-Based on the security analyzer's findings, each skill receives a computed trust level:
-
-| Trust Level | Meaning |
-|---|---|
-| **Trusted** | No findings. The skill runs without restriction. |
-| **UnderReview** | Warnings found. The skill runs but is flagged. Use `forge skills promote <name>` to approve it. |
-| **Failed** | Critical findings. The skill is blocked from running. |
-
-Trust is computed, not declared. A skill cannot assert its own trust level — it earns one through analysis.
-
-## Tool Discovery
-
-After autowire validates your skills, Forge discovers all available tools:
-
-- **8 builtin tools** are always available — `http_request`, `json_parse`, `csv_parse`, `datetime_now`, `uuid_generate`, `math_calculate`, `web_search`, and `read_skill`
-- **Skill tools** are auto-registered from scripts in each skill's `scripts/` directory. Each script becomes a first-class tool the LLM can call by name.
-- **`cli_execute`** is registered when binary-backed skills are present, allowing the LLM to run allowlisted binaries
-- **Conditional tools** (`memory_search`, `memory_get`) are only registered when long-term memory is enabled in your configuration
-
-## AgentSpec Compilation
-
-Once tools are discovered and trust is evaluated, Forge compiles everything into an AgentSpec:
-
-- Skills are compiled into the system prompt. Binary-backed skill bodies are injected inline as a catalog the LLM can browse via `read_skill`.
-- Script-backed skills are registered as first-class tools with JSON Schema definitions derived from their `InputSpec` tables.
-- The system prompt includes the agent's identity, available tools, skill catalog, and any configured constraints.
-
-The compiled AgentSpec is a self-contained description of your agent that can be exported, versioned, and deployed.
-
-## Egress Security
-
-Forge enforces network egress at runtime so your agent can only reach domains you have explicitly allowed.
-
-The egress allowlist is resolved by merging three sources:
-
-1. **Explicit domains** — listed in `forge.yaml` under `egress.allowed_domains`
-2. **Tool-inferred domains** — derived from tool configurations (e.g., `web_search` needs `api.tavily.com`)
-3. **Capability bundles** — domains required by enabled capabilities (e.g., LLM provider API endpoints)
-
-The `Resolve()` function merges and deduplicates these sources. At runtime, the `EgressEnforcer` wraps Go's `http.RoundTripper` interface. Every outbound HTTP request passes through this enforcer — if the target domain is not on the allowlist, the request is blocked before it leaves the process.
-
-## Agent Loop
-
-Once the agent is running, the core loop is straightforward:
-
-1. The LLM receives a user message (plus conversation history and system prompt)
-2. The LLM selects one or more tools to call based on the message
-3. Tools execute with egress enforcement, timeout limits, and env isolation
-4. Tool results are fed back to the LLM
-5. The LLM generates a response, which is streamed back to the user
-
-This loop repeats for each user message. In `forge run` mode, it runs in a single interactive session. In `forge serve` mode, it handles multiple concurrent sessions over HTTP with SSE streaming.
+1. You write a `SKILL.md` that describes what the agent can do
+2. Forge parses the skill definitions and optional YAML frontmatter (binary deps, env vars)
+3. The build pipeline discovers tools, resolves egress domains, and compiles an `AgentSpec`
+4. Security policies (egress allowlists, capability bundles) are applied
+5. Build artifacts are checksummed and optionally signed (Ed25519)
+6. At runtime, encrypted secrets are decrypted and the LLM-powered tool-calling loop executes with session persistence, memory, and a cron scheduler for recurring tasks
 
 ## Module Architecture
 
-Forge is organized into focused modules with clear dependency boundaries:
-
-| Module | Role |
-|---|---|
-| **forge-core** | Pure library — autowire, agent loop, egress, memory, tool system. No CLI, no I/O assumptions. |
-| **forge-cli** | Thin CLI layer — commands, TUI wizard, output formatting. Depends on forge-core. |
-| **forge-plugins** | Channel implementations — Slack, Telegram. Each channel is a separate plugin. |
-| **forge-skills** | Skill registry and contracts — defines the skill interface and ships embedded skills. |
-| **forge-sdk** | Future SDKs for building skills in other languages (planned). |
-
-The dependency direction flows inward: `forge-cli` depends on `forge-core`, which depends on `forge-skills/contract`. No circular dependencies. The core library has no knowledge of CLI concerns, and channels are pluggable without modifying core.
-
-### Key Go Interfaces
-
-| Interface | Purpose |
-|---|---|
-| `llm.Client` | Provider-agnostic LLM client — `Chat()`, `ChatStream()`, `ModelID()` |
-| `runtime.AgentExecutor` | Contract for running agents — `LLMExecutor` is the primary implementation |
-| `tools.Tool` | Tool definition — name, JSON Schema, and execution method |
-| `runtime.ToolExecutor` | Tool execution interface for dependency injection |
-| `channels.ChannelPlugin` | Messaging platform adapter — init, start, stop, event normalization |
-
-### Data Flow
+Forge is organized as a Go workspace with five modules:
 
 ```
-Compilation:
-  ForgeConfig → Validation → Skill Compilation → AgentSpec
-  → Security Policy → Build Artifacts
-
-Runtime:
-  AgentSpec + Tools → LLM Client → Agent Loop
-  (prompt → LLM → tool calls → execution → results → response)
+go.work
+├── forge-core/       Embeddable library
+├── forge-cli/        CLI frontend
+├── forge-plugins/    Channel plugin implementations
+├── forge-ui/         Local web dashboard
+└── forge-skills/     Skill system (registry, parser, compiler)
 ```
 
-## Build Outputs
+### forge-core — Library
 
-Running `forge build` produces these artifacts in `.forge-output/`:
+Pure Go library with no CLI dependencies. Provides the compiler, validator, runtime engine, LLM providers, tool/plugin/channel interfaces, A2A protocol types, and security subsystem. External consumers access the library through the `forgecore` package.
 
-| Artifact | Purpose |
-|---|---|
-| `agent-spec.json` | Complete agent specification — exportable to Initializ Command |
-| `skill-index.json` | Autowire-generated skill index with trust levels and metadata |
-| `egress_allowlist.json` | Machine-readable domain allowlist with source annotations |
-| `Dockerfile` | Container image definition for deployment |
-| `k8s/` | Kubernetes manifests including NetworkPolicy for egress enforcement |
-| `checksums.json` | SHA-256 checksums + optional Ed25519 signature for artifact integrity |
+### forge-cli — CLI Frontend
 
-Every artifact is deterministic — the same source produces the same output. The checksums file lets you verify nothing was tampered with between build and deploy.
+Command-line application built on top of forge-core. Includes Cobra commands, build pipeline stages, container builders, framework plugins (CrewAI, LangChain, custom), A2A dev server, and init templates.
 
-## What's Next
+### forge-plugins — Channel Plugins
 
-- [SKILL.md Format](/docs/core-concepts/skill-md-format) — deep dive into every frontmatter field and the markdown body conventions
+Messaging platform integrations that implement the `channels.ChannelPlugin` interface from forge-core. Ships Slack, Telegram, and markdown formatting plugins.
+
+### forge-ui — Web Dashboard
+
+Local web dashboard for managing agents from the browser. Single Go module embedded into the `forge` binary. See [Dashboard](dashboard.md) for details.
+
+### forge-skills — Skill System
+
+Skill system including the embedded and local skill registries, SKILL.md parser, skill compiler, requirement aggregation, security analyzer, binary/env resolver, and skill signing/verification.
+
+## Package Map
+
+### forge-core
+
+| Package | Responsibility | Key Types |
+|---------|---------------|-----------|
+| `forgecore` | Public API entry point | `Compile`, `ValidateConfig`, `ValidateAgentSpec`, `NewRuntime` |
+| `a2a` | A2A protocol types | `Task`, `Message`, `TaskStatus`, `Part` |
+| `agentspec` | AgentSpec definitions and schema validation | `AgentSpec` |
+| `channels` | Channel adapter plugin interface | `ChannelPlugin`, `ChannelConfig`, `ChannelEvent`, `EventHandler` |
+| `compiler` | AgentSpec compilation and plugin config merging | `CompileRequest`, `CompileResult` |
+| `export` | Agent export functionality | — |
+| `llm` | LLM client interface and message types | `Client`, `ChatRequest`, `ChatResponse`, `StreamDelta` |
+| `llm/providers` | LLM provider implementations | OpenAI, Anthropic, Ollama |
+| `pipeline` | Build pipeline context and orchestration | `Pipeline`, `Stage`, `BuildContext` |
+| `plugins` | Plugin and framework plugin interfaces | `Plugin`, `FrameworkPlugin`, `AgentConfig`, `FrameworkRegistry` |
+| `registry` | Embedded skill registry | — |
+| `runtime` | LLM agent loop, executor, hooks, memory, guardrail interface | `AgentExecutor`, `LLMExecutor`, `ToolExecutor`, `GuardrailChecker` |
+| `schemas` | Embedded JSON schemas | `agentspec.v1.0.schema.json` |
+| `security` | Egress allowlist, security policies, network policies | `EgressConfig`, `Resolve`, `GenerateAllowlistJSON` |
+| `skills` | Skill parsing, compilation, requirements resolution | `CompiledSkills`, `Compile`, `WriteArtifacts` |
+| `tools` | Tool plugin system and executor | `Tool`, `Registry`, `CommandExecutor` |
+| `tools/adapters` | Tool adapters | Webhook, MCP, OpenAPI |
+| `tools/builtins` | Built-in tools | `http_request`, `json_parse`, `csv_parse`, `datetime_now`, `uuid_generate`, `math_calculate`, `web_search` |
+| `types` | ForgeConfig type definitions | `ForgeConfig`, `ModelRef`, `ToolRef` |
+| `util` | Utility functions | Slug generation |
+| `validate` | Config and schema validation | `ValidationResult`, `ValidateForgeConfig`, `ImportSimResult` |
+
+### forge-cli
+
+| Package | Responsibility | Key Types |
+|---------|---------------|-----------|
+| `cmd/forge` | Main entry point | — |
+| `cmd` | CLI command implementations | `init`, `build`, `run`, `validate`, `package`, `export`, `tool`, `channel`, `skills`, `serve`, `schedule`, `secret`, `key`, `ui` |
+| `config` | ForgeConfig loading and YAML parsing | — |
+| `build` | Build pipeline stage implementations | `FrameworkAdapterStage`, `AgentSpecStage`, `ToolsStage`, `SkillsStage`, `EgressStage`, etc. |
+| `container` | Container image builders | `DockerBuilder`, `PodmanBuilder`, `BuildahBuilder` |
+| `plugins` | Framework plugin registry | — |
+| `plugins/crewai` | CrewAI framework adapter | — |
+| `plugins/langchain` | LangChain framework adapter | — |
+| `plugins/custom` | Custom framework plugin | — |
+| `runtime` | CLI-specific runtime (subprocess, guardrail engine, watchers, stubs, mocks) | `LibraryGuardrailEngine` |
+| `server` | A2A HTTP server implementation | — |
+| `channels` | Channel configuration and routing | — |
+| `skills` | Skill file loading and writing | — |
+| `tools` | Tool discovery and execution | — |
+| `tools/devtools` | Dev-only tools | `local_shell`, `local_file_browser` |
+| `templates` | Embedded templates for init wizard | — |
+
+### forge-plugins
+
+| Package | Responsibility |
+|---------|---------------|
+| `channels` | Channel plugin package root |
+| `channels/slack` | Slack channel adapter (Socket Mode) |
+| `channels/telegram` | Telegram channel adapter (polling) |
+| `channels/markdown` | Markdown formatting helper |
+
+### forge-skills
+
+| Package | Responsibility |
+|---------|---------------|
+| `contract` | Skill types, registry interface, filtering |
+| `local` | Embedded + local skill registries |
+| `parser` | SKILL.md parser (frontmatter + body extraction) |
+| `compiler` | Skill compiler (prompt generation) |
+| `requirements` | Requirement aggregation and derivation |
+| `analyzer` | Security audit for skills |
+| `resolver` | Binary and env var resolution |
+| `trust` | Skill signing and verification |
+
+## Key Interfaces
+
+### `forgecore` Public API
+
+The `forgecore` package exposes the top-level library surface:
+
+```go
+func Compile(req CompileRequest) (*CompileResult, error)
+func ValidateConfig(cfg *types.ForgeConfig) *validate.ValidationResult
+func ValidateAgentSpec(jsonData []byte) ([]string, error)
+func ValidateCommandCompat(spec *agentspec.AgentSpec) *validate.ValidationResult
+func SimulateImport(spec *agentspec.AgentSpec) *validate.ImportSimResult
+func NewRuntime(cfg RuntimeConfig) *runtime.LLMExecutor
+```
+
+### `runtime.AgentExecutor`
+
+Core execution interface for running agents. Implemented by `LLMExecutor` in forge-core.
+
+```go
+type AgentExecutor interface {
+    Execute(ctx context.Context, task *a2a.Task, msg *a2a.Message) (*a2a.Message, error)
+    ExecuteStream(ctx context.Context, task *a2a.Task, msg *a2a.Message) (<-chan *a2a.Message, error)
+    Close() error
+}
+```
+
+### `llm.Client`
+
+Provider-agnostic LLM client. Implementations: OpenAI, Anthropic, Ollama (in `llm/providers`).
+
+```go
+type Client interface {
+    Chat(ctx context.Context, req *ChatRequest) (*ChatResponse, error)
+    ChatStream(ctx context.Context, req *ChatRequest) (<-chan StreamDelta, error)
+    ModelID() string
+}
+```
+
+### `tools.Tool`
+
+Agent tool with name, schema, and execution. Categories: builtin, adapter, dev, custom.
+
+```go
+type Tool interface {
+    Name() string
+    Description() string
+    Category() Category
+    InputSchema() json.RawMessage
+    Execute(ctx context.Context, args json.RawMessage) (string, error)
+}
+```
+
+### `runtime.ToolExecutor`
+
+Bridge between the LLM agent loop and the tool registry.
+
+```go
+type ToolExecutor interface {
+    Execute(ctx context.Context, name string, arguments json.RawMessage) (string, error)
+    ToolDefinitions() []llm.ToolDefinition
+}
+```
+
+### `channels.ChannelPlugin`
+
+Channel adapter for messaging platforms. Implementations: Slack, Telegram (in `forge-plugins/channels`).
+
+```go
+type ChannelPlugin interface {
+    Name() string
+    Init(cfg ChannelConfig) error
+    Start(ctx context.Context, handler EventHandler) error
+    Stop() error
+    NormalizeEvent(raw []byte) (*ChannelEvent, error)
+    SendResponse(event *ChannelEvent, response *a2a.Message) error
+}
+```
+
+### `pipeline.Stage`
+
+Single unit of work in the build pipeline. Receives a `BuildContext` carrying all state.
+
+```go
+type Stage interface {
+    Name() string
+    Execute(ctx context.Context, bc *BuildContext) error
+}
+```
+
+### `plugins.FrameworkPlugin`
+
+Framework adapter for the build pipeline. Implementations: CrewAI, LangChain, custom (in `forge-cli/plugins`).
+
+```go
+type FrameworkPlugin interface {
+    Name() string
+    DetectProject(dir string) (bool, error)
+    ExtractAgentConfig(dir string) (*AgentConfig, error)
+    GenerateWrapper(config *AgentConfig) ([]byte, error)
+    RuntimeDependencies() []string
+}
+```
+
+### `container.Builder`
+
+Container image builder. Implementations: `DockerBuilder`, `PodmanBuilder`, `BuildahBuilder` (in `forge-cli/container`).
+
+## Data Flows
+
+### Compilation Flow
+
+```
+forge.yaml
+  → config.Load()                         [forge-cli/config]
+  → types.ForgeConfig                     [forge-core/types]
+  → validate.ValidateForgeConfig()        [forge-core/validate]
+  → skills.Compile()                      [forge-core/skills]
+  → compiler.Compile()                    [forge-core/compiler]
+  → agentspec.AgentSpec + SecurityConfig  [forge-core/agentspec, forge-core/security]
+```
+
+Or via the public API:
+
+```
+forgecore.Compile(CompileRequest) → CompileResult
+```
+
+### Build Pipeline Flow
+
+The build pipeline executes stages sequentially. Each stage lives in `forge-cli/build/` and implements `pipeline.Stage` from forge-core.
+
+| # | Stage | Produces |
+|---|-------|----------|
+| 1 | **FrameworkAdapterStage** | Detects framework (crewai/langchain/custom), extracts agent config, generates A2A wrapper |
+| 2 | **AgentSpecStage** | `agent.json` — canonical AgentSpec from ForgeConfig |
+| 3 | **ToolsStage** | Tool schema files from discovered and configured tools |
+| 4 | **PolicyStage** | `policy-scaffold.json` — guardrail configuration |
+| 5 | **DockerfileStage** | `Dockerfile` — container image definition |
+| 6 | **K8sStage** | `deployment.yaml`, `service.yaml`, `network-policy.yaml` |
+| 7 | **ValidateStage** | Validates all generated artifacts against schemas |
+| 8 | **ManifestStage** | `build-manifest.json` — build metadata and file inventory |
+| — | **SkillsStage** | `compiled/skills/skills.json` + `compiled/prompt.txt` — compiled skills |
+| — | **EgressStage** | `compiled/egress_allowlist.json` — egress domain allowlist |
+| — | **ToolFilterStage** | Annotated + filtered tool list (dev tools removed in prod) |
+
+### Runtime Flow
+
+```
+AgentSpec + Tools
+  → forgecore.NewRuntime(RuntimeConfig)   [forge-core/forgecore]
+  → runtime.LLMExecutor                   [forge-core/runtime]
+  → llm.Client (provider selection)       [forge-core/llm/providers]
+  → Agent loop: prompt → LLM → tool calls → results → LLM → response
+  → a2a.Message                           [forge-core/a2a]
+```
+
+The CLI orchestrates the full runtime stack:
+
+```
+forge run
+  → config.Load()                         [forge-cli/config]
+  → tools.Discover() + tools.Registry     [forge-cli/tools, forge-core/tools]
+  → runtime.LLMExecutor                   [forge-core/runtime]
+  → server.A2AServer                      [forge-cli/server]
+  → channels.Router (optional)            [forge-cli/channels]
+```
+
+## Module Directory Tree
+
+```
+forge/
+  forge-core/          Core library
+    a2a/               A2A protocol types
+    llm/               LLM client, fallback chains, OAuth
+    memory/            Long-term memory (vector + keyword search)
+    runtime/           Agent loop, hooks, compactor, audit logger
+    scheduler/         Cron scheduler (parser, tick loop, overlap prevention)
+    secrets/           Encrypted secret storage (AES-256-GCM + Argon2id)
+    security/          Egress resolver, enforcer, proxy, K8s NetworkPolicy
+    tools/             Tool registry, builtins, adapters, skill_tool
+    types/             Config types
+  forge-cli/           CLI application
+    cmd/               CLI commands (init, build, run, serve, schedule, etc.)
+    runtime/           Runner, skill registration, scheduler store, subprocess executor
+    internal/tui/      Interactive init wizard (Bubbletea)
+    tools/             CLI-specific tools (cli_execute, skill executor)
+  forge-plugins/       Channel plugins
+    telegram/          Telegram adapter (polling, document upload)
+    slack/             Slack adapter (Socket Mode, file upload)
+    markdown/          Markdown converter, message splitting
+  forge-ui/            Local web dashboard
+    server.go          HTTP server, routing, CORS
+    handlers*.go       REST API (agents, config, wizard, skills)
+    process.go         Agent process manager
+    discovery.go       Workspace scanner
+    sse.go             Real-time event broker
+    chat.go            A2A streaming chat proxy
+    static/dist/       Embedded SPA (Preact + HTM + Monaco)
+  forge-skills/        Skill system
+    contract/          Skill types, registry interface, filtering
+    local/             Embedded + local skill registries
+    parser/            SKILL.md parser (frontmatter + body extraction)
+    compiler/          Skill compiler (prompt generation)
+    requirements/      Requirement aggregation and derivation
+    analyzer/          Security audit for skills
+    resolver/          Binary and env var resolution
+    trust/             Skill signing and verification
+```
+
+## Schema Validation
+
+AgentSpec JSON is validated against `schemas/agentspec.v1.0.schema.json` (JSON Schema draft-07) using the `gojsonschema` library. The schema is embedded in the binary via `go:embed` in `forge-core/schemas/`.
+
+## Egress Security
+
+Egress controls operate at both build time and runtime. Build-time controls generate allowlist artifacts and Kubernetes NetworkPolicy manifests. Runtime controls include:
+
+- **IP Validation** — Rejects non-standard IP formats (octal, hex, packed decimal) and IPv6 transition addresses embedding private IPs
+- **SafeDialer** — Validates resolved IPs post-DNS against blocked CIDR ranges before connecting (prevents DNS rebinding)
+- **EgressEnforcer** — In-process `http.RoundTripper` backed by `SafeTransport` for domain allowlist enforcement
+- **EgressProxy** — Local HTTP/HTTPS forward proxy for subprocess traffic, also backed by `SafeDialer`
+- **Redirect credential stripping** — `http_request` and `webhook_call` strip `Authorization`/`Cookie` headers on cross-origin redirects
+
+The A2A server adds:
+- **CORS restriction** — Origin allowlist (localhost by default), configurable via flag/env/YAML
+- **Security headers** — `X-Content-Type-Options`, `Referrer-Policy`, `X-Frame-Options`, `Content-Security-Policy`
+- **Rate limiting** — Per-IP token bucket middleware (read: 60 req/min burst 10, write: 10 req/min burst 3) with 429 responses and `Retry-After` headers; stale visitors evicted automatically
+- **Request size limits** — `MaxHeaderBytes` (1 MiB) and `http.MaxBytesReader` (2 MiB) on request bodies; returns 413 on excess
+
+See [Egress Security](security/egress.md) for details.

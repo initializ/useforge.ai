@@ -5,33 +5,26 @@ order: 3
 editUrl: https://github.com/initializ/useforge.ai/edit/main/src/content/docs/getting-started/your-first-skill.md
 ---
 
-# Your First Skill
+Skills are a progressive disclosure mechanism for defining agent capabilities in a structured, human-readable format. They compile into container artifacts during `forge build`.
 
-Skills are the building blocks that give your Forge agent real capabilities. Each skill is a directory containing a `SKILL.md` file that describes what the skill does, what it needs, and how the LLM should use it.
+## Overview
 
-There are two types of skills:
+Skills bridge the gap between high-level capability descriptions and the tool-calling system. Each skill lives in its own subdirectory under `skills/` with a `SKILL.md` file that defines what the agent can do. Forge compiles these into JSON artifacts and prompt text for the container.
 
-- **Binary-backed skills** — rely on external binaries (like `curl` or `summarize`). The LLM reads the SKILL.md instructions on demand and invokes actions through the `cli_execute` built-in tool.
-- **Script-backed skills** — include a `scripts/` directory with shell scripts that are registered as first-class LLM tools at runtime. The LLM calls them directly by name.
+## SKILL.md Format
 
-This guide walks you through creating one of each.
+Skills are defined in Markdown files inside `skills/<skill-name>/SKILL.md`. Each file supports optional YAML frontmatter and two body formats.
 
-## Adding an Embedded Skill
-
-Before writing a custom skill, try adding one from the embedded registry. Forge ships with several built-in skills you can add with a single command:
-
-```bash
-forge skills add weather
-```
-
-This copies the skill's `SKILL.md` and any scripts into your project's `skills/weather/` directory, checks for required environment variables, and deduplicates `.env` entries.
-
-The resulting `skills/weather/SKILL.md` looks like this:
-
-```yaml
+```markdown
 ---
 name: weather
-description: Get current weather and forecasts
+icon: weather
+category: utilities
+tags:
+  - weather
+  - forecast
+  - api
+description: Weather data skill
 metadata:
   forge:
     requires:
@@ -41,244 +34,126 @@ metadata:
         required: []
         one_of: []
         optional: []
-    egress_domains:
-      - api.openweathermap.org
-      - api.weatherapi.com
 ---
+## Tool: weather_current
 
-# Weather
+Get current weather for a location.
 
-You can look up current weather conditions and forecasts for any location.
+**Input:** location (string) - City name or coordinates
+**Output:** Current temperature, conditions, humidity, and wind speed
 
-## Constraints
+## Tool: weather_forecast
 
-- Always include the location name and current temperature
-- Use Fahrenheit for US locations, Celsius for everywhere else
-- Provide a short natural-language summary of conditions
+Get weather forecast for a location.
+
+**Input:** location (string), days (integer: 1-7)
+**Output:** Daily forecast with high/low temperatures and conditions
 ```
 
-You can inspect the trust level of the newly added skill at any time:
+Each `## Tool:` heading defines a tool the agent can call. The frontmatter declares binary dependencies and environment variable requirements. Skills compile into JSON artifacts and prompt text during `forge build`.
+
+### YAML Frontmatter
+
+Top-level fields:
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `name` | yes | Skill identifier (kebab-case) |
+| `icon` | yes | Emoji displayed in the TUI skill picker |
+| `category` | yes | Grouping for `forge skills list --category` (e.g., `sre`, `developer`, `research`, `utilities`) |
+| `tags` | yes | Discovery keywords for `forge skills list --tags` (kebab-case) |
+| `description` | yes | One-line summary |
+
+The `metadata.forge.requires` block declares runtime dependencies:
+
+- **`bins`** -- Binary dependencies that must be in `$PATH` at runtime
+- **`env.required`** -- Environment variables that must be set
+- **`env.one_of`** -- At least one of these environment variables must be set
+- **`env.optional`** -- Optional environment variables for extended functionality
+
+Frontmatter is parsed by `ParseWithMetadata()` in `forge-skills/parser/parser.go` and feeds into the compilation pipeline.
+
+### Legacy List Format
+
+```markdown
+# Agent Skills
+
+- translate
+- summarize
+- classify
+```
+
+Single-word list items (no spaces, max 64 characters) create name-only skill entries. This format is simpler but provides less metadata.
+
+## Skill Registry
+
+Forge ships with a built-in skill registry. Add skills to your project with a single command:
 
 ```bash
-forge skills list
+# Add a skill from the registry
+forge skills add tavily-research
+
+# Validate skill requirements
+forge skills validate
+
+# Audit skill security
+forge skills audit --embedded
 ```
 
-## Creating a Binary-Backed Skill
+`forge skills add` copies the skill's SKILL.md and any associated scripts into your project's `skills/` directory. It validates binary and environment requirements, checks for existing values in your environment, `.env` file, and encrypted secrets, and prompts only for truly missing values with a suggestion to use `forge secrets set` for sensitive keys.
 
-A binary-backed skill has no `scripts/` directory. The LLM loads the SKILL.md instructions when it needs them (progressive disclosure) and invokes the required binary through `cli_execute`.
+## Skills as First-Class Tools
 
-You will build a `site-check` skill that uses `curl` to determine whether a website is reachable.
+Script-backed skills are automatically registered as **first-class LLM tools** at runtime. When a skill has scripts in `skills/scripts/`, Forge:
 
-### Directory Structure
+1. Parses the skill's SKILL.md for tool definitions, descriptions, and input schemas
+2. Creates a named tool for each `## Tool:` entry (e.g., `tavily_research` becomes a tool the LLM can call directly)
+3. Executes the skill's shell script with JSON input when the LLM invokes it
 
-```
-skills/site-check/
-└── SKILL.md
-```
+This means the LLM sees skill tools alongside builtins like `web_search` and `http_request` -- no generic `cli_execute` indirection needed.
 
-Create the directory:
+For skills **without** scripts (binary-backed skills like `k8s-incident-triage`), Forge injects the full skill instructions into the system prompt. The complete SKILL.md body -- including triage steps, detection heuristics, output structure, and safety constraints -- is included inline so the LLM follows the skill protocol without needing an extra tool call. Skills are invoked via `cli_execute` with the declared binary dependencies.
 
-```bash
-mkdir -p skills/site-check
-```
+## Skill Categories & Tags
 
-### Write the SKILL.md
+All embedded skills must declare `category`, `tags`, and `icon` in their frontmatter. Categories and tags must be lowercase kebab-case.
 
-Create `skills/site-check/SKILL.md` with the following contents:
-
-```yaml
+```markdown
 ---
-name: site-check
-description: Check whether a website is reachable and report its HTTP status.
-metadata:
-  forge:
-    requires:
-      bins:
-        - curl
-      env:
-        required: []
-        one_of: []
-        optional: []
-    egress_domains: []
-    trust_hints:
-      requires_network: true
-      requires_filesystem: false
-      requires_shell: true
-      max_execution_seconds: 15
+name: k8s-incident-triage
+icon: k8s
+category: sre
+tags:
+  - kubernetes
+  - incident-response
+  - triage
 ---
-
-# Site Check
-
-You can check whether a website is up and reachable.
-
-## Instructions
-
-When asked to check if a site is up, run the following command using cli_execute:
-
-    curl -s -o /dev/null -w "%{http_code}" --max-time 10 <URL>
-
-Interpret the result:
-
-- **200-299** — the site is up and healthy
-- **301, 302** — the site is redirecting (include the redirect target)
-- **403** — the site is blocking the request
-- **404** — the specific page was not found
-- **500-599** — the site has a server-side error
-- **000 or timeout** — the site is unreachable
-
-## Constraints
-
-- Always include the HTTP status code in your response
-- If the site is unreachable, say so clearly — do not speculate on the cause
-- Only check URLs the user explicitly provides
 ```
 
-Because `egress_domains` is empty, this skill inherits whatever egress rules you have configured in `forge.yaml`. If you want to restrict it to specific domains, list them explicitly.
-
-## Creating a Script-Backed Skill
-
-A script-backed skill includes a `scripts/` directory. Each script becomes a tool the LLM can call directly, with structured input and output. This gives you tighter control over execution and argument validation.
-
-You will build a `word-count` skill that counts words in text input.
-
-### Directory Structure
-
-```
-skills/word-count/
-├── SKILL.md
-└── scripts/
-    └── word-count.sh
-```
-
-Create the directories:
+Use categories and tags to filter skills:
 
 ```bash
-mkdir -p skills/word-count/scripts
+# List skills by category
+forge skills list --category sre
+
+# Filter by tags (AND semantics — skill must have all listed tags)
+forge skills list --tags kubernetes,incident-response
 ```
 
-### Write the SKILL.md
+## Built-in Skills
 
-Create `skills/word-count/SKILL.md`:
-
-```yaml
----
-name: word-count
-description: Count words, lines, and characters in text input.
-metadata:
-  forge:
-    requires:
-      bins: []
-      env:
-        required: []
-        one_of: []
-        optional: []
-    egress_domains: []
-    trust_hints:
-      requires_network: false
-      requires_filesystem: false
-      requires_shell: true
-      max_execution_seconds: 10
----
-
-# Word Count
-
-You can count words, lines, and characters in any text the user provides.
-
-## Tool: word_count
-
-Count words, lines, and characters in the provided text.
-
-### InputSpec
-
-| Field | Type   | Required | Description            |
-|-------|--------|----------|------------------------|
-| text  | string | yes      | The text to analyze    |
-
-### Output
-
-Returns a JSON object with `words`, `lines`, and `characters` counts.
-
-## Constraints
-
-- Return exact counts — do not estimate
-- Handle empty input gracefully by returning zeroes
-```
-
-The `## Tool: word_count` section tells Forge to register a tool named `word_count`. The `InputSpec` table defines the JSON schema for the tool's arguments. At runtime, the LLM calls `word_count` directly with `{"text": "..."}`.
-
-### Write the Script
-
-Create `skills/word-count/scripts/word-count.sh`:
-
-```bash
-#!/usr/bin/env bash
-set -euo pipefail
-
-# Input is passed as JSON via stdin
-TEXT=$(cat | jq -r '.text // ""')
-
-if [ -z "$TEXT" ]; then
-  echo '{"words": 0, "lines": 0, "characters": 0}'
-  exit 0
-fi
-
-WORDS=$(echo "$TEXT" | wc -w | tr -d ' ')
-LINES=$(echo "$TEXT" | wc -l | tr -d ' ')
-CHARS=$(echo "$TEXT" | wc -c | tr -d ' ')
-
-echo "{\"words\": $WORDS, \"lines\": $LINES, \"characters\": $CHARS}"
-```
-
-Make the script executable:
-
-```bash
-chmod +x skills/word-count/scripts/word-count.sh
-```
-
-**Naming convention:** Tool names use underscores (`word_count`), script filenames use hyphens (`word-count.sh`). Forge maps between them automatically.
-
-## Build and Run
-
-Once your skills are in place, run the autowire pipeline to discover and evaluate them:
-
-```bash
-forge build
-```
-
-`forge build` scans your `skills/` directory, parses each SKILL.md, validates requirements (are the required binaries installed? are required env vars set?), evaluates trust, and generates the skill index.
-
-Then start your agent:
-
-```bash
-forge run
-```
-
-Your agent now has access to both `site-check` (via progressive disclosure and `cli_execute`) and `word-count` (as a directly callable tool). Try asking it to "check if example.com is up" or "count the words in this paragraph."
-
-## Trust Evaluation
-
-When `forge build` runs, each skill passes through the **autowire pipeline**:
-
-1. **Scanner** — discovers SKILL.md files in the `skills/` directory
-2. **Parser** — extracts frontmatter and markdown body
-3. **Security Analyzer** — checks for mismatches between declared trust hints and actual skill contents (e.g., declaring `requires_network: false` while listing egress domains)
-4. **Trust Evaluator** — assigns a trust level based on the analysis
-
-The result is one of three trust levels:
-
-| Trust Level   | Meaning                                                      |
-|---------------|--------------------------------------------------------------|
-| **Trusted**   | Clean analysis, no findings. The skill runs without restriction. |
-| **UnderReview** | Warnings found. The skill runs but is flagged for review. Use `forge skills promote <name>` to approve it. |
-| **Failed**    | Critical findings. The skill is blocked from running until the issues are resolved. |
-
-Trust is computed, not declared. A skill's trust hints are verified against its actual contents. You can inspect the full trust report for any skill:
-
-```bash
-forge skills trust-report site-check
-```
-
-## What's Next
-
-- [SKILL.md Format](/docs/core-concepts/skill-md-format) — deep dive into every frontmatter field and the markdown body conventions
-- [Configuration](/docs/getting-started/configuration) — customize model providers, tools, channels, memory, and egress rules in `forge.yaml`
+| Skill | Category | Description | Scripts |
+|-------|----------|-------------|---------|
+| `github` | developer | Clone repos, create issues/PRs, query GitHub API, and manage git workflows | `github-clone.sh`, `github-checkout.sh`, `github-commit.sh`, `github-push.sh`, `github-create-pr.sh`, `github-status.sh`, `github-list-prs.sh`, `github-get-user.sh`, `github-list-stargazers.sh`, `github-list-forks.sh`, `github-pr-author-profiles.sh`, `github-stargazer-profiles.sh` |
+| `code-agent` | developer | Autonomous code generation, modification, and project scaffolding | -- (builtin tools) |
+| `weather` | utilities | Get weather data for a location | -- (binary-backed) |
+| `tavily-search` | research | Search the web using Tavily AI search API | `tavily-search.sh` |
+| `tavily-research` | research | Deep multi-source research via Tavily API | `tavily-research.sh`, `tavily-research-poll.sh` |
+| `k8s-incident-triage` | sre | Read-only Kubernetes incident triage using kubectl | -- (binary-backed) |
+| `k8s-cost-visibility` | sre | Estimate K8s infrastructure costs (compute, storage, LoadBalancer) with cost attribution reports | `k8s-cost-visibility.sh` |
+| `k8s-pod-rightsizer` | sre | Analyze workload metrics and produce CPU/memory rightsizing recommendations | -- (binary-backed) |
+| `code-review` | developer | AI-powered code review for diffs and files (supports Anthropic API, OpenAI Chat Completions, and OpenAI Responses/Codex API with streaming) | `code-review-diff.sh`, `code-review-file.sh` |
+| `code-review-standards` | developer | Initialize and manage code review standards | -- (template-based) |
+| `code-review-github` | developer | Post code review results to GitHub PRs | -- (binary-backed) |
+| `codegen-react` | developer | Scaffold and iterate on Vite + React apps | `codegen-react-scaffold.sh`, `codegen-react-read.sh`, `codegen-react-write.sh`, `codegen-react-run.sh` |
+| `codegen-html` | developer | Scaffold standalone Preact + HTM apps (zero dependencies) | `codegen-html-scaffold.sh`, `codegen-html-read.sh`, `codegen-html-write.sh` |

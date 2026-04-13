@@ -5,8 +5,6 @@ order: 4
 editUrl: https://github.com/initializ/useforge.ai/edit/main/src/content/docs/skills/contributing-a-skill.md
 ---
 
-# Contributing a Skill
-
 There are two ways to add skills to Forge: contribute an embedded skill via pull request (available to all Forge users) or add a project-local skill (available only in your project). This guide covers both paths and the quality standards that apply.
 
 ## Contributing an Embedded Skill
@@ -32,13 +30,17 @@ The `_template/` directory includes a skeleton SKILL.md with all frontmatter fie
 
 3. **Write your SKILL.md:**
 
-Edit `forge-skills/local/embedded/my-skill/SKILL.md` with proper frontmatter and LLM instructions. Follow the [SKILL.md Format](/docs/core-concepts/skill-md-format) specification for all available fields.
+Edit `forge-skills/local/embedded/my-skill/SKILL.md` with proper frontmatter and LLM instructions. Follow the [Writing Custom Skills](/docs/skills/writing-custom-skills) specification for all available fields.
 
 Here is a minimal example:
 
 ```yaml
 ---
 name: my-skill
+icon: 🔧
+category: utilities
+tags:
+  - my-tag
 description: A short description of what this skill does.
 metadata:
   forge:
@@ -57,8 +59,6 @@ metadata:
       requires_shell: true
       max_execution_seconds: 30
 ---
-
-# My Skill
 
 Instructions for the LLM go here. Be specific about what the skill does,
 how to use it, and any constraints.
@@ -166,6 +166,30 @@ forge skills trust-report my-skill
 ### Iterating on Local Skills
 
 You can modify your SKILL.md or scripts at any time. Run `forge build` or `forge skills refresh` to re-evaluate. If you fix a trust violation, the skill's trust level updates automatically.
+
+## Compilation Pipeline
+
+The skill compilation pipeline has three stages:
+
+1. **Parse** — Reads `SKILL.md` and extracts `SkillEntry` values with name, description, input spec, and output spec. When YAML frontmatter is present, `ParseWithMetadata()` additionally extracts `SkillMetadata` and `SkillRequirements` (binary deps, env vars).
+
+2. **Compile** — Converts entries into `CompiledSkills` with:
+   - A JSON-serializable skill list
+   - A human-readable prompt catalog
+   - Version identifier (`agentskills-v1`)
+
+3. **Write Artifacts** — Outputs to the build directory:
+   - `compiled/skills/skills.json` — Machine-readable skill definitions
+   - `compiled/prompt.txt` — LLM-readable skill catalog
+
+## Build Stage Integration
+
+The `SkillsStage` runs as part of the build pipeline:
+
+1. Scans the `skills/` subdirectory for `SKILL.md` files in each subdirectory
+2. Parses, compiles, and writes artifacts
+3. Updates the `AgentSpec` with `skills_spec_version` and `forge_skills_ext_version`
+4. Records generated files in the build manifest
 
 ## Quality Guidelines
 

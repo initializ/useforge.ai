@@ -5,9 +5,22 @@ order: 3
 editUrl: https://github.com/initializ/useforge.ai/edit/main/src/content/docs/deployment/production-checklist.md
 ---
 
-# Production Checklist
-
 Before deploying your Forge agent to a live environment, work through each section below. Every item has a clear check and, where applicable, a command you can run to verify.
+
+## Production Build Checks
+
+Production builds (`--prod`) enforce:
+
+- No `dev-open` egress mode
+- No dev-only tools (`local_shell`, `local_file_browser`)
+- Secret provider chain must include `env` (not just `encrypted-file`)
+- `.dockerignore` must exist if a Dockerfile is generated
+
+Run the production build to validate all checks pass:
+
+```bash
+forge package --prod
+```
 
 ## Egress Security
 
