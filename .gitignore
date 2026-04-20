@@ -17,6 +17,16 @@ src/content/skills/*.md
 src/content/changelog/*.md
 !src/content/changelog/.gitkeep
 
+# Synced docs (generated at build time from forge repo)
+src/content/docs/getting-started/
+src/content/docs/core-concepts/
+src/content/docs/security/
+src/content/docs/skills/
+src/content/docs/deployment/
+src/content/docs/reference/
+src/content/docs/faq.md
+src/data/docs-manifest.json
+
 # wrangler files
 .wrangler
 .dev.vars*
