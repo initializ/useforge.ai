@@ -1,0 +1,376 @@
+{
+  "syncedAt": "2026-05-07T01:01:11.113Z",
+  "ref": "main",
+  "totalDocs": 36,
+  "sections": {
+    "core-concepts": 8,
+    "deployment": 4,
+    "root": 1,
+    "getting-started": 5,
+    "reference": 7,
+    "security": 7,
+    "skills": 4
+  },
+  "entries": [
+    {
+      "sourcePath": "docs/core-concepts/channels.md",
+      "outputPath": "core-concepts/channels.md",
+      "section": "core-concepts",
+      "slug": "channels",
+      "title": "Channels",
+      "description": "Bridge messaging platforms like Slack and Telegram to your AI agent.",
+      "order": 4,
+      "editUrl": "https://github.com/initializ/forge/edit/main/docs/core-concepts/channels.md"
+    },
+    {
+      "sourcePath": "docs/core-concepts/hooks.md",
+      "outputPath": "core-concepts/hooks.md",
+      "section": "core-concepts",
+      "slug": "hooks",
+      "title": "Hooks",
+      "description": "Hook into the agent loop for logging, enforcement, and auditing.",
+      "order": 7,
+      "editUrl": "https://github.com/initializ/forge/edit/main/docs/core-concepts/hooks.md"
+    },
+    {
+      "sourcePath": "docs/core-concepts/how-forge-works.md",
+      "outputPath": "core-concepts/how-forge-works.md",
+      "section": "core-concepts",
+      "slug": "how-forge-works",
+      "title": "How Forge Works",
+      "description": "Understand Forge's architecture, module system, and data flows.",
+      "order": 1,
+      "editUrl": "https://github.com/initializ/forge/edit/main/docs/core-concepts/how-forge-works.md"
+    },
+    {
+      "sourcePath": "docs/core-concepts/memory-system.md",
+      "outputPath": "core-concepts/memory-system.md",
+      "section": "core-concepts",
+      "slug": "memory-system",
+      "title": "Memory System",
+      "description": "Session persistence, context management, and long-term memory.",
+      "order": 5,
+      "editUrl": "https://github.com/initializ/forge/edit/main/docs/core-concepts/memory-system.md"
+    },
+    {
+      "sourcePath": "docs/core-concepts/runtime-engine.md",
+      "outputPath": "core-concepts/runtime-engine.md",
+      "section": "core-concepts",
+      "slug": "runtime-engine",
+      "title": "Runtime Engine",
+      "description": "The LLM runtime engine powering tool calling, memory, and hooks.",
+      "order": 6,
+      "editUrl": "https://github.com/initializ/forge/edit/main/docs/core-concepts/runtime-engine.md"
+    },
+    {
+      "sourcePath": "docs/core-concepts/scheduling.md",
+      "outputPath": "core-concepts/scheduling.md",
+      "section": "core-concepts",
+      "slug": "scheduling",
+      "title": "Scheduling",
+      "description": "Built-in cron scheduler for recurring agent tasks.",
+      "order": 8,
+      "editUrl": "https://github.com/initializ/forge/edit/main/docs/core-concepts/scheduling.md"
+    },
+    {
+      "sourcePath": "docs/core-concepts/skill-md-format.md",
+      "outputPath": "core-concepts/skill-md-format.md",
+      "section": "core-concepts",
+      "slug": "skill-md-format",
+      "title": "SKILL.md Format",
+      "description": "Define agent skills using the SKILL.md format with YAML frontmatter and tool definitions.",
+      "order": 2,
+      "editUrl": "https://github.com/initializ/forge/edit/main/docs/core-concepts/skill-md-format.md"
+    },
+    {
+      "sourcePath": "docs/core-concepts/tools-and-builtins.md",
+      "outputPath": "core-concepts/tools-and-builtins.md",
+      "section": "core-concepts",
+      "slug": "tools-and-builtins",
+      "title": "Tools & Builtins",
+      "description": "Built-in tools, adapter tools, and the pluggable tool system.",
+      "order": 3,
+      "editUrl": "https://github.com/initializ/forge/edit/main/docs/core-concepts/tools-and-builtins.md"
+    },
+    {
+      "sourcePath": "docs/deployment/docker.md",
+      "outputPath": "deployment/docker.md",
+      "section": "deployment",
+      "slug": "docker",
+      "title": "Docker",
+      "description": "Package and deploy Forge agents as Docker containers.",
+      "order": 1,
+      "editUrl": "https://github.com/initializ/forge/edit/main/docs/deployment/docker.md"
+    },
+    {
+      "sourcePath": "docs/deployment/kubernetes.md",
+      "outputPath": "deployment/kubernetes.md",
+      "section": "deployment",
+      "slug": "kubernetes",
+      "title": "Kubernetes",
+      "description": "Deploy Forge agents to Kubernetes with generated manifests and NetworkPolicy.",
+      "order": 2,
+      "editUrl": "https://github.com/initializ/forge/edit/main/docs/deployment/kubernetes.md"
+    },
+    {
+      "sourcePath": "docs/deployment/monitoring.md",
+      "outputPath": "deployment/monitoring.md",
+      "section": "deployment",
+      "slug": "monitoring",
+      "title": "Monitoring",
+      "description": "Monitor Forge agents with structured audit events and logging.",
+      "order": 4,
+      "editUrl": "https://github.com/initializ/forge/edit/main/docs/deployment/monitoring.md"
+    },
+    {
+      "sourcePath": "docs/deployment/production-checklist.md",
+      "outputPath": "deployment/production-checklist.md",
+      "section": "deployment",
+      "slug": "production-checklist",
+      "title": "Production Checklist",
+      "description": "Production build checks and deployment best practices.",
+      "order": 3,
+      "editUrl": "https://github.com/initializ/forge/edit/main/docs/deployment/production-checklist.md"
+    },
+    {
+      "sourcePath": "docs/faq.md",
+      "outputPath": "faq.md",
+      "section": "root",
+      "slug": "faq",
+      "title": "FAQ",
+      "description": "Frequently asked questions about Forge.",
+      "order": 1,
+      "editUrl": "https://github.com/initializ/forge/edit/main/docs/faq.md"
+    },
+    {
+      "sourcePath": "docs/getting-started/configuration.md",
+      "outputPath": "getting-started/configuration.md",
+      "section": "getting-started",
+      "slug": "configuration",
+      "title": "Configuration",
+      "description": "Configure your Forge agent with forge.yaml and environment variables.",
+      "order": 4,
+      "editUrl": "https://github.com/initializ/forge/edit/main/docs/getting-started/configuration.md"
+    },
+    {
+      "sourcePath": "docs/getting-started/contributing.md",
+      "outputPath": "getting-started/contributing.md",
+      "section": "getting-started",
+      "slug": "contributing",
+      "title": "Contributing",
+      "description": "Set up the development environment and contribute to Forge.",
+      "order": 5,
+      "editUrl": "https://github.com/initializ/forge/edit/main/docs/getting-started/contributing.md"
+    },
+    {
+      "sourcePath": "docs/getting-started/installation.md",
+      "outputPath": "getting-started/installation.md",
+      "section": "getting-started",
+      "slug": "installation",
+      "title": "Installation",
+      "description": "Install Forge via Homebrew, script, or binary download.",
+      "order": 1,
+      "editUrl": "https://github.com/initializ/forge/edit/main/docs/getting-started/installation.md"
+    },
+    {
+      "sourcePath": "docs/getting-started/quick-start.md",
+      "outputPath": "getting-started/quick-start.md",
+      "section": "getting-started",
+      "slug": "quick-start",
+      "title": "Quick Start",
+      "description": "Get a Forge agent running in under 60 seconds.",
+      "order": 2,
+      "editUrl": "https://github.com/initializ/forge/edit/main/docs/getting-started/quick-start.md"
+    },
+    {
+      "sourcePath": "docs/getting-started/your-first-skill.md",
+      "outputPath": "getting-started/your-first-skill.md",
+      "section": "getting-started",
+      "slug": "your-first-skill",
+      "title": "Your First Skill",
+      "description": "Create your first agent skill with the SKILL.md format.",
+      "order": 3,
+      "editUrl": "https://github.com/initializ/forge/edit/main/docs/getting-started/your-first-skill.md"
+    },
+    {
+      "sourcePath": "docs/reference/agent-skills-compatibility.md",
+      "outputPath": "reference/agent-skills-compatibility.md",
+      "section": "reference",
+      "slug": "agent-skills-compatibility",
+      "title": "Agent Skills Compatibility",
+      "description": "Compatibility matrix for skills across agent types and LLM providers.",
+      "order": 4,
+      "editUrl": "https://github.com/initializ/forge/edit/main/docs/reference/agent-skills-compatibility.md"
+    },
+    {
+      "sourcePath": "docs/reference/cli-reference.md",
+      "outputPath": "reference/cli-reference.md",
+      "section": "reference",
+      "slug": "cli-reference",
+      "title": "CLI Reference",
+      "description": "Complete reference for all Forge CLI commands.",
+      "order": 1,
+      "editUrl": "https://github.com/initializ/forge/edit/main/docs/reference/cli-reference.md"
+    },
+    {
+      "sourcePath": "docs/reference/command-integration.md",
+      "outputPath": "reference/command-integration.md",
+      "section": "reference",
+      "slug": "command-integration",
+      "title": "Command Integration",
+      "description": "Integrate Forge agents with the Initializ Command platform.",
+      "order": 7,
+      "editUrl": "https://github.com/initializ/forge/edit/main/docs/reference/command-integration.md"
+    },
+    {
+      "sourcePath": "docs/reference/environment-variables.md",
+      "outputPath": "reference/environment-variables.md",
+      "section": "reference",
+      "slug": "environment-variables",
+      "title": "Environment Variables",
+      "description": "All environment variables supported by Forge.",
+      "order": 3,
+      "editUrl": "https://github.com/initializ/forge/edit/main/docs/reference/environment-variables.md"
+    },
+    {
+      "sourcePath": "docs/reference/forge-yaml-schema.md",
+      "outputPath": "reference/forge-yaml-schema.md",
+      "section": "reference",
+      "slug": "forge-yaml-schema",
+      "title": "forge.yaml Schema",
+      "description": "Complete YAML schema reference for Forge agent configuration.",
+      "order": 2,
+      "editUrl": "https://github.com/initializ/forge/edit/main/docs/reference/forge-yaml-schema.md"
+    },
+    {
+      "sourcePath": "docs/reference/framework-plugins.md",
+      "outputPath": "reference/framework-plugins.md",
+      "section": "reference",
+      "slug": "framework-plugins",
+      "title": "Framework Plugins",
+      "description": "Plugin system for CrewAI, LangChain, and custom frameworks.",
+      "order": 6,
+      "editUrl": "https://github.com/initializ/forge/edit/main/docs/reference/framework-plugins.md"
+    },
+    {
+      "sourcePath": "docs/reference/web-dashboard.md",
+      "outputPath": "reference/web-dashboard.md",
+      "section": "reference",
+      "slug": "web-dashboard",
+      "title": "Web Dashboard",
+      "description": "Local web dashboard for managing agents from the browser.",
+      "order": 5,
+      "editUrl": "https://github.com/initializ/forge/edit/main/docs/reference/web-dashboard.md"
+    },
+    {
+      "sourcePath": "docs/security/audit-logging.md",
+      "outputPath": "security/audit-logging.md",
+      "section": "security",
+      "slug": "audit-logging",
+      "title": "Audit Logging",
+      "description": "Structured NDJSON audit logging for runtime security events.",
+      "order": 6,
+      "editUrl": "https://github.com/initializ/forge/edit/main/docs/security/audit-logging.md"
+    },
+    {
+      "sourcePath": "docs/security/build-signing.md",
+      "outputPath": "security/build-signing.md",
+      "section": "security",
+      "slug": "build-signing",
+      "title": "Build Signing",
+      "description": "Ed25519 signing and verification of build artifacts.",
+      "order": 5,
+      "editUrl": "https://github.com/initializ/forge/edit/main/docs/security/build-signing.md"
+    },
+    {
+      "sourcePath": "docs/security/egress-control.md",
+      "outputPath": "security/egress-control.md",
+      "section": "security",
+      "slug": "egress-control",
+      "title": "Egress Control",
+      "description": "Layered egress security controls for restricting outbound network access.",
+      "order": 2,
+      "editUrl": "https://github.com/initializ/forge/edit/main/docs/security/egress-control.md"
+    },
+    {
+      "sourcePath": "docs/security/guardrails.md",
+      "outputPath": "security/guardrails.md",
+      "section": "security",
+      "slug": "guardrails",
+      "title": "Content Guardrails",
+      "description": "Configurable content filtering, PII detection, and jailbreak protection.",
+      "order": 7,
+      "editUrl": "https://github.com/initializ/forge/edit/main/docs/security/guardrails.md"
+    },
+    {
+      "sourcePath": "docs/security/overview.md",
+      "outputPath": "security/overview.md",
+      "section": "security",
+      "slug": "overview",
+      "title": "Security Overview",
+      "description": "Forge's layered security architecture from network posture to guardrails.",
+      "order": 1,
+      "editUrl": "https://github.com/initializ/forge/edit/main/docs/security/overview.md"
+    },
+    {
+      "sourcePath": "docs/security/secret-management.md",
+      "outputPath": "security/secret-management.md",
+      "section": "security",
+      "slug": "secret-management",
+      "title": "Secret Management",
+      "description": "AES-256-GCM encrypted secret storage with per-agent isolation.",
+      "order": 4,
+      "editUrl": "https://github.com/initializ/forge/edit/main/docs/security/secret-management.md"
+    },
+    {
+      "sourcePath": "docs/security/trust-model.md",
+      "outputPath": "security/trust-model.md",
+      "section": "security",
+      "slug": "trust-model",
+      "title": "Trust Model",
+      "description": "How Forge evaluates trust for skills, tools, and external services.",
+      "order": 3,
+      "editUrl": "https://github.com/initializ/forge/edit/main/docs/security/trust-model.md"
+    },
+    {
+      "sourcePath": "docs/skills/contributing-a-skill.md",
+      "outputPath": "skills/contributing-a-skill.md",
+      "section": "skills",
+      "slug": "contributing-a-skill",
+      "title": "Contributing a Skill",
+      "description": "Contribute a skill to the Forge embedded skill registry.",
+      "order": 4,
+      "editUrl": "https://github.com/initializ/forge/edit/main/docs/skills/contributing-a-skill.md"
+    },
+    {
+      "sourcePath": "docs/skills/embedded-skills.md",
+      "outputPath": "skills/embedded-skills.md",
+      "section": "skills",
+      "slug": "embedded-skills",
+      "title": "Embedded Skills",
+      "description": "Built-in skills that ship with Forge: GitHub, Tavily, Kubernetes, codegen, and more.",
+      "order": 1,
+      "editUrl": "https://github.com/initializ/forge/edit/main/docs/skills/embedded-skills.md"
+    },
+    {
+      "sourcePath": "docs/skills/skills-cli.md",
+      "outputPath": "skills/skills-cli.md",
+      "section": "skills",
+      "slug": "skills-cli",
+      "title": "Skills CLI",
+      "description": "CLI commands for managing, validating, and auditing skills.",
+      "order": 3,
+      "editUrl": "https://github.com/initializ/forge/edit/main/docs/skills/skills-cli.md"
+    },
+    {
+      "sourcePath": "docs/skills/writing-custom-skills.md",
+      "outputPath": "skills/writing-custom-skills.md",
+      "section": "skills",
+      "slug": "writing-custom-skills",
+      "title": "Writing Custom Skills",
+      "description": "Create script-backed skills with tools, guardrails, and the compilation pipeline.",
+      "order": 2,
+      "editUrl": "https://github.com/initializ/forge/edit/main/docs/skills/writing-custom-skills.md"
+    }
+  ]
+}
