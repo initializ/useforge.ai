@@ -163,4 +163,4 @@ Releases are automated via GoReleaser:
 5. GitHub Actions runs GoReleaser to build and publish binaries
 
 ---
-← [Command Integration](/docs/getting-started/command-integration) | [Back to README](/docs/README)
+← [Command Integration](/docs/reference/command-integration) | [Back to README](/docs/README)

@@ -57,7 +57,7 @@ Skill scripts run in a restricted environment via `SkillCommandExecutor`:
 - **OAuth token resolution**: When `OPENAI_API_KEY` is set to `__oauth__`, the executor resolves OAuth credentials and injects the access token, `OPENAI_BASE_URL`, and the configured model as `REVIEW_MODEL`
 - **Configurable timeout**: Each skill declares a `timeout_hint` in its YAML frontmatter (e.g., 300s for research)
 - **No shell execution**: Scripts run via `bash <script> <json-input>`, not through a shell interpreter
-- **Egress proxy enforcement**: When egress mode is `allowlist` or `deny-all`, a local HTTP/HTTPS proxy is started and `HTTP_PROXY`/`HTTPS_PROXY` env vars are injected into subprocess environments, ensuring `curl`, `wget`, Python `requests`, and other HTTP clients route through the same domain allowlist used by in-process tools (see [Egress Security](/docs/skills/security/egress))
+- **Egress proxy enforcement**: When egress mode is `allowlist` or `deny-all`, a local HTTP/HTTPS proxy is started and `HTTP_PROXY`/`HTTPS_PROXY` env vars are injected into subprocess environments, ensuring `curl`, `wget`, Python `requests`, and other HTTP clients route through the same domain allowlist used by in-process tools (see [Egress Security](/docs/security/egress-control))
 
 ### Symlink Escape Detection
 
@@ -113,7 +113,7 @@ The `deny_prompts` and `deny_responses` guardrails form a layered defense agains
 
 Additionally, skill `Description()` methods and system prompt catalog entries use generic descriptions instead of listing binary names.
 
-For full details on guardrail types, pattern syntax, and runtime behavior, see [Content Guardrails — Skill Guardrails](/docs/skills/security/guardrails#skill-guardrails).
+For full details on guardrail types, pattern syntax, and runtime behavior, see [Content Guardrails — Skill Guardrails](/docs/security/guardrails#skill-guardrails).
 
 ## Skill Instructions in System Prompt
 

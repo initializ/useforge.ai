@@ -113,7 +113,7 @@ Allowed domains are resolved from three sources:
 
 Localhost (`127.0.0.1`, `::1`, `localhost`) is always allowed in all modes.
 
-For full details on egress enforcement, see **[Egress Security](/docs/security/egress)**.
+For full details on egress enforcement, see **[Egress Security](/docs/security/egress-control)**.
 
 ---
 
@@ -177,7 +177,7 @@ Forge provides AES-256-GCM encrypted secret storage with Argon2id key derivation
 
 At startup, the runtime detects when the same secret value is shared across different purpose categories (e.g., `OPENAI_API_KEY` and `TELEGRAM_BOT_TOKEN` having the same value). This prevents credential reuse mistakes that could escalate the impact of a single token compromise. Categories: `llm`, `search`, `telegram`, `slack`.
 
-For full details, see **[Secrets Management](/docs/security/secrets)**.
+For full details, see **[Secrets Management](/docs/security/secret-management)**.
 
 ---
 
@@ -185,7 +185,7 @@ For full details, see **[Secrets Management](/docs/security/secrets)**.
 
 Forge supports Ed25519 signing and SHA-256 checksumming of build artifacts for supply chain integrity. At runtime, `forge run` can verify artifacts against trusted keys before execution.
 
-For full details, see **[Build Signing & Verification](/docs/security/signing)**.
+For full details, see **[Build Signing & Verification](/docs/security/build-signing)**.
 
 ---
 
@@ -270,11 +270,11 @@ Production builds enforce:
 
 | Document | Description |
 |----------|-------------|
-| [Egress Security](/docs/security/egress) | Deep dive into egress enforcement: IP validation, SafeDialer, profiles, modes, domain matching, proxy architecture, NetworkPolicy |
-| [Secrets Management](/docs/security/secrets) | Encrypted storage, per-agent secrets, passphrase handling |
-| [Build Signing & Verification](/docs/security/signing) | Key management, build signing, runtime verification |
+| [Egress Security](/docs/security/egress-control) | Deep dive into egress enforcement: IP validation, SafeDialer, profiles, modes, domain matching, proxy architecture, NetworkPolicy |
+| [Secrets Management](/docs/security/secret-management) | Encrypted storage, per-agent secrets, passphrase handling |
+| [Build Signing & Verification](/docs/security/build-signing) | Key management, build signing, runtime verification |
 | [Content Guardrails](/docs/security/guardrails) | PII detection, jailbreak protection, custom rules |
-| [Architecture](/docs/architecture) | System design, module layout, and data flows |
-| [Tools](/docs/tools) | Tool system including `cli_execute` security layers |
-| [Skills](/docs/skills) | Skill definitions and runtime execution |
-| [Commands](/docs/commands) | CLI reference including security-related flags |
+| [Architecture](/docs/core-concepts/how-forge-works) | System design, module layout, and data flows |
+| [Tools](/docs/core-concepts/tools-and-builtins) | Tool system including `cli_execute` security layers |
+| [Skills](/docs/skills/writing-custom-skills) | Skill definitions and runtime execution |
+| [Commands](/docs/reference/cli-reference) | CLI reference including security-related flags |

@@ -82,7 +82,7 @@ hooks.Register(engine.BeforeToolExec, func(ctx context.Context, hctx *engine.Hoo
 
 `AfterToolExec` hooks can modify `hctx.ToolOutput` to redact sensitive content before it enters the LLM context. The agent loop reads back `ToolOutput` from the `HookContext` after all hooks fire.
 
-The runner registers a guardrail hook that scans tool output for secrets and PII patterns. The hook passes `hctx.ToolName` to the guardrail engine, enabling per-tool exemptions via `allow_tools` config. See [Tool Output Scanning](/docs/core-concepts/security/guardrails#tool-output-scanning) for details.
+The runner registers a guardrail hook that scans tool output for secrets and PII patterns. The hook passes `hctx.ToolName` to the guardrail engine, enabling per-tool exemptions via `allow_tools` config. See [Tool Output Scanning](/docs/security/guardrails#tool-output-scanning) for details.
 
 ```go
 hooks.Register(engine.AfterToolExec, func(ctx context.Context, hctx *engine.HookContext) error {
@@ -104,7 +104,7 @@ When skills declare guardrails in their `SKILL.md` frontmatter, the runner regis
 
 These hooks complement the global guardrail hooks (secrets/PII scanning) and fire in addition to them. Skill guardrails are loaded from build artifacts or parsed at runtime from `SKILL.md` — no `forge build` step is required.
 
-For pattern syntax and configuration, see [Skill Guardrails](/docs/core-concepts/security/guardrails#skill-guardrails).
+For pattern syntax and configuration, see [Skill Guardrails](/docs/security/guardrails#skill-guardrails).
 
 ## Audit Logging
 

@@ -508,4 +508,4 @@ forge ui --dir /path/to/workspace --port 4200
 forge ui --no-open
 ```
 
-See [Dashboard](/docs/reference/dashboard) for full documentation.
+See [Dashboard](/docs/reference/web-dashboard) for full documentation.

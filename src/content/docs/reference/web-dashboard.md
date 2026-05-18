@@ -137,7 +137,7 @@ The Skill Builder uses the agent's own LLM provider to power a chat conversation
 
 ### Validation Rules
 
-The validator enforces the [SKILL.md format](/docs/reference/skills):
+The validator enforces the [SKILL.md format](/docs/core-concepts/skill-md-format):
 
 | Check | Level | Description |
 |-------|-------|-------------|

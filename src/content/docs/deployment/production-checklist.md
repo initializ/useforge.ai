@@ -28,4 +28,4 @@ forge export --pretty --include-schemas
 forge export --simulate-import
 ```
 
-See [Command Integration](/docs/deployment/command-integration) for the full integration guide.
+See [Command Integration](/docs/reference/command-integration) for the full integration guide.

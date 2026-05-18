@@ -56,7 +56,7 @@ Messaging platform integrations that implement the `channels.ChannelPlugin` inte
 
 ### forge-ui — Web Dashboard
 
-Local web dashboard for managing agents from the browser. Single Go module embedded into the `forge` binary. See [Dashboard](/docs/core-concepts/dashboard) for details.
+Local web dashboard for managing agents from the browser. Single Go module embedded into the `forge` binary. See [Dashboard](/docs/reference/web-dashboard) for details.
 
 ### forge-skills — Skill System
 
@@ -363,4 +363,4 @@ The A2A server adds:
 - **Rate limiting** — Per-IP token bucket middleware (read: 60 req/min burst 10, write: 10 req/min burst 3) with 429 responses and `Retry-After` headers; stale visitors evicted automatically
 - **Request size limits** — `MaxHeaderBytes` (1 MiB) and `http.MaxBytesReader` (2 MiB) on request bodies; returns 413 on excess
 
-See [Egress Security](/docs/core-concepts/security/egress) for details.
+See [Egress Security](/docs/security/egress-control) for details.
