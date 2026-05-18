@@ -91,12 +91,33 @@ Before running the Slack adapter, create and configure a Slack App:
 
 ### Mention-Aware Filtering
 
-The Slack adapter resolves the bot's own user ID at startup via `auth.test` and uses it for intelligent message filtering:
+The Slack adapter resolves the bot's own user ID **and** `bot_id` at startup via `auth.test`. The user ID drives @mention matching; the `bot_id` powers the self-loop guard.
 
 - **Channel messages** — the bot only responds when explicitly @mentioned (e.g. `@ForgeBot what's the status?`)
 - **Thread replies** — the bot responds to all messages in a thread it's participating in, unless the message @mentions a different user
 - **Direct messages** — all DMs are processed
 - Bot mentions are stripped from the message text before passing to the LLM, so it sees clean input
+
+### Bot Authorship Admission
+
+By default the adapter ignores every event whose Slack `bot_id` is non-empty — this prevents bot-to-bot loops. Operators can admit specific bots (scheduler, monitoring tool, CI bot) that should be allowed to @-mention the agent by listing their `bot_id`s in `slack-config.yaml`:
+
+```yaml
+adapter: slack
+settings:
+  app_token_env: SLACK_APP_TOKEN
+  bot_token_env: SLACK_BOT_TOKEN
+  allow_bot_ids: B0123ABC,B0456DEF
+```
+
+Two safeguards keep loops bounded:
+
+| Rule | Scope |
+|---|---|
+| **Self-loop guard** | The agent's own `bot_id` is always dropped, even if listed in `allow_bot_ids`. No opt-out. |
+| **Mention requirement** | Admitted bots still must include `<@FORGE_AGENT_USER_ID>` in the message text — chatter from an allowed bot without an @-mention is ignored. |
+
+Both drop paths emit an operator-actionable log line naming the `bot_id` and pointing at the YAML setting, so debugging is self-service. Find a bot's `bot_id`: Slack admin → Manage apps → app → Bot User OAuth.
 
 ### Processing Indicators
 
@@ -127,11 +148,17 @@ adapter: slack
 settings:
   app_token_env: SLACK_APP_TOKEN
   bot_token_env: SLACK_BOT_TOKEN
+  # Optional: comma-separated bot_ids whose @mentions are admitted.
+  # Default (omit / empty) = no other bots admitted; only humans trigger.
+  # The agent's own bot_id is always dropped, regardless of this list.
+  # allow_bot_ids: B0123ABC,B0456DEF
 ```
 
 Environment variables:
 - `SLACK_APP_TOKEN` — Socket Mode app-level token (`xapp-...`)
 - `SLACK_BOT_TOKEN` — Bot user OAuth token (`xoxb-...`)
+
+See [Bot Authorship Admission](#bot-authorship-admission) for `allow_bot_ids` details.
 
 ### Telegram (`telegram-config.yaml`)
 
@@ -188,7 +215,8 @@ When channels are configured in `forge.yaml`, the build pipeline automatically:
 
 1. **Includes channel config files** — `slack-config.yaml`, `telegram-config.yaml`, etc. are copied into the Docker build context alongside `forge.yaml`
 2. **Adds `--with` to the entrypoint** — The container entrypoint becomes `["forge", "run", "--host", "0.0.0.0", "--with", "slack,telegram"]`
-3. **Handles auth loopback** — When [external auth](/docs/core-concepts/runtime#external-authentication) is configured, channel adapters authenticate to the A2A server using an internal token, bypassing the external auth provider
+3. **Surfaces channel env vars in the manifests** — Every `_env`-suffixed setting in each `<channel>-config.yaml` (e.g. `bot_token_env: SLACK_BOT_TOKEN`) is unioned into the Kubernetes `secrets.yaml` and `deployment.yaml` (via `secretKeyRef`) and into the docker-compose adapter services. Both outputs derive from the same source — see [Kubernetes — Env Var Injection](/docs/deployment/kubernetes#env-var-injection)
+4. **Handles auth loopback** — When [external auth](/docs/core-concepts/runtime#external-authentication) is configured, channel adapters authenticate to the A2A server using an internal token, bypassing the external auth provider
 
 Pass channel secrets via environment variables:
 
