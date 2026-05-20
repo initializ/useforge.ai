@@ -1,0 +1,384 @@
+---
+import Base from '@/layouts/Base.astro';
+
+const metaDescription =
+  'Forge is the open-source agent runtime built for the enterprise reality — multi-cloud, on-prem, air-gapped, regulated. Computed trust, egress enforcement, audit logging by default. Single static binary, no managed-service dependency, no cloud lock-in.';
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Product',
+  name: 'Forge for Enterprise',
+  description: metaDescription,
+  url: 'https://useforge.ai/enterprise/',
+  applicationCategory: 'EnterpriseApplication',
+  operatingSystem: 'Cross-platform',
+  audience: {
+    '@type': 'Audience',
+    audienceType: 'Enterprise',
+  },
+  brand: {
+    '@type': 'Organization',
+    name: 'Initializ',
+    url: 'https://initializ.ai',
+  },
+  offers: {
+    '@type': 'Offer',
+    price: '0',
+    priceCurrency: 'USD',
+    url: 'https://github.com/initializ/forge',
+  },
+};
+
+const competitorCards = [
+  {
+    label: 'Hyperscaler-managed runtimes',
+    body: 'If your stack is 100% AWS, <strong class="text-heading">AgentCore</strong> is excellent. If you\'re Microsoft-native with Entra and M365, <strong class="text-heading">Foundry</strong> is integrated for that. If you\'re GCP-native with Gemini-grounding, <strong class="text-heading">Gemini Enterprise</strong> is the deepest fit. Forge is for enterprises that span clouds, run on-prem, or need air-gapped deployment.',
+    links: [
+      { href: '/compare/forge-vs-agentcore', label: 'Forge vs AgentCore' },
+      { href: '/compare/forge-vs-foundry', label: 'Forge vs Foundry' },
+      { href: '/compare/forge-vs-vertex', label: 'Forge vs Gemini Enterprise' },
+    ],
+  },
+  {
+    label: 'Anthropic-hosted runtimes',
+    body: '<strong class="text-heading">Claude Managed Agents</strong> is the right runtime for event-driven workloads that run in Anthropic\'s cloud on Anthropic models with MCP-reachable tools. Forge runs the same SKILL.md format in your environment, on your model choice, with direct access to systems that can\'t be exposed via public MCP.',
+    links: [{ href: '/compare/forge-vs-claude-managed-agents', label: 'Forge vs Claude Managed Agents' }],
+  },
+  {
+    label: 'Agent frameworks',
+    body: '<strong class="text-heading">LangChain</strong>, <strong class="text-heading">CrewAI</strong>, and other frameworks give you Python abstractions to build agents. Forge gives you a runtime to deploy them. The two are not competitors; LangChain logic can live inside a SKILL.md script.',
+    links: [
+      { href: '/compare/forge-vs-langchain', label: 'Forge vs LangChain' },
+      { href: '/compare/forge-vs-crewai', label: 'Forge vs CrewAI' },
+    ],
+  },
+  {
+    label: 'Personal agent tooling',
+    body: '<strong class="text-heading">Claude Cowork</strong> and similar desktop assistants run on a knowledge worker\'s laptop for personal productivity. Forge runs as a service in your infrastructure, for your organization. Different blast radius, different security model.',
+    links: [{ href: '/compare/', label: 'Compare all' }],
+  },
+];
+
+const audiences = [
+  {
+    title: 'Domain experts who author skills',
+    body: 'If you write runbooks today, you can write Forge skills today. SKILL.md is markdown with structured frontmatter — the same prose you use in operational documentation, with declarations for what tools and integrations the skill needs. The Skill Builder UI in `forge ui` is designed for non-developer authors. No Python, no framework.',
+  },
+  {
+    title: 'Developers who write the tools',
+    body: 'When LLM reasoning isn\'t enough, developers contribute scripts (in any language) that skills invoke as tools. The skill body declares the tools by name; the developer implements them; the domain expert iterates on the procedure without touching code. Clear separation, version-controlled together.',
+  },
+  {
+    title: 'Platform engineers who operate the runtime',
+    body: 'A single static Go binary. Standard Kubernetes manifests. Egress enforcement at the runtime layer. Audit logs through OpenTelemetry to your existing SIEM. Local model inference via `forge brain` for air-gapped deployments. The runtime is infrastructure you already know how to operate.',
+  },
+];
+
+// Hub vs OSS table — softened per user direction since no Hub-tier marketing page exists yet.
+// Future enterprise launch should update "Available with Forge Hub" rows to concrete claims.
+const tableRows = [
+  { capability: 'Runtime', oss: 'Full single-binary runtime, all execution features', hub: 'Same — no runtime gating' },
+  { capability: 'Egress enforcement', oss: 'Per-skill allowlists, runtime-enforced', hub: 'Same' },
+  { capability: 'Computed trust', oss: 'Autowire pipeline, security analyzer', hub: 'Same' },
+  { capability: 'Audit logging', oss: 'Structured logs with correlation IDs', hub: 'Same, plus SIEM-ready streaming connectors (preview)' },
+  { capability: 'Skill registry', oss: 'Local skills, community registry', hub: 'Private organizational registry, on-prem option (contact us)' },
+  { capability: 'Skill signing', oss: 'Cryptographic verification supported', hub: 'Signed skill distribution, key management (preview)' },
+  { capability: 'RBAC', oss: 'Filesystem permissions', hub: 'Workspace-driven RBAC, fine-grained roles (contact us)' },
+  { capability: 'Model inference', oss: 'Pluggable model providers, `forge brain` local', hub: 'Same' },
+  { capability: 'Support', oss: 'Community via Discord and GitHub', hub: 'SLA-backed enterprise support (contact us)' },
+  { capability: 'Compliance', oss: 'SOC 2 / ISO 27001 audit-ready posture', hub: 'Compliance documentation, attestations, controls evidence (contact us)' },
+  { capability: 'Deployment', oss: 'Self-deploy on any infrastructure', hub: 'Reference architectures, deployment assistance (contact us)' },
+];
+---
+
+<Base
+  title="Forge for Enterprise — Forge"
+  description={metaDescription}
+  keywords="enterprise AI agent runtime, on-prem AI agent, air-gapped AI agent, kubernetes AI agent, SOC2 AI agent, regulated AI agent, multi-cloud agent runtime"
+  layout="marketing"
+  jsonLd={jsonLd}
+>
+  <!-- Section 1: Hero -->
+  <section class="relative overflow-hidden pt-20 pb-12 sm:pt-28 sm:pb-16">
+    <div
+      class="pointer-events-none absolute inset-0 -top-40"
+      style="background: radial-gradient(ellipse 60% 50% at 50% 0%, rgba(249,115,22,0.10) 0%, transparent 70%)"
+    ></div>
+    <div class="relative mx-auto max-w-3xl px-4 text-center">
+      <h1 class="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight">
+        <span class="bg-gradient-to-r from-forge-orange to-forge-amber bg-clip-text text-transparent">
+          The agent runtime built for the enterprise reality
+        </span>
+      </h1>
+      <p class="mt-6 text-lg sm:text-xl text-secondary max-w-2xl mx-auto leading-relaxed">
+        Multi-cloud. On-prem. Air-gapped. Regulated. Forge runs the same SKILL.md agent on EKS, AKS,
+        GKE, on-prem Kubernetes, bare metal, or air-gapped infrastructure — with computed trust,
+        egress enforcement, and audit logging built into the runtime, not bolted on as an
+        enterprise tier.
+      </p>
+      <div class="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
+        <a
+          href="mailto:enterprise@initializ.ai"
+          class="inline-flex items-center gap-2 px-6 py-3 bg-forge-orange hover:bg-forge-deep text-white font-medium rounded-forge-md transition-colors shadow-lg shadow-forge-orange/20"
+        >
+          Talk to us about enterprise
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </a>
+        <a
+          href="/hub"
+          class="inline-flex items-center gap-2 px-6 py-3 border border-dark-border text-body hover:text-heading hover:border-gray-500 font-medium rounded-forge-md transition-colors"
+        >
+          View Forge Hub
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 2: What enterprise means -->
+  <section class="py-16 sm:py-20 border-t border-dark-border">
+    <div class="mx-auto max-w-3xl px-4">
+      <h2 class="text-2xl sm:text-3xl font-bold text-heading mb-6">
+        What "enterprise" actually means for an agent runtime
+      </h2>
+      <div class="space-y-5 text-secondary leading-relaxed">
+        <p>
+          The agent runtime market has produced excellent products for desktop knowledge work, for
+          AWS-native deployment, for Azure-native deployment, for GCP-native deployment, and for
+          hosted sessions in Anthropic's cloud. What it has not produced — and structurally cannot
+          produce, because each major vendor's incentive is to keep workloads in their own cloud —
+          is a runtime that runs <em>anywhere your services already run</em> without picking a
+          cloud, a model, or a managed-service dependency. That gap is where Forge lives.
+        </p>
+        <p>
+          <strong class="text-heading">The infrastructure you actually have, not the one a vendor would prefer.</strong>
+          Enterprise deployments span multiple clouds, include on-prem, frequently include
+          air-gapped environments for regulated workloads, and never sit cleanly on a single
+          hyperscaler. A runtime that requires AWS, requires Azure, or requires Anthropic's cloud
+          isn't a runtime — it's a cloud commitment. Forge runs on any container infrastructure and
+          on bare metal, with no managed-service dependency.
+        </p>
+        <p>
+          <strong class="text-heading">The security model your security team can actually review.</strong>
+          Computed-not-declared trust. Per-skill egress allowlists enforced at the runtime layer.
+          Denied tools as explicit contracts in skill frontmatter. Audit logs with correlation IDs
+          at every level. The autowire pipeline scans every skill before it executes. These aren't
+          enterprise add-ons; they're how the open-source runtime works. When your security team
+          asks "how do we prevent this agent from doing things we didn't authorize," the answer
+          doesn't require a separate paid product.
+        </p>
+        <p>
+          <strong class="text-heading">The compliance posture your auditors will actually accept.</strong>
+          Forge Hub adds signed skills, RBAC, and an on-prem registry for organizations under
+          SOC 2, ISO 27001, HIPAA, FedRAMP, or other frameworks. Audit logs stream to your
+          existing SIEM. Identity binds to the IdP you already operate. State persists wherever
+          you already store state. No vendor-specific compliance dependency is created.
+        </p>
+        <p>
+          <strong class="text-heading">The cost predictability your CFO will actually sign off on.</strong>
+          Forge is open source. You pay for the infrastructure you already operate and the model
+          API spend you already budget. No consumption-priced managed-runtime fee, no per-session
+          billing surprises, no cloud-vendor lock-in on agent execution. At scale, this is the
+          difference between an agent program that survives a budget review and one that doesn't.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 3: Competitive context -->
+  <section class="py-16 sm:py-20 border-t border-dark-border">
+    <div class="mx-auto max-w-5xl px-4">
+      <h2 class="text-2xl sm:text-3xl font-bold text-heading mb-4">
+        Where Forge fits in the enterprise agent runtime landscape
+      </h2>
+      <p class="text-secondary mb-10">
+        Forge does not try to be every agent runtime. The honest carve, made explicitly:
+      </p>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {competitorCards.map((card) => (
+          <div class="bg-dark-surface border border-dark-border rounded-forge-lg p-6">
+            <h3 class="font-bold text-heading text-base mb-3">{card.label}</h3>
+            <p class="text-sm text-secondary leading-relaxed" set:html={card.body}></p>
+            <div class="mt-4 flex flex-wrap gap-x-3 gap-y-1">
+              {card.links.map((link, i) => (
+                <>
+                  {i > 0 && <span class="text-muted text-sm">·</span>}
+                  <a
+                    href={link.href}
+                    class="text-sm font-medium text-forge-orange hover:text-forge-amber transition-colors"
+                  >
+                    {link.label}
+                  </a>
+                </>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 4: Three audiences -->
+  <section class="py-16 sm:py-20 border-t border-dark-border">
+    <div class="mx-auto max-w-5xl px-4">
+      <h2 class="text-2xl sm:text-3xl font-bold text-heading mb-4">
+        Three audiences. One document. One runtime.
+      </h2>
+      <p class="text-secondary mb-10 max-w-3xl">
+        Enterprise agent programs fail when they're built by developers in isolation. The
+        operational expertise lives elsewhere — in the SREs who write runbooks, the security
+        engineers who document controls, the compliance officers who codify procedures. Forge is
+        designed so all three audiences can collaborate through the SKILL.md document.
+      </p>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {audiences.map((a, i) => (
+          <div class="bg-dark-surface border border-dark-border rounded-forge-lg p-6">
+            <div class="flex items-center gap-3 mb-3">
+              <span class="flex items-center justify-center w-7 h-7 rounded-full bg-forge-orange/10 text-forge-orange text-sm font-bold flex-shrink-0">
+                {i + 1}
+              </span>
+              <h3 class="font-bold text-heading text-base">{a.title}</h3>
+            </div>
+            <p class="text-sm text-secondary leading-relaxed" set:html={a.body.replace(/`([^`]+)`/g, '<code class="text-forge-orange/80 bg-dark-bg px-1.5 py-0.5 rounded text-xs">$1</code>')}></p>
+          </div>
+        ))}
+      </div>
+      <div class="mt-8 text-center">
+        <a
+          href="/who-is-forge-for/"
+          class="inline-flex items-center gap-2 text-base font-medium text-forge-orange hover:text-forge-amber transition-colors"
+        >
+          Read the full three-audience model
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 5: Customer reference (placeholder per Part D — no GreyOrange approval) -->
+  <!-- TODO: Once GreyOrange marketing + security sign-off is in hand (see instructions 07 + 09),
+       replace this section with the named case-study version and create /customers/greyorange/.
+       Track via: <github-issue-link-pending> -->
+  <section class="py-16 sm:py-20 border-t border-dark-border">
+    <div class="mx-auto max-w-3xl px-4">
+      <h2 class="text-2xl sm:text-3xl font-bold text-heading mb-4">
+        In production
+      </h2>
+      <div class="space-y-4 text-secondary leading-relaxed">
+        <p>
+          Forge is in production deployment with enterprise customers in robotics, logistics,
+          fintech, and platform engineering. Customer case studies are in publication —
+          <a href="mailto:enterprise@initializ.ai" class="text-forge-orange hover:text-forge-amber transition-colors">contact us</a>
+          if you'd like a direct reference.
+        </p>
+        <p>
+          For the full architectural argument and a representative production scenario, read
+          <a href="/blog/agent-runtime-for-services" class="text-forge-orange hover:text-forge-amber transition-colors">the long-form positioning post</a>.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 6: What Forge Hub adds -->
+  <section class="py-16 sm:py-20 border-t border-dark-border">
+    <div class="mx-auto max-w-5xl px-4">
+      <h2 class="text-2xl sm:text-3xl font-bold text-heading mb-4">
+        What Forge Hub adds for enterprise
+      </h2>
+      <p class="text-secondary mb-8 max-w-3xl">
+        The core Forge runtime is open source under Apache 2.0 and includes the security model,
+        egress enforcement, computed trust, and audit logging by default — not gated as enterprise
+        features. Forge Hub adds the controls enterprise procurement and security teams require
+        to deploy at scale. Items marked <em>preview</em> or <em>contact us</em> are in active
+        development or available on request.
+      </p>
+      <div class="bg-dark-surface border border-dark-border rounded-forge-xl overflow-hidden">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-dark-border">
+              <th class="text-left px-4 sm:px-6 py-4 text-secondary font-mono text-xs uppercase tracking-wider">Capability</th>
+              <th class="text-left px-4 sm:px-6 py-4 text-forge-orange font-mono text-xs uppercase tracking-wider">Open-source Forge</th>
+              <th class="text-left px-4 sm:px-6 py-4 text-forge-amber font-mono text-xs uppercase tracking-wider">Forge Hub Enterprise</th>
+            </tr>
+          </thead>
+          <tbody>
+            {tableRows.map((row, i) => (
+              <tr class={i < tableRows.length - 1 ? 'border-b border-dark-border/50' : ''}>
+                <td class="px-4 sm:px-6 py-3 text-heading font-medium align-top">{row.capability}</td>
+                <td class="px-4 sm:px-6 py-3 text-secondary align-top">{row.oss}</td>
+                <td class="px-4 sm:px-6 py-3 text-body align-top">{row.hub}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <div class="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
+        <a
+          href="/hub"
+          class="inline-flex items-center gap-2 px-5 py-2.5 border border-dark-border hover:border-gray-500 text-body hover:text-heading text-sm font-medium rounded-forge-md transition-colors"
+        >
+          Learn more about Forge Hub
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
+        </a>
+        <a
+          href="mailto:enterprise@initializ.ai"
+          class="inline-flex items-center gap-2 px-5 py-2.5 bg-forge-orange hover:bg-forge-deep text-white text-sm font-medium rounded-forge-md transition-colors"
+        >
+          Talk to us about enterprise
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 7: Closing -->
+  <section class="py-16 sm:py-20 border-t border-dark-border">
+    <div class="mx-auto max-w-3xl px-4">
+      <div class="bg-dark-surface border border-dark-border rounded-forge-xl p-8 text-center">
+        <h2 class="text-xl font-bold text-heading mb-2">Ready to deploy in production?</h2>
+        <p class="text-secondary text-sm mb-5">
+          The Forge runtime is open source. Enterprise support, signed skills, and the on-prem
+          registry are available through Forge Hub.
+        </p>
+        <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
+          <a
+            href="/docs/getting-started/installation"
+            class="inline-flex items-center gap-2 px-5 py-2.5 bg-forge-orange hover:bg-forge-deep text-white text-sm font-medium rounded-forge-md transition-colors"
+          >
+            Get started with Forge
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </a>
+          <a
+            href="mailto:enterprise@initializ.ai"
+            class="inline-flex items-center gap-2 px-5 py-2.5 border border-dark-border hover:border-gray-500 text-body hover:text-heading text-sm font-medium rounded-forge-md transition-colors"
+          >
+            Talk to enterprise sales
+          </a>
+        </div>
+      </div>
+
+      <div class="mt-12">
+        <h3 class="text-sm font-semibold text-muted uppercase tracking-wider mb-4 text-center">
+          Related resources
+        </h3>
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+          <a href="/who-is-forge-for/" class="bg-dark-surface border border-dark-border rounded-forge-md p-3 text-center text-sm text-secondary hover:text-heading hover:border-gray-500 transition-colors">
+            Who Forge is for
+          </a>
+          <a href="/compare/" class="bg-dark-surface border border-dark-border rounded-forge-md p-3 text-center text-sm text-secondary hover:text-heading hover:border-gray-500 transition-colors">
+            Compare
+          </a>
+          <a href="/blog/agent-runtime-for-services" class="bg-dark-surface border border-dark-border rounded-forge-md p-3 text-center text-sm text-secondary hover:text-heading hover:border-gray-500 transition-colors">
+            Positioning
+          </a>
+          <a href="/hub" class="bg-dark-surface border border-dark-border rounded-forge-md p-3 text-center text-sm text-secondary hover:text-heading hover:border-gray-500 transition-colors">
+            Forge Hub
+          </a>
+          <a href="/trust" class="bg-dark-surface border border-dark-border rounded-forge-md p-3 text-center text-sm text-secondary hover:text-heading hover:border-gray-500 transition-colors">
+            Trust
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+</Base>
