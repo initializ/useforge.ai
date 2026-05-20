@@ -123,4 +123,6 @@ What remains is the structural difference: the agent loop and the model run on A
 
 ---
 
+**Read the full positioning:** [Forge is the runtime for agents that run next to services →](/blog/agent-runtime-for-services)
+
 **Also see:** [Forge vs AgentCore](/compare/forge-vs-agentcore) · [Forge vs Foundry](/compare/forge-vs-foundry) · [Forge vs Gemini Enterprise](/compare/forge-vs-vertex)
