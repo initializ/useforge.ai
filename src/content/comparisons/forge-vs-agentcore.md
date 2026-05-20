@@ -105,4 +105,4 @@ The most honest summary: **AgentCore is AWS's answer to "production agents on AW
 
 ---
 
-**Also see:** [Forge vs Azure Foundry](/compare/forge-vs-foundry) · [Forge vs Vertex](/compare/forge-vs-vertex) · [Forge vs Claude Managed Agents](/compare/forge-vs-claude-managed-agents)
+**Also see:** [Forge vs Foundry](/compare/forge-vs-foundry) · [Forge vs Gemini Enterprise](/compare/forge-vs-vertex) · [Forge vs Claude Managed Agents](/compare/forge-vs-claude-managed-agents)

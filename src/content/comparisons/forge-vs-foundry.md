@@ -107,4 +107,4 @@ The choice is rarely close in practice. Microsoft-native enterprises will get mo
 
 ---
 
-**Also see:** [Forge vs AgentCore](/compare/forge-vs-agentcore) · [Forge vs Vertex](/compare/forge-vs-vertex) · [Forge vs Claude Managed Agents](/compare/forge-vs-claude-managed-agents)
+**Also see:** [Forge vs AgentCore](/compare/forge-vs-agentcore) · [Forge vs Gemini Enterprise](/compare/forge-vs-vertex) · [Forge vs Claude Managed Agents](/compare/forge-vs-claude-managed-agents)
