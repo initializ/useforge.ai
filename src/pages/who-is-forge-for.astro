@@ -1,0 +1,408 @@
+---
+import Base from '@/layouts/Base.astro';
+
+const metaDescription =
+  'Forge serves three audiences — domain experts who author skills as markdown, developers who write the tools that extend them, and platform engineers who operate the runtime. The agent is a document, and the document is the contract.';
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebPage',
+  name: 'Who Forge is for',
+  description: metaDescription,
+  url: 'https://useforge.ai/who-is-forge-for/',
+  audience: [
+    { '@type': 'Audience', audienceType: 'Domain experts who author skills' },
+    { '@type': 'Audience', audienceType: 'Developers who write tools' },
+    { '@type': 'Audience', audienceType: 'Platform engineers who operate the runtime' },
+  ],
+  publisher: {
+    '@type': 'Organization',
+    name: 'Initializ',
+    url: 'https://initializ.ai',
+  },
+};
+---
+
+<Base
+  title="Who Forge Is For — Forge"
+  description={metaDescription}
+  layout="marketing"
+  jsonLd={jsonLd}
+>
+  <!-- Hero -->
+  <section class="relative overflow-hidden pt-20 pb-12 sm:pt-28 sm:pb-16">
+    <div
+      class="pointer-events-none absolute inset-0 -top-40"
+      style="background: radial-gradient(ellipse 60% 50% at 50% 0%, rgba(249,115,22,0.10) 0%, transparent 70%)"
+    ></div>
+    <div class="relative mx-auto max-w-3xl px-4 text-center">
+      <h1 class="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight">
+        <span class="bg-gradient-to-r from-forge-orange to-forge-amber bg-clip-text text-transparent">
+          Who Forge is for
+        </span>
+      </h1>
+      <p class="mt-4 text-lg sm:text-xl text-secondary max-w-2xl mx-auto">
+        Forge isn't just for developers. The SKILL.md format makes the agent a document — and
+        three audiences collaborate through that document to build, extend, and operate
+        production agents.
+      </p>
+    </div>
+  </section>
+
+  <!-- Intro -->
+  <section class="pb-12">
+    <div class="mx-auto max-w-3xl px-4 space-y-4 text-secondary leading-relaxed">
+      <p>
+        The agent runtime market is dominated by products that assume the agent is code. Pick a
+        Python framework, learn its abstractions, write the orchestration, manage the
+        dependencies, deploy the container. That model works for one audience: software engineers.
+        It excludes the people who actually know what the agent should do — the SREs who write the
+        runbooks, the security engineers who document the controls, the compliance officers who
+        codify the procedures, the operations leads who maintain the playbooks.
+      </p>
+      <p>
+        Forge takes a different premise. A <code class="text-forge-orange/80 bg-dark-surface px-1.5 py-0.5 rounded text-sm">SKILL.md</code>
+        is a markdown document with structured frontmatter. The frontmatter declares what the
+        skill needs. The body is instructions written for an LLM, in the same prose you'd use in
+        a runbook or playbook. Scripts are optional — used when the LLM needs deterministic tools
+        to call — and they live in a separate directory that domain experts don't have to touch.
+        The agent, as an artifact, is something a non-coder can read, review, write, and
+        version-control.
+      </p>
+      <p>
+        That structural choice opens Forge to three audiences who collaborate naturally through
+        the document.
+      </p>
+    </div>
+  </section>
+
+  <!-- Audience one -->
+  <section class="py-12 border-t border-dark-border">
+    <div class="mx-auto max-w-3xl px-4">
+      <div class="flex items-center gap-3 mb-4">
+        <span class="flex items-center justify-center w-7 h-7 rounded-full bg-forge-orange/10 text-forge-orange text-sm font-bold">
+          1
+        </span>
+        <h2 class="text-2xl sm:text-3xl font-bold text-heading">Domain experts who author skills</h2>
+      </div>
+      <div class="space-y-4 text-secondary leading-relaxed">
+        <p>
+          If you write runbooks today — operational procedures, incident response steps, security
+          playbooks, audit procedures, support escalation paths, customer onboarding sequences —
+          you can write Forge skills. The format is the same prose you already write, with a
+          frontmatter block on top declaring what tools and integrations the skill needs.
+        </p>
+        <p>
+          Concretely: an SRE who has documented their pod-restart triage process can turn that
+          documentation into a working agent by adding frontmatter declaring access to
+          <code class="text-forge-orange/80 bg-dark-surface px-1.5 py-0.5 rounded text-sm">kubectl</code>
+          and a few environment variables. A security engineer who maintains a vulnerability-triage
+          playbook can convert it into a skill that the LLM follows step-by-step. A compliance
+          officer who maintains a quarterly access-review procedure can codify it as a skill that
+          runs on a schedule and produces the evidence artifact the audit needs.
+        </p>
+        <p>
+          The Skill Builder UI — opened with <code class="text-forge-orange/80 bg-dark-surface px-1.5 py-0.5 rounded text-sm">forge ui</code>
+          and served locally with no external dependency — is designed for this audience. It gives
+          a structured editor for the frontmatter, a markdown editor for the body, and immediate
+          preview of how the agent will execute. No Python, no framework, no deployment manifest.
+        </p>
+        <p class="font-semibold text-heading">What domain experts get from Forge:</p>
+        <ul class="list-disc pl-6 space-y-2">
+          <li>The agent is a document they can author and review without writing code.</li>
+          <li>
+            The same skill that lives in their team's Confluence or runbook repository can be made
+            executable without rewriting.
+          </li>
+          <li>
+            Skills are versioned in git, reviewed in pull requests, and signed for production use
+            — the same workflow operational documents already follow at most organizations.
+          </li>
+          <li>
+            Domain experts can iterate on a skill without involving an engineer for every change,
+            the way they iterate on documentation today.
+          </li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- Audience two -->
+  <section class="py-12 border-t border-dark-border">
+    <div class="mx-auto max-w-3xl px-4">
+      <div class="flex items-center gap-3 mb-4">
+        <span class="flex items-center justify-center w-7 h-7 rounded-full bg-forge-orange/10 text-forge-orange text-sm font-bold">
+          2
+        </span>
+        <h2 class="text-2xl sm:text-3xl font-bold text-heading">Developers who extend skills with tools</h2>
+      </div>
+      <div class="space-y-4 text-secondary leading-relaxed">
+        <p>
+          Many skills need more than what an LLM can do alone. They need to call APIs, query
+          databases, run kubectl commands, parse complex outputs, or perform deterministic
+          actions where LLM judgment is unsafe. That's where developers come in.
+        </p>
+        <p>
+          Forge skills can include scripts in their <code class="text-forge-orange/80 bg-dark-surface px-1.5 py-0.5 rounded text-sm">scripts/</code>
+          directory — Bash, Python, Go, anything. The frontmatter declares which scripts the
+          skill exposes as tools. The LLM, reading the skill body, sees the tools as named
+          functions it can invoke. A developer writes the script once; the domain expert who owns
+          the skill body uses it as a tool the way an LLM uses any other tool.
+        </p>
+        <p>
+          The collaboration shape: a domain expert writes the skill body in markdown, naming the
+          tools they'd like the agent to have. A developer reads the skill, writes the scripts
+          for the tools the domain expert specified, declares them in frontmatter. The domain
+          expert iterates on the body without touching scripts. The developer iterates on scripts
+          without touching the body. Both versions live in the same SKILL.md directory and are
+          reviewed together.
+        </p>
+        <p class="font-semibold text-heading">What developers get from Forge:</p>
+        <ul class="list-disc pl-6 space-y-2">
+          <li>
+            A clear contract between domain logic (markdown body) and tool implementation
+            (scripts in any language).
+          </li>
+          <li>
+            A runtime that handles LLM invocation, tool dispatch, egress enforcement, and audit
+            logging — so developers focus on the tool, not the agent infrastructure.
+          </li>
+          <li>
+            The same multi-language tool support across every Forge deployment — develop locally
+            with <code class="text-forge-orange/80 bg-dark-surface px-1.5 py-0.5 rounded text-sm">forge run</code>,
+            ship with <code class="text-forge-orange/80 bg-dark-surface px-1.5 py-0.5 rounded text-sm">forge package</code>,
+            deploy with the standard Kubernetes manifest.
+          </li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- Audience three -->
+  <section class="py-12 border-t border-dark-border">
+    <div class="mx-auto max-w-3xl px-4">
+      <div class="flex items-center gap-3 mb-4">
+        <span class="flex items-center justify-center w-7 h-7 rounded-full bg-forge-orange/10 text-forge-orange text-sm font-bold">
+          3
+        </span>
+        <h2 class="text-2xl sm:text-3xl font-bold text-heading">Platform engineers who operate the runtime</h2>
+      </div>
+      <div class="space-y-4 text-secondary leading-relaxed">
+        <p>
+          Once skills exist, they need to run somewhere production-grade. Platform engineers,
+          SREs (in their operator capacity), and DevOps teams are the audience for Forge's
+          runtime layer — the single static binary, the Kubernetes deployment patterns, the
+          egress enforcement model, the audit logging, the autowire trust pipeline.
+        </p>
+        <p>
+          This audience cares about: how does the runtime fit alongside the services we already
+          operate? What's its resource footprint? How does it observe through our existing
+          Prometheus and Grafana? How does it authenticate with the IdP we already use? Can we
+          run it air-gapped? Can it survive a node failure? Can the security team review it
+          end-to-end?
+        </p>
+        <p>
+          Forge is designed to make those questions cleanly answerable. The runtime is a Go
+          binary, no daemon, no DinD, no managed-service dependency. It deploys with standard
+          Kubernetes manifests. It enforces egress at the runtime layer with per-skill
+          allowlists. It emits structured audit logs with correlation IDs. It supports local
+          model inference for air-gapped deployment. It can be embedded in another service as a
+          library when that fits the architecture better.
+        </p>
+        <p class="font-semibold text-heading">What platform engineers get from Forge:</p>
+        <ul class="list-disc pl-6 space-y-2">
+          <li>A single static binary they can deploy with whatever orchestration they already use.</li>
+          <li>
+            A runtime security model that doesn't depend on the underlying cloud — same egress
+            controls and audit posture on EKS, AKS, GKE, or on-prem.
+          </li>
+          <li>Zero managed-service dependency, zero phone-home, no vendor billing surface beyond model APIs.</li>
+          <li>Standard observability via OpenTelemetry — flows into the SIEM and metrics platform already operating.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- How the three collaborate -->
+  <section class="py-12 border-t border-dark-border">
+    <div class="mx-auto max-w-3xl px-4">
+      <h2 class="text-2xl sm:text-3xl font-bold text-heading mb-4">How the three audiences collaborate</h2>
+      <div class="space-y-4 text-secondary leading-relaxed">
+        <p>
+          The SKILL.md format is the contract. Domain experts write the body. Developers write
+          the scripts. Platform engineers operate the runtime. The same document is the source
+          of truth for all three roles.
+        </p>
+        <p>
+          A working example: an enterprise SRE team wants an agent that triages Kubernetes
+          incidents. The senior SRE who knows the team's actual triage process writes the skill
+          body in markdown — the diagnostic steps, the safety constraints, the escalation rules.
+          The platform team's developer writes scripts for the kubectl invocations and the Slack
+          notifications. The platform engineer deploys the skill as a Kubernetes sidecar to the
+          cluster being monitored, with audit logs flowing into Splunk and egress restricted to
+          the cluster's internal API only.
+        </p>
+        <p>
+          Every change to the agent's behavior — refining the triage process, adding a new
+          escalation rule, tightening the egress allowlist — happens through pull requests
+          against the SKILL.md repository. The domain expert reviews body changes. The developer
+          reviews script changes. The platform engineer reviews frontmatter and deployment
+          changes. The agent improves like any other operational document, with the right people
+          reviewing the parts they own.
+        </p>
+        <p>
+          That's the difference between an agent as code and an agent as document. Code excludes
+          everyone who doesn't write code. Documents include everyone who can read them, and the
+          contract between roles is visible to all of them.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Cowork distinction -->
+  <section class="py-12 border-t border-dark-border">
+    <div class="mx-auto max-w-3xl px-4">
+      <h2 class="text-2xl sm:text-3xl font-bold text-heading mb-4">
+        What about non-developers running their own personal agents?
+      </h2>
+      <div class="space-y-4 text-secondary leading-relaxed">
+        <p>
+          Forge is not designed for the "I want an agent to help with my email and my calendar on
+          my Mac" use case. That's a desktop assistant, and Claude Cowork is the right product
+          for it. Cowork runs on your laptop, talks to the SaaS apps you personally use, completes
+          tasks on your behalf, and shuts down when you don't need it.
+        </p>
+        <p>
+          Forge is designed for the agent that runs as a service — for your team, your
+          organization, your customers. The author of that agent might not be a developer (and
+          often isn't — the best people to author production runbook-style agents are the SREs,
+          security engineers, and operations leads who own the underlying processes). But the
+          agent itself lives in your infrastructure, runs continuously or on schedule, and serves
+          a function that goes beyond one person's productivity.
+        </p>
+        <p>
+          The distinction is the deployment shape and audience of the agent, not the technical
+          sophistication of the author:
+        </p>
+        <ul class="list-disc pl-6 space-y-2">
+          <li>
+            A non-developer building an agent for <strong class="text-heading">themselves</strong>,
+            on <strong class="text-heading">their machine</strong> → Claude Cowork
+          </li>
+          <li>
+            A non-developer building an agent for <strong class="text-heading">their organization</strong>,
+            running as a <strong class="text-heading">service</strong> → Forge
+          </li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- Getting started by audience -->
+  <section class="py-12 border-t border-dark-border">
+    <div class="mx-auto max-w-3xl px-4">
+      <h2 class="text-2xl sm:text-3xl font-bold text-heading mb-6">Getting started by audience</h2>
+
+      <div class="space-y-8">
+        <div>
+          <h3 class="text-lg font-bold text-heading mb-3">If you're a domain expert authoring skills</h3>
+          <div class="space-y-3 text-secondary leading-relaxed">
+            <p>
+              Start with <code class="text-forge-orange/80 bg-dark-surface px-1.5 py-0.5 rounded text-sm">forge init my-skill</code>
+              to scaffold a new SKILL.md. Open the Skill Builder UI with
+              <code class="text-forge-orange/80 bg-dark-surface px-1.5 py-0.5 rounded text-sm">forge ui</code>
+              for a structured editor. The
+              <a href="/docs/core-concepts/skill-md-format" class="text-forge-orange hover:text-forge-amber transition-colors">
+                SKILL.md spec
+              </a>
+              documents the frontmatter fields, and the
+              <a href="/docs/skills/writing-custom-skills" class="text-forge-orange hover:text-forge-amber transition-colors">
+                writing-custom-skills guide
+              </a>
+              walks through the practical patterns: how to structure the body, when to add scripts
+              vs ask the LLM to reason, how to declare egress, how to test locally with
+              <code class="text-forge-orange/80 bg-dark-surface px-1.5 py-0.5 rounded text-sm">forge run</code>.
+            </p>
+          </div>
+        </div>
+
+        <div>
+          <h3 class="text-lg font-bold text-heading mb-3">If you're a developer writing tools</h3>
+          <div class="space-y-3 text-secondary leading-relaxed">
+            <p>
+              The
+              <a href="/docs/skills/writing-custom-skills" class="text-forge-orange hover:text-forge-amber transition-colors">
+                writing-custom-skills guide
+              </a>
+              covers the tool-script interface — how scripts declare arguments, how they return
+              results, how the LLM sees them. For the embedded-skills catalog (existing scripts
+              you can take patterns from), see
+              <a href="/docs/skills/embedded-skills" class="text-forge-orange hover:text-forge-amber transition-colors">
+                embedded skills
+              </a>.
+            </p>
+          </div>
+        </div>
+
+        <div>
+          <h3 class="text-lg font-bold text-heading mb-3">If you're a platform engineer deploying Forge</h3>
+          <div class="space-y-3 text-secondary leading-relaxed">
+            <p>
+              Start with the
+              <a href="/docs/getting-started/installation" class="text-forge-orange hover:text-forge-amber transition-colors">
+                installation guide
+              </a>
+              for the binary. The
+              <a href="/docs/deployment/kubernetes" class="text-forge-orange hover:text-forge-amber transition-colors">
+                Kubernetes deployment guide
+              </a>
+              covers the standard manifest patterns. The
+              <a href="/docs/security/overview" class="text-forge-orange hover:text-forge-amber transition-colors">
+                security overview
+              </a>
+              documents the trust model, egress enforcement, and audit logging. For enterprise
+              deployment with signing, RBAC, and on-prem registry, see
+              <a href="/hub" class="text-forge-orange hover:text-forge-amber transition-colors">
+                Forge Hub
+              </a>.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="py-12 border-t border-dark-border">
+    <div class="mx-auto max-w-3xl px-4">
+      <div class="bg-dark-surface border border-dark-border rounded-forge-xl p-8 text-center">
+        <h2 class="text-xl font-bold text-heading mb-2">Ready to try Forge?</h2>
+        <p class="text-secondary text-sm mb-5">
+          Get started in minutes with the Forge CLI.
+        </p>
+        <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
+          <a
+            href="/docs/getting-started/installation"
+            class="inline-flex items-center gap-2 px-5 py-2.5 bg-forge-orange hover:bg-forge-deep text-white text-sm font-medium rounded-forge-md transition-colors"
+          >
+            Get started
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+              <path d="M5 12h14M12 5l7 7-7 7" />
+            </svg>
+          </a>
+          <a
+            href="https://github.com/initializ/forge"
+            target="_blank"
+            rel="noopener"
+            class="inline-flex items-center gap-2 px-5 py-2.5 border border-dark-border hover:border-gray-500 text-body hover:text-heading text-sm font-medium rounded-forge-md transition-colors"
+          >
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" />
+            </svg>
+            View on GitHub
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+</Base>
