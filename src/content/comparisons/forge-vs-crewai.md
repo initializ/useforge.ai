@@ -2,7 +2,9 @@
 title: "Forge vs CrewAI"
 description: "How Forge compares to CrewAI — portable skills vs Python orchestration."
 competitor: "CrewAI"
-order: 3
+order: 21
+category: "framework"
+seeAlso: "forge-vs-langchain"
 ---
 
 # Forge vs CrewAI

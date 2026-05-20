@@ -1,8 +1,10 @@
 ---
 title: "Running Agent Skills: DIY vs Forge"
 description: "What you get with Forge compared to building your own SKILL.md runtime from scratch."
-competitor: "DIY"
-order: 4
+competitor: "Running Agent Skills manually"
+order: 22
+category: "framework"
+seeAlso: "forge-vs-langchain"
 ---
 
 # Running Agent Skills: DIY vs Forge
