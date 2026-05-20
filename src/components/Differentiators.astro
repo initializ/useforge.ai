@@ -1,0 +1,62 @@
+---
+const cards = [
+  {
+    title: 'Open standard, not proprietary surface',
+    body: 'SKILL.md is Anthropic\'s open Agent Skills format. Forge runs that standard. AgentCore agents are AgentCore agents. Foundry agents are Foundry agents. Move runtimes and you rewrite. Move Forge skills and they just keep working.',
+  },
+  {
+    title: 'Any infrastructure, including ones the hyperscalers can\'t reach',
+    body: 'EKS, AKS, GKE, OpenShift, vanilla Kubernetes, Nomad, bare metal, on-prem, air-gapped, edge. Single binary, single container. No hyperscaler runtime is going to ship to an air-gapped facility — Forge already does.',
+  },
+  {
+    title: 'Any model, including ones you run yourself',
+    body: 'Anthropic, OpenAI, Gemini, Ollama, or local GGUF via `forge brain`. Multi-provider isn\'t a feature toggle — it\'s the default architecture. Run the model that fits the workload, including local inference for data that can\'t leave your network.',
+  },
+  {
+    title: 'Production hardening as the default',
+    body: 'Computed-not-declared trust. Per-skill egress enforcement. Denied-tools as explicit contracts. Audit logs with correlation IDs. These are part of the open-source runtime, not the enterprise tier. You don\'t buy the security model — you start with it.',
+  },
+  {
+    title: 'The agent is a document, not a codebase',
+    body: 'A SKILL.md is markdown with frontmatter — readable and authorable by SREs, security engineers, compliance officers, and any domain expert who already writes runbooks. Developers extend skills with scripts when LLM reasoning alone isn\'t enough. Platform engineers operate the runtime. The agent is a document, and three roles collaborate through it.',
+    href: '/who-is-forge-for/',
+    hrefLabel: 'Who Forge is for',
+  },
+];
+---
+
+<section class="py-20 sm:py-24 relative">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="text-center mb-12">
+      <h2 class="text-3xl sm:text-4xl font-bold text-heading mb-4">
+        Why Forge
+      </h2>
+      <p class="text-secondary text-lg max-w-2xl mx-auto">
+        Five things alternative runtimes have structurally chosen not to do.
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {cards.map((card, i) => (
+        <div class={`bg-dark-surface border border-dark-border rounded-forge-lg p-6 ${i === 4 ? 'lg:col-span-1 md:col-span-2' : ''}`}>
+          <div class="flex items-start gap-3 mb-3">
+            <span class="flex items-center justify-center w-7 h-7 rounded-full bg-forge-orange/10 text-forge-orange text-sm font-bold flex-shrink-0">
+              {i + 1}
+            </span>
+            <h3 class="font-bold text-heading text-base leading-snug">{card.title}</h3>
+          </div>
+          <p class="text-sm text-secondary leading-relaxed" set:html={card.body.replace(/`([^`]+)`/g, '<code class="text-forge-orange/80 bg-dark-bg px-1.5 py-0.5 rounded text-xs">$1</code>')}></p>
+          {card.href && (
+            <a
+              href={card.href}
+              class="inline-flex items-center gap-1 mt-3 text-sm font-medium text-forge-orange hover:text-forge-amber transition-colors"
+            >
+              {card.hrefLabel}
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </a>
+          )}
+        </div>
+      ))}
+    </div>
+  </div>
+</section>

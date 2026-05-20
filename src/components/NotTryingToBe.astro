@@ -1,0 +1,57 @@
+---
+const cards = [
+  {
+    label: 'Not a desktop agent',
+    body: 'If your agent needs to sit next to a person — completing multi-step tasks across SaaS apps, organizing files, drafting documents — use <strong class="text-heading">Claude Cowork</strong>. Forge is for the agent that sits next to a service, not next to a person.',
+    href: '/compare/forge-vs-claude-managed-agents',
+    hrefLabel: 'Forge vs Claude Managed Agents',
+  },
+  {
+    label: 'Not a hyperscaler-managed runtime',
+    body: 'If your stack is 100% AWS and you want zero operational burden, use <a href="/compare/forge-vs-agentcore" class="text-forge-orange hover:text-forge-amber transition-colors font-medium">AgentCore</a>. If you\'re Microsoft-native with Entra and M365, use <a href="/compare/forge-vs-foundry" class="text-forge-orange hover:text-forge-amber transition-colors font-medium">Foundry</a>. If you\'re GCP-native with Gemini grounding, use <a href="/compare/forge-vs-vertex" class="text-forge-orange hover:text-forge-amber transition-colors font-medium">Gemini Enterprise</a>. Forge is for organizations that don\'t or can\'t standardize on a single cloud.',
+    href: '/compare/',
+    hrefLabel: 'Compare all',
+  },
+  {
+    label: 'Not a Python framework',
+    body: 'If you need rich orchestration primitives, RAG composition, or LCEL graph definitions in code, use <strong class="text-heading">LangChain</strong> or <strong class="text-heading">CrewAI</strong>. Forge can run their logic inside a SKILL.md script — but Forge is a runtime, not a framework.',
+    href: '/compare/forge-vs-langchain',
+    hrefLabel: 'Forge vs LangChain',
+  },
+  {
+    label: 'Not a chat assistant',
+    body: 'If you want a conversational AI for general questions, use Claude directly. Forge agents are headless production services, not chat interfaces. They expose Slack and Telegram channels into already-running agents — they don\'t replace conversation.',
+  },
+];
+---
+
+<section class="py-20 sm:py-24 relative border-t border-dark-border">
+  <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="text-center mb-12">
+      <h2 class="text-3xl sm:text-4xl font-bold text-heading mb-4">
+        Forge is not trying to be every agent runtime
+      </h2>
+      <p class="text-secondary text-lg max-w-2xl mx-auto">
+        The agent runtime market is crowded. We respect the alternatives — and we've drawn explicit lines around what Forge is and isn't, so you can pick the right tool without reading marketing copy.
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {cards.map((card) => (
+        <div class="bg-dark-surface border border-dark-border rounded-forge-lg p-6">
+          <h3 class="font-bold text-heading text-base mb-3">{card.label}</h3>
+          <p class="text-sm text-secondary leading-relaxed" set:html={card.body}></p>
+          {card.href && (
+            <a
+              href={card.href}
+              class="inline-flex items-center gap-1 mt-4 text-sm font-medium text-forge-orange hover:text-forge-amber transition-colors"
+            >
+              {card.hrefLabel}
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </a>
+          )}
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
