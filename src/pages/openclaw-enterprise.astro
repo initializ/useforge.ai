@@ -4,11 +4,11 @@ import Base from '@/layouts/Base.astro';
 const techArticleJsonLd = {
   '@context': 'https://schema.org',
   '@type': 'TechArticle',
-  headline: 'Running AI Agents in Enterprise Environments: OpenClaw vs Forge',
-  description: 'Compare OpenClaw and Forge for enterprise AI agent deployment. Covers architecture differences, security models, and why enterprise teams choose outbound-only networking.',
+  headline: 'OpenClaw vs Forge for Enterprise Deployment',
+  description: 'Detailed comparison of OpenClaw and Forge for enterprise AI agent deployment. Architecture differences, security models, outbound-only networking, and why enterprise teams choose Forge over OpenClaw inbound-gateway architectures.',
   url: 'https://useforge.ai/openclaw-enterprise',
   datePublished: '2026-03-11',
-  dateModified: '2026-03-11',
+  dateModified: '2026-05-20',
   author: {
     '@type': 'Organization',
     name: 'Initializ',
@@ -19,7 +19,7 @@ const techArticleJsonLd = {
     name: 'Initializ',
     url: 'https://initializ.ai',
   },
-  keywords: 'openclaw enterprise, openclaw production deployment, openclaw vs forge, enterprise AI agents, outbound-only networking',
+  keywords: 'openclaw enterprise, openclaw production deployment, openclaw vs forge, openclaw security, openclaw inbound gateway, outbound-only networking',
 };
 
 const faqJsonLd = {
@@ -63,11 +63,11 @@ const faqJsonLd = {
 ---
 
 <Base
-  title="Running AI Agents in Enterprise Environments: OpenClaw vs Forge"
-  description="Compare OpenClaw and Forge for enterprise AI agent deployment. Architecture differences, security models, and why enterprise teams choose outbound-only networking."
+  title="OpenClaw vs Forge for Enterprise Deployment"
+  description="Detailed comparison of OpenClaw and Forge for enterprise AI agent deployment. Architecture differences, security models, outbound-only networking, and why enterprise teams choose Forge over OpenClaw inbound-gateway architectures."
   layout="marketing"
   jsonLd={techArticleJsonLd}
-  keywords="openclaw enterprise, openclaw production deployment, openclaw vs forge, enterprise AI agents, outbound-only networking, ai agent security"
+  keywords="openclaw enterprise, openclaw production deployment, openclaw vs forge, openclaw security, openclaw inbound gateway, outbound-only networking"
 >
   <!-- FAQPage JSON-LD (second structured data block, valid per Google spec) -->
   <script type="application/ld+json" set:html={JSON.stringify(faqJsonLd)} />
@@ -83,19 +83,29 @@ const faqJsonLd = {
         Enterprise Comparison
       </span>
       <h1 class="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-heading">
-        Running AI Agents in Enterprise Environments:
         <span class="bg-gradient-to-r from-forge-orange to-forge-amber bg-clip-text text-transparent">
           OpenClaw vs Forge
         </span>
+        for Enterprise Deployment
       </h1>
       <p class="mt-4 text-lg sm:text-xl text-secondary max-w-2xl mx-auto">
-        Forge is often described as "OpenClaw for enterprise environments." This page explains why — and what makes enterprise agent deployment fundamentally different.
+        Forge is often described as "OpenClaw for enterprise environments." This page explains the specific architectural and security differences between the two — and where each fits. For Forge's general enterprise positioning across the full competitive landscape (including AgentCore, Foundry, Vertex, and Claude Managed Agents), see the <a href="/enterprise/" class="text-forge-orange hover:text-forge-amber transition-colors">enterprise overview</a>.
       </p>
     </div>
   </section>
 
   <!-- Main content -->
   <div class="mx-auto max-w-4xl px-4 pb-20" data-pagefind-body>
+
+    <!-- Scope callout -->
+    <div class="bg-dark-surface border border-dark-border border-l-4 border-l-forge-orange rounded-forge-md p-5 mt-6">
+      <p class="text-sm text-secondary leading-relaxed">
+        <strong class="text-heading">Looking for the broader enterprise picture?</strong>
+        This page focuses specifically on the OpenClaw comparison. For Forge's full enterprise
+        positioning across managed cloud runtimes, frameworks, and personal-agent tools, see the
+        <a href="/enterprise/" class="text-forge-orange hover:text-forge-amber transition-colors font-medium">enterprise overview →</a>
+      </p>
+    </div>
 
     <!-- What OpenClaw Proved -->
     <section class="py-10 border-t border-dark-border">
