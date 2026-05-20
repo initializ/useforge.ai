@@ -22,3 +22,6 @@ src/content/changelog/*.md
 .dev.vars*
 !.dev.vars.example
 !.env.example
+
+# Research notes (kept locally, never shipped)
+notes/
