@@ -107,4 +107,6 @@ The choice is rarely close in practice. Microsoft-native enterprises will get mo
 
 ---
 
+**Read the full positioning:** [Forge is the runtime for agents that run next to services →](/blog/agent-runtime-for-services)
+
 **Also see:** [Forge vs AgentCore](/compare/forge-vs-agentcore) · [Forge vs Gemini Enterprise](/compare/forge-vs-vertex) · [Forge vs Claude Managed Agents](/compare/forge-vs-claude-managed-agents)

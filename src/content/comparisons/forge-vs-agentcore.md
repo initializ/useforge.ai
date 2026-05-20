@@ -105,4 +105,6 @@ The most honest summary: **AgentCore is AWS's answer to "production agents on AW
 
 ---
 
+**Read the full positioning:** [Forge is the runtime for agents that run next to services →](/blog/agent-runtime-for-services)
+
 **Also see:** [Forge vs Foundry](/compare/forge-vs-foundry) · [Forge vs Gemini Enterprise](/compare/forge-vs-vertex) · [Forge vs Claude Managed Agents](/compare/forge-vs-claude-managed-agents)

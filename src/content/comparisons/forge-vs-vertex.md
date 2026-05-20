@@ -110,4 +110,6 @@ The most honest summary: **Gemini Enterprise is GCP's answer to "Gemini-powered 
 
 ---
 
+**Read the full positioning:** [Forge is the runtime for agents that run next to services →](/blog/agent-runtime-for-services)
+
 **Also see:** [Forge vs AgentCore](/compare/forge-vs-agentcore) · [Forge vs Foundry](/compare/forge-vs-foundry) · [Forge vs Claude Managed Agents](/compare/forge-vs-claude-managed-agents)
