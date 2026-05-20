@@ -2,7 +2,8 @@
 title: "Forge vs OpenClaw"
 description: "Personal agents vs enterprise agents — how Forge and OpenClaw serve fundamentally different environments."
 competitor: "OpenClaw"
-order: 1
+order: 30
+category: "personal-vs-enterprise"
 ---
 
 # Forge vs OpenClaw

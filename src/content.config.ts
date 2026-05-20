@@ -47,6 +47,8 @@ const comparisons = defineCollection({
     description: z.string(),
     competitor: z.string(),
     order: z.number().optional(),
+    category: z.enum(['managed-runtime', 'framework', 'personal-vs-enterprise']).optional(),
+    seeAlso: z.string().optional(),
   }),
 });
 

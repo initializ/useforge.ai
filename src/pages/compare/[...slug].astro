@@ -6,13 +6,17 @@ export async function getStaticPaths() {
   const comparisons = await getCollection('comparisons');
   return comparisons.map((comp) => ({
     params: { slug: comp.id },
-    props: { comp },
+    props: { comp, allComparisons: comparisons },
   }));
 }
 
-const { comp } = Astro.props;
+const { comp, allComparisons } = Astro.props;
 const { Content } = await render(comp);
-const { title, description, competitor } = comp.data;
+const { title, description, competitor, seeAlso } = comp.data;
+
+const seeAlsoComp = seeAlso
+  ? allComparisons.find((c) => c.id === seeAlso)
+  : undefined;
 
 const jsonLd = {
   '@context': 'https://schema.org',
@@ -66,6 +70,21 @@ const jsonLd = {
         <Content />
       </div>
     </article>
+
+    {seeAlsoComp && (
+      <div class="mb-12 pt-8 border-t border-dark-border">
+        <p class="text-xs uppercase tracking-wider text-muted mb-2">Also see</p>
+        <a
+          href={`/compare/${seeAlsoComp.id}`}
+          class="inline-flex items-center gap-2 text-base font-medium text-forge-orange hover:text-forge-amber transition-colors"
+        >
+          Forge vs {seeAlsoComp.data.competitor}
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+            <path d="M5 12h14M12 5l7 7-7 7" />
+          </svg>
+        </a>
+      </div>
+    )}
 
     <!-- CTA -->
     <div class="bg-dark-surface border border-dark-border rounded-forge-xl p-8 text-center">

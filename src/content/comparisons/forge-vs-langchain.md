@@ -2,7 +2,9 @@
 title: "Forge vs LangChain"
 description: "How Forge compares to LangChain for building AI agents — security model, skill portability, and deployment."
 competitor: "LangChain"
-order: 2
+order: 20
+category: "framework"
+seeAlso: "forge-vs-crewai"
 ---
 
 # Forge vs LangChain
