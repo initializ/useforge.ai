@@ -1,12 +1,15 @@
 ---
 import Base from '../layouts/Base.astro';
 import Hero from '../components/Hero.astro';
-import HowForgeWorks from '../components/HowForgeWorks.astro';
-import UseCases from '../components/UseCases.astro';
-import ComparisonTable from '../components/HomeComparisonTable.astro';
+import Differentiators from '../components/Differentiators.astro';
+import NotTryingToBe from '../components/NotTryingToBe.astro';
+import WhatIsForge from '../components/WhatIsForge.astro';
 import SkillExample from '../components/SkillExample.astro';
+import ComparisonTable from '../components/HomeComparisonTable.astro';
 import TrustCallout from '../components/TrustCallout.astro';
 import ContributorGrid from '../components/ContributorGrid.astro';
+
+const description = "Forge is a secure, portable AI agent runtime for enterprise work — the open-source runtime for Anthropic's Agent Skills standard. The same SKILL.md runs on Kubernetes, on-prem, air-gapped, or as an A2A endpoint, with any LLM provider including local inference.";
 
 const jsonLd = {
   "@context": "https://schema.org",
@@ -14,18 +17,21 @@ const jsonLd = {
   "name": "Forge",
   "applicationCategory": "DeveloperApplication",
   "operatingSystem": "Cross-platform",
-  "description": "Forge is a secure, portable AI agent runtime for enterprise work. Run agents locally, in cloud, Kubernetes, or air-gapped environments without inbound tunnels or exposed ports.",
+  "description": description,
   "url": "https://useforge.ai/",
   "downloadUrl": "https://github.com/initializ/forge",
+  "license": "https://www.apache.org/licenses/LICENSE-2.0",
   "softwareHelp": {
     "@type": "CreativeWork",
     "url": "https://useforge.ai/docs"
   },
   "featureList": [
-    "Secure outbound-only architecture (no inbound tunnels)",
-    "Atomic skill-based execution (SKILL.md)",
-    "Portable runtime across local, cloud, Kubernetes, and air-gapped deployments",
-    "Enterprise-ready agent execution model"
+    "Open-source runtime for Anthropic's Agent Skills (SKILL.md) standard",
+    "Multi-cloud, on-prem, and air-gapped deployment",
+    "Multi-model: Anthropic, OpenAI, Gemini, Ollama, or local GGUF",
+    "Computed-not-declared trust with per-skill egress enforcement",
+    "Structured audit logging with correlation IDs",
+    "Single static binary, no managed-service dependency"
   ],
   "creator": {
     "@type": "Organization",
@@ -47,15 +53,16 @@ const jsonLd = {
 
 <Base
   title="Forge — Secure, Portable AI Agent Runtime for Enterprise Work"
-  description="Forge is a secure, portable AI agent runtime for enterprise work. Run agents locally, in cloud, Kubernetes, or air-gapped environments—without inbound tunnels or exposed ports."
-  keywords="secure ai agent runtime, enterprise ai agent framework, outbound-only ai agents, portable agents, air-gapped ai agents"
+  description={description}
+  keywords="ai agent runtime, anthropic agent skills, skill.md runtime, multi-cloud ai agents, on-prem ai agents, air-gapped ai agents, open source agent runtime"
   jsonLd={jsonLd}
 >
   <Hero />
-  <HowForgeWorks />
-  <UseCases />
-  <ComparisonTable />
+  <Differentiators />
+  <NotTryingToBe />
+  <WhatIsForge />
   <SkillExample />
+  <ComparisonTable />
   <TrustCallout />
   <ContributorGrid />
 </Base>

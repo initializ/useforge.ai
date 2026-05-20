@@ -20,26 +20,29 @@
     </h1>
 
     <!-- Subheading -->
-    <p class="text-lg sm:text-xl text-secondary max-w-2xl mx-auto mb-10 leading-relaxed">
-      Deploy AI agents safely across local, cloud, and enterprise environments — without inbound tunnels, exposed ports, or environment rewrites.
+    <p class="text-lg sm:text-xl text-secondary max-w-2xl mx-auto mb-6 leading-relaxed">
+      Forge is the open-source runtime for Anthropic's Agent Skills standard — built for the agent that runs next to a service, in your environment, on infrastructure you already operate. Write a SKILL.md. Compile to a portable, hardened agent. Deploy it anywhere containers run: Kubernetes, on-prem, air-gapped, embedded in CI, or as an A2A endpoint.
     </p>
 
-    <!-- CTAs — Primary: GitHub, Secondary: Docs -->
+    <!-- Trust strip -->
+    <p class="text-xs sm:text-sm text-muted max-w-3xl mx-auto mb-10">
+      Built on Anthropic's open Agent Skills standard · Apache 2.0 licensed · Single static binary · No managed-service dependency
+    </p>
+
+    <!-- CTAs — Primary: Get started, Secondary: Compare Forge -->
     <div class="flex flex-col sm:flex-row items-center justify-center gap-4 mb-10">
       <a
-        href="https://go.useforge.ai/github"
-        target="_blank"
-        rel="noopener"
+        href="/docs/getting-started/installation"
         class="inline-flex items-center gap-2 px-6 py-3 bg-forge-orange hover:bg-forge-deep text-white font-medium rounded-forge-md transition-all duration-300 ease-forge shadow-lg shadow-forge-orange/20 hover:shadow-forge-orange/30"
       >
-        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 16 16"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
-        View on GitHub
+        Get started
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
       </a>
       <a
-        href="/docs/getting-started/installation"
+        href="/compare/"
         class="inline-flex items-center gap-2 px-6 py-3 border border-dark-border text-body hover:text-heading hover:border-gray-500 font-medium rounded-forge-md transition-all duration-300 ease-forge"
       >
-        Read Docs
+        Compare Forge
         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
       </a>
     </div>
