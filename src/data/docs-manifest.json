@@ -1,14 +1,14 @@
 {
-  "syncedAt": "2026-05-20T18:56:19.923Z",
+  "syncedAt": "2026-05-24T20:19:00.184Z",
   "ref": "main",
-  "totalDocs": 36,
+  "totalDocs": 37,
   "sections": {
     "core-concepts": 8,
     "deployment": 4,
     "root": 1,
     "getting-started": 5,
     "reference": 7,
-    "security": 7,
+    "security": 8,
     "skills": 4
   },
   "entries": [
@@ -271,6 +271,16 @@
       "description": "Structured NDJSON audit logging for runtime security events.",
       "order": 6,
       "editUrl": "https://github.com/initializ/forge/edit/main/docs/security/audit-logging.md"
+    },
+    {
+      "sourcePath": "docs/security/authentication.md",
+      "outputPath": "security/authentication.md",
+      "section": "security",
+      "slug": "authentication",
+      "title": "Authentication Providers",
+      "description": "Pluggable auth provider chain that gates Forge's /tasks endpoint — OIDC, AWS Sigv4, GCP IAP, Azure AD, and local-only static_token.",
+      "order": 6,
+      "editUrl": "https://github.com/initializ/forge/edit/main/docs/security/authentication.md"
     },
     {
       "sourcePath": "docs/security/build-signing.md",
