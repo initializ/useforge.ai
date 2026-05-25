@@ -1,12 +1,13 @@
 {
-  "syncedAt": "2026-05-24T20:19:00.184Z",
+  "syncedAt": "2026-05-25T21:43:39.940Z",
   "ref": "main",
-  "totalDocs": 37,
+  "totalDocs": 42,
   "sections": {
     "core-concepts": 8,
     "deployment": 4,
     "root": 1,
     "getting-started": 5,
+    "mcp": 5,
     "reference": 7,
     "security": 8,
     "skills": 4
@@ -191,6 +192,56 @@
       "description": "Create your first agent skill with the SKILL.md format.",
       "order": 3,
       "editUrl": "https://github.com/initializ/forge/edit/main/docs/getting-started/your-first-skill.md"
+    },
+    {
+      "sourcePath": "docs/mcp/audit-events.md",
+      "outputPath": "mcp/audit-events.md",
+      "section": "mcp",
+      "slug": "audit-events",
+      "title": "MCP — Audit Events",
+      "description": "Seven event types emitted by the MCP subsystem; their fields and reason codes.",
+      "order": 4,
+      "editUrl": "https://github.com/initializ/forge/edit/main/docs/mcp/audit-events.md"
+    },
+    {
+      "sourcePath": "docs/mcp/cli-reference.md",
+      "outputPath": "mcp/cli-reference.md",
+      "section": "mcp",
+      "slug": "cli-reference",
+      "title": "MCP — CLI Reference",
+      "description": "Every flag of every forge mcp subcommand.",
+      "order": 3,
+      "editUrl": "https://github.com/initializ/forge/edit/main/docs/mcp/cli-reference.md"
+    },
+    {
+      "sourcePath": "docs/mcp/configuration.md",
+      "outputPath": "mcp/configuration.md",
+      "section": "mcp",
+      "slug": "configuration",
+      "title": "MCP — Configuration Reference",
+      "description": "Full schema for the forge.yaml mcp: block.",
+      "order": 2,
+      "editUrl": "https://github.com/initializ/forge/edit/main/docs/mcp/configuration.md"
+    },
+    {
+      "sourcePath": "docs/mcp/index.md",
+      "outputPath": "mcp/index.md",
+      "section": "mcp",
+      "slug": "index",
+      "title": "Model Context Protocol (MCP)",
+      "description": "Pluggable MCP client — connect Forge agents to any HTTP MCP server.",
+      "order": 1,
+      "editUrl": "https://github.com/initializ/forge/edit/main/docs/mcp/index.md"
+    },
+    {
+      "sourcePath": "docs/mcp/troubleshooting.md",
+      "outputPath": "mcp/troubleshooting.md",
+      "section": "mcp",
+      "slug": "troubleshooting",
+      "title": "MCP — Troubleshooting",
+      "description": "Common Phase 1 failure modes mapped to fixes.",
+      "order": 5,
+      "editUrl": "https://github.com/initializ/forge/edit/main/docs/mcp/troubleshooting.md"
     },
     {
       "sourcePath": "docs/reference/agent-skills-compatibility.md",
