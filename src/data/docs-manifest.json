@@ -1,7 +1,7 @@
 {
-  "syncedAt": "2026-06-05T19:58:54.834Z",
+  "syncedAt": "2026-06-05T21:54:02.506Z",
   "ref": "main",
-  "totalDocs": 43,
+  "totalDocs": 44,
   "sections": {
     "core-concepts": 8,
     "deployment": 4,
@@ -9,7 +9,7 @@
     "getting-started": 5,
     "mcp": 5,
     "reference": 7,
-    "security": 9,
+    "security": 10,
     "skills": 4
   },
   "entries": [
@@ -372,6 +372,16 @@
       "description": "Forge's layered security architecture from network posture to guardrails.",
       "order": 1,
       "editUrl": "https://github.com/initializ/forge/edit/main/docs/security/overview.md"
+    },
+    {
+      "sourcePath": "docs/security/platform-policy.md",
+      "outputPath": "security/platform-policy.md",
+      "section": "security",
+      "slug": "platform-policy",
+      "title": "Platform Policy",
+      "description": "Workspace-level runtime safety net bounding what a forge.yaml is allowed to declare.",
+      "order": 8,
+      "editUrl": "https://github.com/initializ/forge/edit/main/docs/security/platform-policy.md"
     },
     {
       "sourcePath": "docs/security/secret-management.md",
