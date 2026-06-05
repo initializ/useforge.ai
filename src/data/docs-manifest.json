@@ -1,7 +1,7 @@
 {
-  "syncedAt": "2026-06-04T15:08:49.025Z",
+  "syncedAt": "2026-06-05T01:32:58.654Z",
   "ref": "main",
-  "totalDocs": 42,
+  "totalDocs": 43,
   "sections": {
     "core-concepts": 8,
     "deployment": 4,
@@ -9,7 +9,7 @@
     "getting-started": 5,
     "mcp": 5,
     "reference": 7,
-    "security": 8,
+    "security": 9,
     "skills": 4
   },
   "entries": [
@@ -392,6 +392,16 @@
       "description": "How Forge evaluates trust for skills, tools, and external services.",
       "order": 3,
       "editUrl": "https://github.com/initializ/forge/edit/main/docs/security/trust-model.md"
+    },
+    {
+      "sourcePath": "docs/security/workflow-correlation.md",
+      "outputPath": "security/workflow-correlation.md",
+      "section": "security",
+      "slug": "workflow-correlation",
+      "title": "Workflow Correlation IDs",
+      "description": "Orchestrator workflow / stage / step / invocation-caller identifiers threaded from inbound A2A headers through context.Context onto every audit event.",
+      "order": 7,
+      "editUrl": "https://github.com/initializ/forge/edit/main/docs/security/workflow-correlation.md"
     },
     {
       "sourcePath": "docs/skills/contributing-a-skill.md",
