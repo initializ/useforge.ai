@@ -1,5 +1,5 @@
 {
-  "syncedAt": "2026-06-05T21:54:02.506Z",
+  "syncedAt": "2026-06-06T22:03:35.642Z",
   "ref": "main",
   "totalDocs": 44,
   "sections": {
@@ -379,7 +379,7 @@
       "section": "security",
       "slug": "platform-policy",
       "title": "Platform Policy",
-      "description": "Workspace-level runtime safety net bounding what a forge.yaml is allowed to declare.",
+      "description": "Three-layer policy that bounds what a forge.yaml is allowed to declare — system, user, and workspace files compose by union and most-restrictive.",
       "order": 8,
       "editUrl": "https://github.com/initializ/forge/edit/main/docs/security/platform-policy.md"
     },
