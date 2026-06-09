@@ -1,9 +1,9 @@
 {
-  "syncedAt": "2026-06-07T05:23:41.906Z",
+  "syncedAt": "2026-06-09T03:14:46.217Z",
   "ref": "main",
-  "totalDocs": 44,
+  "totalDocs": 45,
   "sections": {
-    "core-concepts": 8,
+    "core-concepts": 9,
     "deployment": 4,
     "root": 1,
     "getting-started": 5,
@@ -52,6 +52,16 @@
       "description": "Session persistence, context management, and long-term memory.",
       "order": 5,
       "editUrl": "https://github.com/initializ/forge/edit/main/docs/core-concepts/memory-system.md"
+    },
+    {
+      "sourcePath": "docs/core-concepts/observability-tracing.md",
+      "outputPath": "core-concepts/observability-tracing.md",
+      "section": "core-concepts",
+      "slug": "observability-tracing",
+      "title": "Observability — Tracing",
+      "description": "OpenTelemetry distributed tracing across A2A → executor → LLM → tool — config, propagation, audit cross-link, and build-time egress.",
+      "order": 9,
+      "editUrl": "https://github.com/initializ/forge/edit/main/docs/core-concepts/observability-tracing.md"
     },
     {
       "sourcePath": "docs/core-concepts/runtime-engine.md",
