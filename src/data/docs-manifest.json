@@ -1,14 +1,14 @@
 {
-  "syncedAt": "2026-06-11T15:50:30.169Z",
+  "syncedAt": "2026-06-11T18:09:34.889Z",
   "ref": "main",
-  "totalDocs": 46,
+  "totalDocs": 47,
   "sections": {
     "core-concepts": 10,
     "deployment": 4,
     "root": 1,
     "getting-started": 5,
     "mcp": 5,
-    "reference": 7,
+    "reference": 8,
     "security": 10,
     "skills": 4
   },
@@ -322,6 +322,16 @@
       "description": "Plugin system for CrewAI, LangChain, and custom frameworks.",
       "order": 6,
       "editUrl": "https://github.com/initializ/forge/edit/main/docs/reference/framework-plugins.md"
+    },
+    {
+      "sourcePath": "docs/reference/library-modules.md",
+      "outputPath": "reference/library-modules.md",
+      "section": "reference",
+      "slug": "library-modules",
+      "title": "Library Modules",
+      "description": "Import forge-core, forge-skills, and forge-plugins as Go library packages — for embedding Forge in a host application.",
+      "order": 12,
+      "editUrl": "https://github.com/initializ/forge/edit/main/docs/reference/library-modules.md"
     },
     {
       "sourcePath": "docs/reference/web-dashboard.md",
