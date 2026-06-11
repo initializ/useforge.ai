@@ -1,9 +1,9 @@
 {
-  "syncedAt": "2026-06-10T23:32:49.778Z",
+  "syncedAt": "2026-06-11T15:34:07.355Z",
   "ref": "main",
-  "totalDocs": 45,
+  "totalDocs": 46,
   "sections": {
-    "core-concepts": 9,
+    "core-concepts": 10,
     "deployment": 4,
     "root": 1,
     "getting-started": 5,
@@ -13,6 +13,16 @@
     "skills": 4
   },
   "entries": [
+    {
+      "sourcePath": "docs/core-concepts/binary-dependencies.md",
+      "outputPath": "core-concepts/binary-dependencies.md",
+      "section": "core-concepts",
+      "slug": "binary-dependencies",
+      "title": "Binary Dependencies",
+      "description": "How forge build resolves, installs, and places skill-declared binaries in the runtime container image.",
+      "order": 8,
+      "editUrl": "https://github.com/initializ/forge/edit/main/docs/core-concepts/binary-dependencies.md"
+    },
     {
       "sourcePath": "docs/core-concepts/channels.md",
       "outputPath": "core-concepts/channels.md",
