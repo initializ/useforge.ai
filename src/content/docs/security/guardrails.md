@@ -7,7 +7,7 @@ editUrl: "https://github.com/initializ/forge/edit/main/docs/security/guardrails.
 
 <!-- Synced from github.com/initializ/forge -->
 
-The guardrail engine validates inbound and outbound messages against configurable policy rules using the `github.com/initializ/guardrails` library.
+The guardrail engine validates inbound and outbound messages against configurable policy rules using the [`github.com/initializ/guardrails`](https://github.com/initializ/guardrails) library (pinned at `v0.12.0` in `forge-cli/go.mod`). Both the file-mode `guardrails.json` schema and the MongoDB-mode `AgentConfig` documents share the same shape — `models.StructuredGuardrails` from that library's [`models/config.go`](https://github.com/initializ/guardrails/blob/v0.12.0/models/config.go). The library's `models` package is the authoritative type definition; this page mirrors it for the fields most operators reach for, but field-level additions in newer library versions will surface there first.
 
 ## Architecture
 
@@ -18,7 +18,25 @@ Guardrails are implemented as a `GuardrailChecker` interface in forge-core, with
 | **File mode** (default) | `guardrails.json` in project root | Local development, standalone deployments |
 | **DB mode** | MongoDB (`AgentConfig` collection) | Platform deployments with centralized config + audit |
 
-Priority: `FORGE_GUARDRAILS_DB` env → `guardrails.json` → built-in defaults.
+### Source precedence
+
+`BuildGuardrailChecker` (`forge-cli/runtime/guardrails_loader.go`) resolves the active config in this exact order at every `forge run`. The first row whose trigger matches is the one that loads — there is no merging across rows.
+
+| # | Trigger | Outcome | What happens to lower-priority sources |
+|---|---|---|---|
+| 1 | `FORGE_GUARDRAILS_DB` set **and** MongoDB connect + ping succeed | **DB mode** — config loaded per-request from the `AgentConfig` collection in the `Initializ` database, keyed by `(FORGE_AGENT_ID, FORGE_ORG_ID)`. Audit records written back to MongoDB (`EnableAudit: true`). | `guardrails.json` is ignored at runtime even if present in the image. |
+| 2 | `FORGE_GUARDRAILS_DB` set **but** connect or ping fails (10-second timeout) | Warns `failed to connect guardrails DB, falling back to file` and continues to row 3. | Falls through. |
+| 3 | `guardrails.json` exists at `<workDir>/<cfg.GuardrailsPath \|\| "guardrails.json">` and parses | **File mode** — config is the parsed `StructuredGuardrails`. | Built-in defaults discarded. |
+| 4 | File missing, unreadable, or invalid JSON | **Built-in defaults** — bundled PII (email/phone/SSN/credit-card) + jailbreak/prompt-injection/command-injection detection + 11 secret-pattern regexes (see [Default Secret Patterns](#default-secret-patterns)). | N/A — this is the floor. |
+| 5 | Engine construction itself errors (after picking 3 or 4) | Warns `failed to create file guardrail engine, using noop` and installs a `NoopGuardrailChecker`. | No checks run; messages pass through unmodified. |
+
+Notable consequences of the order:
+
+- **MongoDB mode bypasses `guardrails.json` entirely** — the file still gets baked into `/app/guardrails.json` by the build, but the runner never opens it when `FORGE_GUARDRAILS_DB` is set. You can flip an agent between modes at runtime by setting / unsetting the env var without rebuilding.
+- **DB failure is non-fatal.** A misconfigured URI or transient network issue drops to file mode with a warning, not a hard exit. If you need a hard requirement, monitor the warning in your log pipeline (`failed to connect guardrails DB, falling back to file`).
+- **DB mode requires `FORGE_ORG_ID`** to scope the `AgentConfig` lookup. Forgetting to set it usually surfaces as the library returning no config and decisions defaulting through; check that org ID is populated alongside the URI.
+- **`cfg.GuardrailsPath`** in `forge.yaml` overrides the default `"guardrails.json"` filename for file mode only — it has no effect in DB mode.
+- **Audit sinks differ.** DB mode writes via the library's `EnableAudit` path into MongoDB. File mode emits Forge's normal `guardrail_check` audit events through the configured audit sinks (see [Audit Events](#audit-events)).
 
 ## Built-in Evaluators
 
@@ -143,6 +161,195 @@ Gates control which evaluation points are active:
 | `outputGate` | `true` | Validates agent responses before delivery |
 | `contextGate` | `false` | Validates context window content |
 | `streamGate` | `false` | Validates streaming chunks |
+
+### Full `guardrails.json` Schema
+
+The `StructuredGuardrails` document (`github.com/initializ/guardrails/models.StructuredGuardrails`) has the following top-level blocks. Every block is optional — omitted blocks disable the corresponding evaluator. Field names use camelCase to match the JSON / BSON tags on the library structs.
+
+| Top-level key | Library type | Purpose |
+|---|---|---|
+| `pii` | `*PIIConfig` | PII detection (email, phone, SSN, credit-card, …) |
+| `moderation` | `*ModerationConfig` | Content-moderation categories (hate, harassment, violence, sexual, …) |
+| `security` | `*SecurityConfig` | Jailbreak, prompt injection, SQL injection, command injection, custom security patterns |
+| `urlFilter` | `*URLFilterConfig` | Allowlist / denylist URLs in inbound and outbound text |
+| `customRules` | `*CustomRulesConfig` | User-defined regex / keyword / phrase rules with gate scoping |
+| `approvalGates` | `[]ApprovalCondition` | Per-condition human-approval gates with notification channels |
+| `nsfwText` | `*NSFWTextConfig` | NSFW-text confidence-threshold detection |
+| `hallucination` | `*HallucinationConfig` | Hallucination detection — `require_sources` or `review` mode |
+| `skillConstraints` | `*SkillConstraintsConfig` | Allowed / blocked skill names with per-decision action |
+| `gateConfig` | `*GateConfig` | Which gates (input / tool-call / output / context / stream) fire |
+
+#### `pii`
+
+```json
+{
+  "enabled": true,
+  "action": "mask",
+  "categories": {
+    "email": { "enabled": true, "action": "mask" },
+    "phoneNumber": { "enabled": true, "action": "mask" }
+  }
+}
+```
+
+| Field | Type | Notes |
+|---|---|---|
+| `enabled` | `bool` | Master switch for PII detection |
+| `action` | `string` | Global default: `mask` / `block` / `warn` |
+| `categories` | `map<string, PIICategoryConfig>` | Per-category overrides; each entry has `enabled`, `action`, optional `id`, `label` |
+
+#### `moderation`
+
+```json
+{
+  "enabled": true,
+  "action": "warn",
+  "categories": {
+    "hate": { "enabled": true, "action": "block", "threshold": 0.8 }
+  }
+}
+```
+
+Same shape as `pii`, but each `ModerationCategoryConfig` also accepts a `threshold` float (0.0–1.0) and optional `description`.
+
+#### `security`
+
+```json
+{
+  "jailbreakDetection": { "enabled": true, "confidenceThreshold": 25, "action": "block" },
+  "promptInjection":    { "enabled": true, "confidenceThreshold": 30, "action": "block" },
+  "sqlInjection":       { "enabled": true, "confidenceThreshold": 40, "action": "block" },
+  "commandInjection":   { "enabled": true, "confidenceThreshold": 35, "action": "block" },
+  "customPatterns": [
+    { "name": "internal-token", "pattern": "INT-[A-Z0-9]{16}", "action": "block", "description": "Internal service tokens" }
+  ]
+}
+```
+
+| Sub-block | Type | Notes |
+|---|---|---|
+| `jailbreakDetection`, `promptInjection`, `sqlInjection`, `commandInjection` | `*ThresholdConfig` | Each has `enabled` (bool), `confidenceThreshold` (0–100 percent), `action` (string) |
+| `customPatterns` | `[]SecurityPattern` | Each has `name`, `pattern` (regex), `action`, optional `description` |
+
+#### `urlFilter`
+
+```json
+{
+  "enabled": true,
+  "mode": "denylist",
+  "denylist": ["evil.example.com"],
+  "allowlist": [],
+  "maskAction": "redact",
+  "replaceWith": "[URL REDACTED]",
+  "action": "mask"
+}
+```
+
+| Field | Type | Notes |
+|---|---|---|
+| `mode` | `string` | `allowlist` / `denylist` / `both` |
+| `allowlist`, `denylist` | `[]string` | Host patterns |
+| `action` | `string` | `mask` / `block` / `warn` |
+| `maskAction`, `replaceWith` | `string` | Used when `action: mask` |
+
+#### `customRules`
+
+```json
+{
+  "hardConstraints": ["no-pii-leakage"],
+  "softConstraints": ["polite-tone"],
+  "rules": [
+    {
+      "id": "secret_openai",
+      "name": "OpenAI API Key",
+      "type": "regex",
+      "constraint": "hard",
+      "pattern": "sk-[A-Za-z0-9]{20,}",
+      "action": "mask",
+      "gates": ["output", "tool_call"]
+    }
+  ]
+}
+```
+
+| Rule field | Type | Notes |
+|---|---|---|
+| `id`, `name` | `string` | Identification |
+| `type` | `string` | `regex` / `keyword` / `phrase` |
+| `constraint` | `string` | `hard` (fail-fast) / `soft` (logged only) |
+| `pattern` | `string` | Required for `regex` type |
+| `keywords` | `[]string` | Required for `keyword` / `phrase` types |
+| `action` | `string` | `mask` / `block` / `warn` |
+| `gates` | `[]string` | Which gates to apply to — `input`, `output`, `tool_call`, `context`, `stream` |
+| `caseSensitive` | `bool` | Default false for keyword/phrase types |
+| `description` | `string` | Optional human-readable note |
+
+#### `approvalGates`
+
+```json
+[
+  {
+    "id": "high-risk-action",
+    "condition": "tool == 'kubectl' && contains(args, 'delete')",
+    "action": "require_human_approval",
+    "notifyChannels": ["slack:ops"]
+  }
+]
+```
+
+| Field | Type | Notes |
+|---|---|---|
+| `id`, `condition` | `string` | Required |
+| `action` | `string` | `block` / `require_human_approval` / `warn` |
+| `notifyChannels` | `[]string` | Channel adapters to notify on trigger |
+
+#### `nsfwText`
+
+```json
+{ "enabled": true, "confidenceThreshold": 0.85, "action": "block" }
+```
+
+`confidenceThreshold` is a 0.0–1.0 float (different from the 0–100 percentage used by `security.*`).
+
+#### `hallucination`
+
+```json
+{
+  "enabled": true,
+  "mode": "require_sources",
+  "minSourceCount": 1,
+  "action": "warn"
+}
+```
+
+| Field | Type | Notes |
+|---|---|---|
+| `mode` | `string` | `require_sources` / `review` |
+| `minSourceCount` | `int` | Minimum source citations required when `mode: require_sources` |
+
+#### `skillConstraints`
+
+```json
+{
+  "enabled": true,
+  "allowedSkills": ["code_review_diff", "review_github_list_prs"],
+  "blockedSkills": [],
+  "action": "block"
+}
+```
+
+Allowed / blocked skill names checked against the agent's registered skill set.
+
+#### `gateConfig`
+
+See [Gate Configuration](#gate-configuration) above. Field types are all `bool` in the library struct.
+
+### Compatibility notes
+
+- The `forge init` template generates a `guardrails.json` containing only the `pii`, `security`, `customRules`, and `gateConfig` blocks. The other blocks (`moderation`, `urlFilter`, `approvalGates`, `nsfwText`, `hallucination`, `skillConstraints`) are not bootstrapped but are accepted at runtime — add them by hand if you need them.
+- All blocks are pointer-typed in the library struct. Omitting a key in JSON is equivalent to disabling that evaluator; setting an empty object `{}` with `enabled: false` is functionally the same but uses one extra parse cycle.
+- camelCase JSON keys are the contract — the BSON tags happen to be identical so a `StructuredGuardrails` document round-trips between MongoDB and `guardrails.json` without translation.
+- For evaluator semantics, regex flag handling, and the full action vocabulary, see the library's [`models/config.go`](https://github.com/initializ/guardrails/blob/v0.12.0/models/config.go).
 
 ## DB Mode (Platform Deployments)
 
