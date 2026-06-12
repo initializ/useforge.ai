@@ -117,6 +117,7 @@ function buildManifest(): PageEntry[] {
     { slug: 'about', title: 'About Forge', section: 'About' },
     { slug: 'who-is-forge-for', title: 'Who Forge Is For', section: 'About' },
     { slug: 'enterprise', title: 'Forge for Enterprise', section: 'Enterprise' },
+    { slug: 'events', title: 'Events', section: 'Events' },
   );
 
   // Docs (recursive walk)
