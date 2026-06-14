@@ -1,7 +1,7 @@
 {
-  "syncedAt": "2026-06-14T05:29:48.459Z",
+  "syncedAt": "2026-06-14T16:18:10.338Z",
   "ref": "main",
-  "totalDocs": 47,
+  "totalDocs": 48,
   "sections": {
     "core-concepts": 10,
     "deployment": 4,
@@ -9,7 +9,7 @@
     "getting-started": 5,
     "mcp": 5,
     "reference": 8,
-    "security": 10,
+    "security": 11,
     "skills": 4
   },
   "entries": [
@@ -422,6 +422,16 @@
       "description": "AES-256-GCM encrypted secret storage with per-agent isolation.",
       "order": 4,
       "editUrl": "https://github.com/initializ/forge/edit/main/docs/security/secret-management.md"
+    },
+    {
+      "sourcePath": "docs/security/tenancy.md",
+      "outputPath": "security/tenancy.md",
+      "section": "security",
+      "slug": "tenancy",
+      "title": "Tenancy Stamping",
+      "description": "Stamping org_id and workspace_id on every audit event from env + headers.",
+      "order": 9,
+      "editUrl": "https://github.com/initializ/forge/edit/main/docs/security/tenancy.md"
     },
     {
       "sourcePath": "docs/security/trust-model.md",
