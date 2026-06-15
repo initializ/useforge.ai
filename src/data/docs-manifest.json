@@ -1,10 +1,10 @@
 {
-  "syncedAt": "2026-06-15T18:38:51.154Z",
+  "syncedAt": "2026-06-15T19:34:14.423Z",
   "ref": "main",
-  "totalDocs": 48,
+  "totalDocs": 49,
   "sections": {
     "core-concepts": 10,
-    "deployment": 4,
+    "deployment": 5,
     "root": 1,
     "getting-started": 5,
     "mcp": 5,
@@ -152,6 +152,16 @@
       "description": "Production build checks and deployment best practices.",
       "order": 3,
       "editUrl": "https://github.com/initializ/forge/edit/main/docs/deployment/production-checklist.md"
+    },
+    {
+      "sourcePath": "docs/deployment/scheduler-kubernetes.md",
+      "outputPath": "deployment/scheduler-kubernetes.md",
+      "section": "deployment",
+      "slug": "scheduler-kubernetes",
+      "title": "Scheduler — Kubernetes",
+      "description": "Hybrid scheduler backend: file-backed on developer laptops, Kubernetes CronJobs in production.",
+      "order": 10,
+      "editUrl": "https://github.com/initializ/forge/edit/main/docs/deployment/scheduler-kubernetes.md"
     },
     {
       "sourcePath": "docs/faq.md",
