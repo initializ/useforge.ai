@@ -1,6 +1,15 @@
 ---
+import fs from 'node:fs';
+import path from 'node:path';
 import { getCollection, getEntry } from 'astro:content';
 import Base from '@/layouts/Base.astro';
+import AgendaTimeline from '@/components/workshop/AgendaTimeline.astro';
+import StepCard from '@/components/workshop/StepCard.astro';
+import Callout from '@/components/workshop/Callout.astro';
+import PrereqChecklist from '@/components/workshop/PrereqChecklist.astro';
+import StickyToc from '@/components/workshop/StickyToc.astro';
+import RunYourOwnCTA from '@/components/workshop/RunYourOwnCTA.astro';
+import InstallCTA from '@/components/workshop/InstallCTA.astro';
 
 export async function getStaticPaths() {
   const events = await getCollection('events');
@@ -14,17 +23,255 @@ if (!playbook) {
 }
 const w = playbook.data;
 const e = event.data;
+
+// Asset fallbacks — gracefully handle when supplied creatives are absent.
+const projectRoot = path.resolve(process.cwd());
+const suppliedOgPath = path.join(projectRoot, 'public/og/forge-workshop-og.png');
+const suppliedPdfPath = path.join(projectRoot, 'public/downloads/forge-workshop-facilitator-kit.pdf');
+const hasSuppliedOg = fs.existsSync(suppliedOgPath);
+const hasFacilitatorPdf = fs.existsSync(suppliedPdfPath);
+const ogImage = hasSuppliedOg ? '/og/forge-workshop-og.png' : `/og/events/${e.slug}.png`;
+const facilitatorKitUrl = hasFacilitatorPdf ? '/downloads/forge-workshop-facilitator-kit.pdf' : null;
+
+function fmtDate(iso?: string, tz?: string) {
+  if (!iso) return null;
+  const d = new Date(iso);
+  return new Intl.DateTimeFormat('en-US', {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    timeZone: tz,
+    timeZoneName: 'short',
+  }).format(d);
+}
+
+const tocItems = w.agenda.map((a) => ({ anchor: a.anchor, title: a.title }));
+
+const handsOn = w.segments.filter((s) => s.type === 'hands-on');
+const talks = w.segments.filter((s) => s.type === 'talk');
+
+// JSON-LD — Event + HowTo (both passed via the jsonLd prop as an array).
+const eventStatusMap = {
+  upcoming: 'https://schema.org/EventScheduled',
+  past: 'https://schema.org/EventScheduled',
+  template: 'https://schema.org/EventScheduled',
+} as const;
+
+const eventLd: Record<string, unknown> = {
+  '@context': 'https://schema.org',
+  '@type': 'Event',
+  name: w.title,
+  description: e.seo.description,
+  eventStatus: eventStatusMap[e.status],
+  eventAttendanceMode:
+    e.mode === 'virtual'
+      ? 'https://schema.org/OnlineEventAttendanceMode'
+      : e.mode === 'hybrid'
+        ? 'https://schema.org/MixedEventAttendanceMode'
+        : 'https://schema.org/OfflineEventAttendanceMode',
+  organizer: {
+    '@type': 'Organization',
+    name: 'Initializ',
+    url: 'https://initializ.ai',
+  },
+  url: `https://useforge.ai/events/${e.slug}/`,
+  image: `https://useforge.ai${ogImage}`,
+};
+if (e.startDateTime) eventLd.startDate = e.startDateTime;
+if (e.endDateTime) eventLd.endDate = e.endDateTime;
+if (e.venueName) {
+  eventLd.location = {
+    '@type': 'Place',
+    name: e.venueName,
+    address: {
+      '@type': 'PostalAddress',
+      addressLocality: e.addressLocality,
+      addressRegion: e.addressRegion,
+    },
+  };
+}
+if (e.registrationUrl) {
+  eventLd.offers = {
+    '@type': 'Offer',
+    url: e.registrationUrl,
+    availability: 'https://schema.org/InStock',
+  };
+}
+
+const howToLd = {
+  '@context': 'https://schema.org',
+  '@type': 'HowTo',
+  name: `Run the ${w.title}`,
+  description: w.summary,
+  totalTime: 'PT2H',
+  step: w.segments.map((seg, idx) => ({
+    '@type': 'HowToStep',
+    position: idx + 1,
+    name: seg.title,
+    text: seg.intro,
+    url: `https://useforge.ai/events/${e.slug}/#${seg.id}`,
+  })),
+};
+
+const dateLine = fmtDate(e.startDateTime, e.timezone);
+const venueLine = e.venueName ? `${e.venueName}${e.addressLocality ? ` · ${e.addressLocality}` : ''}` : null;
 ---
 
 <Base
   title={`${w.title} — Forge`}
   description={e.seo.description}
   layout="marketing"
-  ogImage={e.ogImage}
+  ogImage={ogImage}
+  jsonLd={[eventLd, howToLd]}
 >
-  <article class="mx-auto max-w-3xl px-4 py-12">
-    <h1 class="text-3xl sm:text-4xl font-bold text-heading">{w.title}</h1>
-    <p class="mt-4 text-secondary">{w.summary}</p>
-    <!-- Phase 4 fills in the full composition -->
-  </article>
+  <!-- Hero -->
+  <section class="relative overflow-hidden pt-16 pb-10 sm:pt-24 sm:pb-12">
+    <div
+      class="pointer-events-none absolute inset-0 -top-40"
+      style="background: radial-gradient(ellipse 60% 50% at 50% 0%, rgba(249,115,22,0.10) 0%, transparent 70%)"
+    ></div>
+    <div class="relative mx-auto max-w-3xl px-4">
+      <div class="text-center">
+        {e.status === 'past' && (
+          <span class="inline-block text-xs font-semibold uppercase tracking-wide text-muted bg-dark-surface border border-dark-border rounded-full px-3 py-1 mb-4">
+            Past event
+          </span>
+        )}
+        <h1 class="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-heading">
+          Run the
+          <span class="bg-gradient-to-r from-forge-orange to-forge-amber bg-clip-text text-transparent">
+            {w.title}
+          </span>
+        </h1>
+        <p class="mt-4 text-base sm:text-lg text-secondary max-w-2xl mx-auto leading-relaxed">
+          A 2-hour, copy-paste guide to ship a live, governed AI agent — built on the open
+          <a href="https://agentskills.io" target="_blank" rel="noopener" class="text-forge-orange hover:text-forge-amber transition-colors">Agent Skills</a>
+          standard — onto a real Kubernetes cluster with egress control, guardrails, and audit.
+          Attend the next one or run your own.
+        </p>
+
+        {e.status === 'upcoming' && (
+          <div class="mt-6 inline-flex flex-col sm:flex-row items-center gap-4">
+            <div class="text-sm text-secondary">
+              {dateLine && <div class="font-medium text-heading">{dateLine}</div>}
+              {venueLine && <div>{venueLine}</div>}
+            </div>
+            {e.registrationUrl && (
+              <a
+                href={e.registrationUrl}
+                target="_blank"
+                rel="noopener"
+                class="inline-flex items-center gap-2 px-5 py-2.5 bg-forge-orange hover:bg-forge-deep text-white text-sm font-semibold rounded-forge-md transition-colors"
+              >
+                Register on Luma
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+              </a>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  </section>
+
+  <!-- Body grid (sticky TOC on xl screens) -->
+  <div class="mx-auto max-w-7xl px-4 grid grid-cols-1 xl:grid-cols-[1fr_220px] gap-12">
+    <article class="max-w-3xl">
+      <!-- What you'll build / who it's for -->
+      <section class="border-t border-dark-border pt-10">
+        <h2 class="text-2xl font-bold text-heading mb-4">What you'll build</h2>
+        <p class="text-secondary leading-relaxed">{w.summary}</p>
+      </section>
+
+      <!-- Prerequisites -->
+      <section class="border-t border-dark-border pt-10 mt-10">
+        <h2 class="text-2xl font-bold text-heading mb-4">Prerequisites</h2>
+        <PrereqChecklist attendee={w.prerequisites.attendee} organizer={w.prerequisites.organizer} />
+        <h3 class="text-base font-semibold text-heading mt-6 mb-2">What the organizer provides</h3>
+        <ul class="space-y-1.5 text-sm text-secondary">
+          {w.whatOrganizerProvides.map((item) => (
+            <li class="flex items-start gap-2">
+              <span class="text-forge-orange mt-0.5" aria-hidden="true">•</span>
+              <span>{item}</span>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <!-- Agenda -->
+      <section class="border-t border-dark-border pt-10 mt-10">
+        <h2 class="text-2xl font-bold text-heading mb-2">Agenda</h2>
+        <p class="text-sm text-muted mb-4">Two hours · {handsOn.length} hands-on segments · {talks.length} talks</p>
+        <AgendaTimeline agenda={w.agenda} />
+      </section>
+
+      <!-- Segments -->
+      {w.segments.map((seg, segIdx) => (
+        <section id={seg.id} class="border-t border-dark-border pt-10 mt-10 scroll-mt-24">
+          <div class="flex flex-wrap items-baseline gap-3 mb-3">
+            <span class="text-sm font-semibold text-muted">{(segIdx + 1).toString().padStart(2, '0')}</span>
+            <span class="text-xs font-medium px-2 py-0.5 rounded-full border border-dark-border text-muted">
+              {seg.type === 'hands-on' ? 'Hands-on' : seg.type === 'talk' ? 'Talk' : 'Break'} · {seg.durationMin} min
+            </span>
+          </div>
+          <h2 class="text-2xl font-bold text-heading mb-3">{seg.title}</h2>
+          <p class="text-secondary leading-relaxed">{seg.intro}</p>
+
+          {seg.steps.length > 0 && (
+            <div class="mt-4">
+              {seg.steps.map((step, i) => (
+                <StepCard index={i + 1} instruction={step.instruction} command={step.command} expected={step.expected} />
+              ))}
+            </div>
+          )}
+
+          {seg.securityPrimitive && (
+            <Callout variant="security">
+              <p>{seg.securityPrimitive}</p>
+            </Callout>
+          )}
+
+          {seg.expectedOutcome && (
+            <p class="mt-4 text-sm text-secondary">
+              <span class="font-semibold text-heading">Outcome:</span> {seg.expectedOutcome}
+            </p>
+          )}
+
+          {seg.troubleshooting.length > 0 && (
+            <Callout variant="warning" label="Troubleshooting">
+              <ul class="space-y-1.5 list-disc pl-4">
+                {seg.troubleshooting.map((t) => (
+                  <li set:html={t}></li>
+                ))}
+              </ul>
+            </Callout>
+          )}
+        </section>
+      ))}
+
+      <!-- Facilitator kit -->
+      <section class="border-t border-dark-border pt-10 mt-10">
+        <h2 class="text-2xl font-bold text-heading mb-4">Facilitator kit</h2>
+        <div class="bg-dark-surface border border-dark-border rounded-forge-lg p-5 sm:p-6 text-sm text-secondary leading-relaxed">
+          <div set:html={w.facilitatorKit
+            .replace(/^### (.+)$/gm, '<h3 class="text-base font-semibold text-heading mt-4 mb-2">$1</h3>')
+            .replace(/^\*\*(.+)\*\*$/gm, '<h3 class="text-base font-semibold text-heading mt-4 mb-2">$1</h3>')
+            .replace(/^- (.+)$/gm, '<li>$1</li>')
+            .replace(/(<li>.*<\/li>\n?)+/g, (m) => `<ul class="list-disc pl-5 space-y-1 my-2">${m}</ul>`)
+            .replace(/`([^`]+)`/g, '<code class="text-forge-orange/90 bg-dark-bg px-1.5 py-0.5 rounded text-xs">$1</code>')
+          }></div>
+        </div>
+      </section>
+
+      <!-- Run your own + Install CTA -->
+      <RunYourOwnCTA body={w.runYourOwn} facilitatorKitUrl={facilitatorKitUrl} />
+      <InstallCTA />
+    </article>
+
+    <StickyToc items={tocItems} />
+  </div>
 </Base>
