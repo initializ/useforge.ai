@@ -1,0 +1,30 @@
+---
+import { getCollection, getEntry } from 'astro:content';
+import Base from '@/layouts/Base.astro';
+
+export async function getStaticPaths() {
+  const events = await getCollection('events');
+  return events.map((e) => ({ params: { slug: e.data.slug }, props: { event: e } }));
+}
+
+const { event } = Astro.props;
+const playbook = await getEntry(event.data.playbook);
+if (!playbook) {
+  throw new Error(`Playbook not found for event ${event.data.slug}`);
+}
+const w = playbook.data;
+const e = event.data;
+---
+
+<Base
+  title={`${w.title} — Forge`}
+  description={e.seo.description}
+  layout="marketing"
+  ogImage={e.ogImage}
+>
+  <article class="mx-auto max-w-3xl px-4 py-12">
+    <h1 class="text-3xl sm:text-4xl font-bold text-heading">{w.title}</h1>
+    <p class="mt-4 text-secondary">{w.summary}</p>
+    <!-- Phase 4 fills in the full composition -->
+  </article>
+</Base>
