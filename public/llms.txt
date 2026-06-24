@@ -17,6 +17,10 @@ Skills are defined in Markdown (skill.md) and executed by a secure runtime.
 - Documentation: https://useforge.ai/docs
 - GitHub: https://github.com/useforge
 
+## Events & Workshops
+- Events index: https://useforge.ai/events/
+- Forge Agent Builder Workshop (runnable 2-hour guide; copy-paste commands, deploys a governed agent to Kubernetes): https://useforge.ai/events/forge-agent-builder-workshop/
+
 ## Enterprise & Alternatives
 - Forge is often described as "OpenClaw for enterprise environments."
 - Forge focuses on the enterprise deployment constraints that OpenClaw was not designed to address.

@@ -3,7 +3,7 @@ interface Props {
   title: string;
   description: string;
   ogImage?: string;
-  jsonLd?: Record<string, unknown>;
+  jsonLd?: Record<string, unknown> | Record<string, unknown>[];
   keywords?: string;
 }
 
@@ -34,6 +34,6 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
 <meta name="twitter:description" content={description} />
 <meta name="twitter:image" content={new URL(ogImage, Astro.site).href} />
 
-{jsonLd && (
-  <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
-)}
+{jsonLd && (Array.isArray(jsonLd) ? jsonLd : [jsonLd]).map((item) => (
+  <script type="application/ld+json" set:html={JSON.stringify(item)} />
+))}
