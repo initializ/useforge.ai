@@ -1,0 +1,203 @@
+title: Forge Agent Builder Workshop
+summary: >-
+  A hands-on workshop where attendees take a SKILL.md (the open Agent Skills
+  standard) and ship a live, governed AI agent onto a real Kubernetes cluster —
+  with egress control, guardrails, and audit built in. For platform engineers,
+  SREs, AI engineers, and security/governance teams.
+
+prerequisites:
+  attendee:
+    - Laptop with Docker and kubectl
+    - Forge pre-installed (`brew install initializ/tap/forge` or the curl installer)
+  organizer:
+    - A Kubernetes cluster with a namespace per attendee
+    - LLM API keys to hand out
+    - A pre-seeded failing workload for triage
+
+whatOrganizerProvides:
+  - Cluster access + LLM keys per attendee
+  - A seeded incident (e.g., a CrashLoopBackOff pod)
+  - This guide
+
+agenda:
+  - durationMin: 10
+    title: Welcome & setup
+    type: talk
+    goal: Zero environment friction before the clock starts.
+    anchor: welcome-setup
+  - durationMin: 15
+    title: What is Forge
+    type: talk
+    goal: Standard → runtime → trust layer; deployment locus; preview egress / guardrails / audit.
+    anchor: what-is-forge
+  - durationMin: 15
+    title: Install & first run (codegen-html)
+    type: hands-on
+    goal: A running agent in 15 minutes.
+    anchor: install-first-run
+  - durationMin: 30
+    title: Forge UI + Weather skill via Skill Builder
+    type: hands-on
+    goal: Author a governed skill from scratch.
+    anchor: weather-skill
+  - durationMin: 35
+    title: Build, deploy & run K8s Incident Triage
+    type: hands-on
+    goal: An audited agent doing real ops work inside your boundary.
+    anchor: k8s-incident-triage
+  - durationMin: 15
+    title: Networking & close
+    type: talk
+    goal: Recap, CTAs, Q&A.
+    anchor: networking-close
+
+segments:
+  - id: welcome-setup
+    title: Welcome & setup
+    durationMin: 10
+    type: talk
+    intro: >-
+      Confirm `forge version` on arrival. Hand out KUBECONFIG + LLM keys.
+      Make sure every attendee has Docker running and kubectl reachable.
+    steps: []
+
+  - id: what-is-forge
+    title: What is Forge
+    durationMin: 15
+    type: talk
+    intro: >-
+      Agent Skills (SKILL.md) is the open format; Forge is the open-source
+      runtime; Forge Hub is the trust layer. Thesis: a SKILL.md compiles to a
+      portable, secure container that runs in *your* VPC/cluster, not a vendor's
+      runtime. Name the three primitives they'll see live: egress allowlists,
+      guardrails, NDJSON audit.
+    steps: []
+
+  - id: install-first-run
+    title: Install & first run (codegen-html)
+    durationMin: 15
+    type: hands-on
+    intro: >-
+      A running agent in 15 minutes. Install Forge, scaffold from an embedded
+      skill, run it locally, ask it to do real work.
+    steps:
+      - instruction: Install Forge (skip if pre-installed).
+        command: brew install initializ/tap/forge
+        expected: "`forge version` prints a version."
+      - instruction: Scaffold from the embedded skill.
+        command: forge init --from-skills codegen-html
+        expected: "Project with `forge.yaml`, `.env`, `SKILL.md`, `guardrails.json`."
+      - instruction: Run it (dev A2A server, hot reload).
+        command: forge run
+        expected: "A local endpoint prints; agent is live."
+      - instruction: Open the local chat; ask it to scaffold a simple HTML page; open the result.
+    securityPrimitive: >-
+      Even this starter declares its egress (cdn.tailwindcss.com, esm.sh) —
+      nothing else is reachable.
+    expectedOutcome: A running agent that produced a working HTML app.
+    troubleshooting: []
+
+  - id: weather-skill
+    title: Forge UI + Weather skill on open-meteo (Skill Builder)
+    durationMin: 30
+    type: hands-on
+    intro: >-
+      Author a governed Agent Skill from scratch using the Skill Builder UI
+      (not by hand-writing SKILL.md). Call open-meteo, which is keyless on
+      purpose — no API-key friction in a room.
+    steps:
+      - instruction: Launch the dashboard.
+        command: forge ui
+        expected: "http://localhost:4200"
+      - instruction: >-
+          Open your agent → Skill Builder. Prompt it to create a weather skill
+          calling `https://api.open-meteo.com` (keyless) with `curl` + `jq`,
+          taking latitude/longitude (optionally `geocoding-api.open-meteo.com`
+          for city names).
+      - instruction: Validate, then Save.
+        expected: >-
+          Save reports the egress domain auto-added (env/egress injection on
+          save); `api.open-meteo.com` is now in the allowlist.
+      - instruction: Run the agent; ask for weather at a location.
+    securityPrimitive: >-
+      The skill can reach `api.open-meteo.com` and nothing else — the allowlist
+      is derived from the declaration, not hand-maintained.
+    expectedOutcome: Attendees authored a governed Agent Skill via Skill Builder.
+    troubleshooting: []
+
+  - id: k8s-incident-triage
+    title: Build, deploy & run K8s Incident Triage
+    durationMin: 35
+    type: hands-on
+    intro: >-
+      The headline segment. Package an embedded skill, read the generated
+      egress allowlist and NetworkPolicy aloud, deploy to a real cluster,
+      trigger a seeded incident, watch the audit log, and watch a guardrail
+      block a sensitive command.
+    steps:
+      - instruction: Add the embedded skill.
+        command: forge init --from-skills k8s-incident-triage
+      - instruction: Produce container + manifests + egress artifacts.
+        command: forge package --prod --registry <your-registry> --tag forge-triage:demo
+        expected: >-
+          `.forge-output/` has the Dockerfile, K8s manifests,
+          `egress_allowlist.json`, and a `NetworkPolicy`.
+      - instruction: >-
+          Open `egress_allowlist.json` and the `NetworkPolicy` and read them
+          aloud — egress restricted to declared domains (incl. cluster API)
+          on 80/443. *(security money-shot.)*
+      - instruction: Provide creds.
+        command: export KUBECONFIG="$(cat ~/.kube/config)"
+      - instruction: Deploy.
+        command: kubectl apply -f .forge-output/k8s/
+        expected: "Agent pod Running; NetworkPolicy applied."
+      - instruction: >-
+          Trigger the seeded incident (CrashLoopBackOff pod); ask the agent to
+          triage.
+        expected: >-
+          It inspects the cluster via `kubectl` and returns a structured triage.
+      - instruction: >-
+          Inspect the NDJSON audit log — one line per event, metadata-only by
+          default, correlation-threaded.
+      - instruction: >-
+          Show a guardrail blocking a sensitive command (e.g.,
+          `kubectl get secrets`).
+    securityPrimitive: >-
+      Real ops work, inside the org's boundary, every action audited; the agent
+      cannot exfiltrate to an undeclared domain.
+    expectedOutcome: An audited agent doing real ops work inside your boundary.
+    troubleshooting:
+      - Deploy stalls → check namespace + KUBECONFIG.
+      - "`--prod` egress build fails → a skill requested `dev-open` egress, tighten it."
+
+  - id: networking-close
+    title: Networking & close
+    durationMin: 15
+    type: talk
+    intro: >-
+      Recap the three primitives (egress allowlists, guardrails, NDJSON audit);
+      CTAs (Forge OSS repo, Forge Hub, useforge.ai); Q&A; networking.
+    steps: []
+
+facilitatorKit: |
+  **Checkpoints**
+  - Talks end by :25.
+  - First hands-on agent by :40.
+  - Skill Builder save by ~:10 past.
+  - Triage deployed by ~:40 past.
+
+  **Room setup**
+  - Pre-provision a namespace per attendee.
+  - Pre-seed the failing workload.
+  - Hand out KUBECONFIG + LLM keys at the door.
+  - Confirm `forge version` on arrival.
+
+  **Fallback**
+  - If pace varies, switch the triage deploy to facilitator-led "deploy alongside
+    me" on a shared screen.
+
+runYourOwn: |
+  Add a new `src/content/events/*.yaml` entry: set your date, venue, and
+  registration URL, keep `playbook: forge-agent-builder`. Bring your own cluster
+  and LLM keys (or a managed sandbox). The playbook body stays identical — that's
+  the point.

@@ -1,0 +1,20 @@
+# NOTE: date / venue / timezone are placeholders. Populate from the canonical
+# Luma event (https://luma.com/evt-9ZnGnQtifJKOHd3) before publishing.
+title: Forge Agent Builder Workshop
+slug: forge-agent-builder-workshop
+playbook: forge-agent-builder
+status: upcoming
+startDateTime: '2026-07-15T17:00:00+05:30'
+endDateTime: '2026-07-15T19:00:00+05:30'
+timezone: Asia/Kolkata
+venueName: TBD
+addressLocality: Bengaluru
+addressRegion: KA
+mode: in-person
+registrationUrl: https://luma.com/evt-9ZnGnQtifJKOHd3
+ogImage: /og/forge-workshop-og.png
+seo:
+  description: >-
+    A hands-on 2-hour workshop where you ship a live, governed AI agent — built
+    on the open Agent Skills standard — onto a real Kubernetes cluster with
+    egress control, guardrails, and audit. Run it yourself with this guide.
