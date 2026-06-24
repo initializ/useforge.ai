@@ -1,0 +1,158 @@
+---
+import Base from '@/layouts/Base.astro';
+import { getCollection } from 'astro:content';
+
+const all = await getCollection('events');
+
+const byStart = (a: typeof all[number], b: typeof all[number]) => {
+  const ad = a.data.startDateTime ?? '';
+  const bd = b.data.startDateTime ?? '';
+  return ad.localeCompare(bd);
+};
+
+const upcoming = all.filter((e) => e.data.status === 'upcoming').sort(byStart);
+const past = all.filter((e) => e.data.status === 'past').sort(byStart).reverse();
+
+const metaDescription =
+  'Upcoming and past events from the Forge team — workshops, talks, meetups, and conferences.';
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'CollectionPage',
+  name: 'Events',
+  description: metaDescription,
+  url: 'https://useforge.ai/events/',
+  publisher: {
+    '@type': 'Organization',
+    name: 'Initializ',
+    url: 'https://initializ.ai',
+  },
+};
+
+function fmtDate(iso?: string, tz?: string) {
+  if (!iso) return null;
+  const d = new Date(iso);
+  return new Intl.DateTimeFormat('en-US', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    timeZone: tz,
+    timeZoneName: 'short',
+  }).format(d);
+}
+---
+
+<Base
+  title="Events — Forge"
+  description={metaDescription}
+  layout="marketing"
+  jsonLd={jsonLd}
+>
+  <!-- Hero -->
+  <section class="relative overflow-hidden pt-20 pb-12 sm:pt-28 sm:pb-16">
+    <div
+      class="pointer-events-none absolute inset-0 -top-40"
+      style="background: radial-gradient(ellipse 60% 50% at 50% 0%, rgba(249,115,22,0.10) 0%, transparent 70%)"
+    ></div>
+    <div class="relative mx-auto max-w-3xl px-4 text-center">
+      <h1 class="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight">
+        <span class="bg-gradient-to-r from-forge-orange to-forge-amber bg-clip-text text-transparent">
+          Events
+        </span>
+      </h1>
+      <p class="mt-4 text-lg sm:text-xl text-secondary max-w-2xl mx-auto">
+        Where to find the Forge team — workshops, talks, meetups, and conferences.
+        Each event ships with a runnable guide so anyone can host their own.
+      </p>
+    </div>
+  </section>
+
+  <!-- Upcoming -->
+  <section class="py-12 border-t border-dark-border">
+    <div class="mx-auto max-w-5xl px-4">
+      <h2 class="text-2xl sm:text-3xl font-bold text-heading mb-6">Upcoming</h2>
+      {upcoming.length === 0 ? (
+        <p class="text-secondary">No events on the calendar right now — check back soon, or follow us on <a href="https://discord.gg/PtFa4z97Ag" target="_blank" rel="noopener" class="text-forge-orange hover:text-forge-amber transition-colors">Discord</a> for announcements.</p>
+      ) : (
+        <ul class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {upcoming.map((e) => (
+            <li class="bg-dark-surface border border-dark-border rounded-forge-lg p-6 hover:border-forge-orange transition-colors">
+              <a href={`/events/${e.data.slug}/`} class="block">
+                <div class="text-xs font-medium text-forge-orange uppercase tracking-wide mb-2">
+                  {e.data.mode === 'in-person' ? 'In person' : e.data.mode === 'virtual' ? 'Virtual' : 'Hybrid'}
+                  {e.data.addressLocality && ` · ${e.data.addressLocality}`}
+                </div>
+                <h3 class="text-lg font-bold text-heading mb-2">{e.data.title}</h3>
+                {e.data.startDateTime && (
+                  <p class="text-sm text-secondary mb-3">{fmtDate(e.data.startDateTime, e.data.timezone)}</p>
+                )}
+                <p class="text-sm text-secondary line-clamp-3">{e.data.seo.description}</p>
+                <span class="inline-flex items-center gap-1 mt-4 text-sm font-medium text-forge-orange">
+                  Details & registration
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
+                </span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  </section>
+
+  <!-- Past -->
+  <section class="py-12 border-t border-dark-border">
+    <div class="mx-auto max-w-5xl px-4">
+      <h2 class="text-2xl sm:text-3xl font-bold text-heading mb-6">Past</h2>
+      {past.length === 0 ? (
+        <p class="text-secondary text-sm">Nothing here yet — the first event hasn't wrapped.</p>
+      ) : (
+        <ul class="space-y-3">
+          {past.map((e) => (
+            <li>
+              <a href={`/events/${e.data.slug}/`} class="flex flex-col sm:flex-row sm:items-baseline sm:gap-4 text-secondary hover:text-heading transition-colors">
+                <span class="text-sm text-muted shrink-0">
+                  {e.data.startDateTime && fmtDate(e.data.startDateTime, e.data.timezone)}
+                </span>
+                <span class="font-medium">{e.data.title}</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="py-12 border-t border-dark-border">
+    <div class="mx-auto max-w-3xl px-4">
+      <div class="bg-dark-surface border border-dark-border rounded-forge-xl p-8 text-center">
+        <h2 class="text-xl font-bold text-heading mb-2">Want us at your event?</h2>
+        <p class="text-secondary text-sm mb-5">
+          Conferences, meetups, podcasts, workshops — drop us a line and we'll find a way to be there.
+        </p>
+        <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
+          <a
+            href="mailto:hello@initializ.ai?subject=Invite%20Forge%20to%20speak%20at%20our%20event"
+            class="inline-flex items-center gap-2 px-5 py-2.5 bg-forge-orange hover:bg-forge-deep text-white text-sm font-medium rounded-forge-md transition-colors"
+          >
+            Invite Forge
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+              <path d="M5 12h14M12 5l7 7-7 7" />
+            </svg>
+          </a>
+          <a
+            href="https://discord.gg/PtFa4z97Ag"
+            target="_blank"
+            rel="noopener"
+            class="inline-flex items-center gap-2 px-5 py-2.5 border border-dark-border hover:border-gray-500 text-body hover:text-heading text-sm font-medium rounded-forge-md transition-colors"
+          >
+            Stay in the loop on Discord
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+</Base>

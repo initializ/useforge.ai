@@ -1,0 +1,26 @@
+---
+interface TocItem {
+  anchor: string;
+  title: string;
+}
+interface Props {
+  items: TocItem[];
+}
+const { items } = Astro.props;
+---
+
+<nav aria-label="Workshop sections" class="hidden xl:block sticky top-24 self-start text-sm">
+  <h2 class="text-xs font-semibold text-muted uppercase tracking-wide mb-3">On this page</h2>
+  <ul class="space-y-2 border-l border-dark-border pl-4">
+    {items.map((item) => (
+      <li>
+        <a
+          href={`#${item.anchor}`}
+          class="block text-secondary hover:text-forge-orange transition-colors leading-snug"
+        >
+          {item.title}
+        </a>
+      </li>
+    ))}
+  </ul>
+</nav>

@@ -1,0 +1,26 @@
+---
+import CommandBlock from './CommandBlock.astro';
+
+interface Props {
+  index: number;
+  instruction: string;
+  command?: string;
+  expected?: string;
+}
+const { index, instruction, command, expected } = Astro.props;
+---
+
+<div class="flex gap-4 my-4">
+  <div class="shrink-0 w-8 h-8 rounded-full bg-forge-orange/10 border border-forge-orange/30 text-forge-orange flex items-center justify-center text-sm font-semibold">
+    {index}
+  </div>
+  <div class="flex-1 min-w-0">
+    <p class="text-body leading-relaxed" set:html={instruction}></p>
+    {command && <CommandBlock command={command} />}
+    {expected && (
+      <p class="text-sm text-secondary mt-2">
+        <span class="font-semibold text-heading">Expected:</span> <span set:html={expected}></span>
+      </p>
+    )}
+  </div>
+</div>

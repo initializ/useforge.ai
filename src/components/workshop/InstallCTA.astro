@@ -1,0 +1,32 @@
+---
+import CommandBlock from './CommandBlock.astro';
+---
+
+<section class="my-12">
+  <div class="bg-dark-surface border border-dark-border rounded-forge-xl p-6 sm:p-8 text-center">
+    <h2 class="text-xl sm:text-2xl font-bold text-heading mb-2">Install Forge</h2>
+    <p class="text-secondary text-sm mb-5">Get started in minutes — install the CLI and ship your first agent.</p>
+    <div class="max-w-md mx-auto text-left">
+      <CommandBlock command="brew install initializ/tap/forge" />
+    </div>
+    <div class="mt-5 flex flex-col sm:flex-row items-center justify-center gap-3">
+      <a
+        href="/docs/getting-started/installation"
+        class="inline-flex items-center gap-2 px-5 py-2.5 bg-forge-orange hover:bg-forge-deep text-white text-sm font-medium rounded-forge-md transition-colors"
+      >
+        Quickstart
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M12 5l7 7-7 7" />
+        </svg>
+      </a>
+      <a
+        href="https://github.com/initializ/forge"
+        target="_blank"
+        rel="noopener"
+        class="inline-flex items-center gap-2 px-5 py-2.5 border border-dark-border hover:border-gray-500 text-body hover:text-heading text-sm font-medium rounded-forge-md transition-colors"
+      >
+        View on GitHub
+      </a>
+    </div>
+  </div>
+</section>

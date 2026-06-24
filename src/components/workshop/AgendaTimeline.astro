@@ -1,0 +1,44 @@
+---
+interface AgendaItem {
+  durationMin: number;
+  title: string;
+  type: 'talk' | 'hands-on' | 'break';
+  goal: string;
+  anchor: string;
+}
+interface Props {
+  agenda: AgendaItem[];
+}
+const { agenda } = Astro.props;
+
+const typeStyles = {
+  talk: { label: 'Talk', color: 'text-blue-400 bg-blue-500/10 border-blue-500/30' },
+  'hands-on': { label: 'Hands-on', color: 'text-forge-orange bg-forge-orange/10 border-forge-orange/30' },
+  break: { label: 'Break', color: 'text-muted bg-dark-surface border-dark-border' },
+};
+---
+
+<ol class="relative space-y-4 border-l-2 border-dark-border pl-6 my-6">
+  {agenda.map((item, i) => {
+    const t = typeStyles[item.type];
+    return (
+      <li class="relative">
+        <span class="absolute -left-[31px] top-1 w-4 h-4 rounded-full bg-dark-surface border-2 border-forge-orange" aria-hidden="true"></span>
+        <a
+          href={`#${item.anchor}`}
+          class="block bg-dark-surface border border-dark-border rounded-forge-md p-4 hover:border-forge-orange transition-colors"
+        >
+          <div class="flex flex-wrap items-baseline gap-3 mb-1">
+            <span class="text-sm font-semibold text-muted">{(i + 1).toString().padStart(2, '0')}</span>
+            <span class={`text-xs font-medium px-2 py-0.5 rounded-full border ${t.color}`}>
+              {t.label}
+            </span>
+            <span class="text-xs text-muted">{item.durationMin} min</span>
+          </div>
+          <h3 class="text-base font-bold text-heading mb-1">{item.title}</h3>
+          <p class="text-sm text-secondary">{item.goal}</p>
+        </a>
+      </li>
+    );
+  })}
+</ol>
