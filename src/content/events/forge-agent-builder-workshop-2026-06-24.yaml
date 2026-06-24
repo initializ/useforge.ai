@@ -1,17 +1,15 @@
-# NOTE: date / venue / timezone are placeholders. Populate from the canonical
-# Luma event (https://luma.com/evt-9ZnGnQtifJKOHd3) before publishing.
 title: Forge Agent Builder Workshop
 slug: forge-agent-builder-workshop
 playbook: forge-agent-builder
 status: upcoming
-startDateTime: '2026-07-15T17:00:00+05:30'
-endDateTime: '2026-07-15T19:00:00+05:30'
-timezone: Asia/Kolkata
-venueName: TBD
-addressLocality: Bengaluru
-addressRegion: KA
+startDateTime: '2026-06-24T17:00:00-04:00'
+endDateTime: '2026-06-24T19:00:00-04:00'
+timezone: America/New_York
+venueName: Tech North Atlanta
+addressLocality: Alpharetta
+addressRegion: GA
 mode: in-person
-registrationUrl: https://luma.com/evt-9ZnGnQtifJKOHd3
+registrationUrl: https://luma.com/3w3bx8zy
 ogImage: /og/forge-workshop-og.png
 seo:
   description: >-
