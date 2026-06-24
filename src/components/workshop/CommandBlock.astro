@@ -1,0 +1,46 @@
+---
+interface Props {
+  command: string;
+  lang?: string;
+}
+const { command, lang = 'bash' } = Astro.props;
+---
+
+<div class="relative group my-3">
+  <pre class="bg-dark-bg border border-dark-border rounded-forge-md p-4 pr-14 overflow-x-auto text-sm font-mono text-body"><code data-lang={lang}>{command}</code></pre>
+  <button
+    type="button"
+    data-copy-command
+    aria-label="Copy command to clipboard"
+    class="absolute top-2 right-2 px-2 py-1 text-xs font-medium text-muted bg-dark-surface border border-dark-border rounded-forge-sm hover:text-heading hover:border-forge-orange focus:outline-none focus:ring-2 focus:ring-forge-orange focus:ring-offset-2 focus:ring-offset-dark-bg transition-colors"
+  >
+    Copy
+  </button>
+</div>
+
+<script>
+  function attachCopyHandlers() {
+    document.querySelectorAll<HTMLButtonElement>('[data-copy-command]').forEach((btn) => {
+      if (btn.dataset.bound === 'true') return;
+      btn.dataset.bound = 'true';
+      btn.addEventListener('click', async () => {
+        const code = btn.parentElement?.querySelector('code')?.textContent ?? '';
+        try {
+          await navigator.clipboard.writeText(code);
+          const original = btn.textContent;
+          btn.textContent = 'Copied';
+          setTimeout(() => {
+            btn.textContent = original;
+          }, 1500);
+        } catch {
+          btn.textContent = 'Copy failed';
+          setTimeout(() => {
+            btn.textContent = 'Copy';
+          }, 1500);
+        }
+      });
+    });
+  }
+  attachCopyHandlers();
+  document.addEventListener('astro:page-load', attachCopyHandlers);
+</script>
