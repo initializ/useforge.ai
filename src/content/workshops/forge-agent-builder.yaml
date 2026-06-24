@@ -84,8 +84,10 @@ segments:
       - instruction: Install Forge (skip if pre-installed).
         command: brew install initializ/tap/forge
         expected: "`forge version` prints a version."
-      - instruction: Scaffold from the embedded skill.
-        command: forge init --from-skills codegen-html
+      - instruction: >-
+          Scaffold a new project — `forge init` opens a TUI that lists every
+          embedded skill. Choose the <strong>codegen-html</strong> skill.
+        command: forge init
         expected: "Project with `forge.yaml`, `.env`, `SKILL.md`, `guardrails.json`."
       - instruction: Run it (dev A2A server, hot reload).
         command: forge run
@@ -135,8 +137,10 @@ segments:
       trigger a seeded incident, watch the audit log, and watch a guardrail
       block a sensitive command.
     steps:
-      - instruction: Add the embedded skill.
-        command: forge init --from-skills k8s-incident-triage
+      - instruction: >-
+          Scaffold a fresh project in a new directory — `forge init` opens the
+          TUI skill picker. Choose the <strong>k8s-incident-triage</strong> skill.
+        command: forge init
       - instruction: Produce container + manifests + egress artifacts.
         command: forge package --prod --registry <your-registry> --tag forge-triage:demo
         expected: >-
