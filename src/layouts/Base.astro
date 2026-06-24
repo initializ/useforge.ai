@@ -9,7 +9,7 @@ interface Props {
   title?: string;
   description?: string;
   ogImage?: string;
-  jsonLd?: Record<string, unknown>;
+  jsonLd?: Record<string, unknown> | Record<string, unknown>[];
   keywords?: string;
   layout?: 'default' | 'docs' | 'marketing';
 }
