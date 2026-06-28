@@ -1,7 +1,7 @@
 {
-  "syncedAt": "2026-06-26T06:28:44.165Z",
+  "syncedAt": "2026-06-28T18:27:17.834Z",
   "ref": "main",
-  "totalDocs": 49,
+  "totalDocs": 50,
   "sections": {
     "core-concepts": 10,
     "deployment": 5,
@@ -9,7 +9,7 @@
     "getting-started": 5,
     "mcp": 5,
     "reference": 8,
-    "security": 11,
+    "security": 12,
     "skills": 4
   },
   "entries": [
@@ -352,6 +352,16 @@
       "description": "Local web dashboard for managing agents from the browser.",
       "order": 5,
       "editUrl": "https://github.com/initializ/forge/edit/main/docs/reference/web-dashboard.md"
+    },
+    {
+      "sourcePath": "docs/security/admission.md",
+      "outputPath": "security/admission.md",
+      "section": "security",
+      "slug": "admission",
+      "title": "Platform Admission Hook",
+      "description": "Pre-dispatch gate that asks a platform API whether to admit each new inbound A2A invocation. Used for cost-ceiling / quota enforcement above the request-rate limiter.",
+      "order": 9,
+      "editUrl": "https://github.com/initializ/forge/edit/main/docs/security/admission.md"
     },
     {
       "sourcePath": "docs/security/audit-logging.md",
