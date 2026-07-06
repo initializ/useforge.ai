@@ -1,7 +1,7 @@
 {
-  "syncedAt": "2026-07-06T18:24:12.944Z",
+  "syncedAt": "2026-07-06T19:51:42.158Z",
   "ref": "main",
-  "totalDocs": 51,
+  "totalDocs": 52,
   "sections": {
     "core-concepts": 11,
     "deployment": 5,
@@ -9,7 +9,7 @@
     "getting-started": 5,
     "mcp": 5,
     "reference": 8,
-    "security": 12,
+    "security": 13,
     "skills": 4
   },
   "entries": [
@@ -382,6 +382,16 @@
       "description": "Structured NDJSON audit logging for runtime security events.",
       "order": 6,
       "editUrl": "https://github.com/initializ/forge/edit/main/docs/security/audit-logging.md"
+    },
+    {
+      "sourcePath": "docs/security/audit-tamper-evidence.md",
+      "outputPath": "security/audit-tamper-evidence.md",
+      "section": "security",
+      "slug": "audit-tamper-evidence",
+      "title": "Audit tamper evidence",
+      "description": "Hash-chained NDJSON audit stream — how it works and how to verify a captured log.",
+      "order": 8,
+      "editUrl": "https://github.com/initializ/forge/edit/main/docs/security/audit-tamper-evidence.md"
     },
     {
       "sourcePath": "docs/security/authentication.md",
