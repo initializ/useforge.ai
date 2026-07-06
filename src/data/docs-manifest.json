@@ -1,9 +1,9 @@
 {
-  "syncedAt": "2026-07-03T19:27:48.138Z",
+  "syncedAt": "2026-07-06T06:47:04.374Z",
   "ref": "main",
-  "totalDocs": 50,
+  "totalDocs": 51,
   "sections": {
-    "core-concepts": 10,
+    "core-concepts": 11,
     "deployment": 5,
     "root": 1,
     "getting-started": 5,
@@ -32,6 +32,16 @@
       "description": "Bridge messaging platforms like Slack and Telegram to your AI agent.",
       "order": 4,
       "editUrl": "https://github.com/initializ/forge/edit/main/docs/core-concepts/channels.md"
+    },
+    {
+      "sourcePath": "docs/core-concepts/context-compression.md",
+      "outputPath": "core-concepts/context-compression.md",
+      "section": "core-concepts",
+      "slug": "context-compression",
+      "title": "Context Compression",
+      "description": "Reversible compression of bulky tool outputs — fewer tokens, nothing lost.",
+      "order": 6,
+      "editUrl": "https://github.com/initializ/forge/edit/main/docs/core-concepts/context-compression.md"
     },
     {
       "sourcePath": "docs/core-concepts/hooks.md",
