@@ -326,15 +326,72 @@ Compresses bulky tool outputs before they reach the LLM; dropped content is stor
 
 See [Context Compression](/docs/core-concepts/context-compression) for how the pieces fit together.
 
-## `security` — build-time security knobs
+## `security` — build-time + runtime governance
 
 ```yaml
 security:
   policy_path: ./security-policy.yaml
+
+  # R3 (#208) — see docs/security/intent-alignment.md
+  intent_alignment:
+    enabled: true
+    provider: openai
+    model: text-embedding-3-small
+    api_key_env: OPENAI_API_KEY
+    threshold: 0.5           # *float64: score below → warn
+    hard_threshold: 0.3      # *float64: score below → deny; use -1 for warn-only
+    cache_size: 1024
+
+  # R7 (#214) — see docs/security/intent-alignment.md#drift-tracking-governance-r7--214
+  intent_drift:
+    enabled: true
+    window: 5                # last N scores in the rolling window
+    drift_threshold: 0.35    # *float64: mean below → enter drift
+    monotone_n: 3            # additionally trip on N strictly-decreasing scores
+
+  # R4b (#210) — see docs/security/step-up-auth.md
+  step_up:
+    enabled: true
+    tools:
+      cli_execute: acr:mfa
+    acr_hierarchy: [acr:password, acr:mfa, acr:hardware]
+
+  # R4c (#211) — see docs/security/defer-decisions.md
+  defer:
+    enabled: true
+    default_timeout: 10m
+    tools:
+      cli_execute:
+        to: channel:slack:#oncall
+        timeout: 10m
+        context_template: "agent about to run {tool} args {args}"
 ```
 
 | Field | Default | Notes |
 |---|---|---|
 | `policy_path` | `""` | Path to a YAML `SecurityPolicy` file ([schema](/docs/skills/skills-cli#policy-yaml)) consumed by the build's `security-analysis` stage. Resolved relative to the `forge.yaml` directory when not absolute. Overridden by `forge build --policy` when both are set. Empty = use the builtin `DefaultPolicy` (`max_risk_score: 90`, deny `nc`/`ncat`/`netcat`/`nmap`/`ssh`/`scp`, warn on scripts). |
+| `intent_alignment.*` | off | Governance R3 — per-tool-call cosine similarity between the stated task intent and the tool's description+args. `threshold` and `hard_threshold` are `*float64` so an explicit `0` is preserved (the collision with the zero-value default that stopped the warn-only rollout on the initial PR is fixed). Cosine range is `[-1, 1]`; set `hard_threshold: -1` to run warn-only during rollout. Fail-closed on embedder error. |
+| `intent_drift.*` | off | Governance R7 — rolling-window analyzer that sits on top of R3's scores. `drift_threshold` is `*float64` for the same reason as R3. `monotone_n` must be `≤ window` (rejected at startup otherwise — the ring would never accumulate enough scores). Emits `intent_drift` events on state transitions only (no per-call flood). |
+| `step_up.*` | off | Governance R4b — per-tool `acr` requirement enforced from the caller's authenticated identity. Startup rejects `enabled: true` with an empty `tools` map. Missing acr → RFC 9470 401 challenge (`WWW-Authenticate: Bearer error="step_up_required", acr_values="<value>"`). |
+| `defer.*` | off | Governance R4c — per-tool pause-and-resume. When a listed tool is invoked, the executor blocks on `POST /tasks/{id}/decisions`. Startup rejects `enabled: true` with an empty `tools` map. Timeout auto-denies. The pause blocks the caller's HTTP request for up to `timeout`; long-window approvals should use `tasks/sendSubscribe` (SSE). |
+
+Every sub-block ships **off by default** — an absent block leaves the corresponding hook unregistered and the wire shape unchanged from a pre-governance Forge deployment.
+
+The runtime credential-scoping block (`credentials:` — governance R9) is a **top-level** field, not nested under `security:`. Each entry binds a JIT credential provider to a tool (and optionally a specific `binary` for `cli_execute`):
+
+```yaml
+# R9 (#215) — see docs/security/least-privilege-credentials.md
+credentials:
+  - tool: cli_execute
+    binary: aws                    # scope to a specific binary (cli_execute only)
+    provider: sts_assume_role      # static | sts_assume_role | …
+    spec:
+      role_arn: arn:aws:iam::123456789012:role/forge-skill-read
+      external_id: skill-alpha
+      session_name: forge-agent-jit
+      duration: 15m                # short-lived; revoked after the call
+```
+
+Credentials are materialized fresh per tool call and injected in-tool at `Execute` (headers for HTTP tools, env for `cli_execute`) — see [Least-privilege credentials](/docs/security/least-privilege-credentials).
 
 The same SecurityPolicy schema is consumed by `forge skills audit --policy`, so a single committed `security-policy.yaml` can gate both interactive audits and `forge build` runs. See [Skills CLI / Security Audit](/docs/skills/skills-cli#security-audit) for the policy YAML reference, scoring overrides, and audit output shape.
