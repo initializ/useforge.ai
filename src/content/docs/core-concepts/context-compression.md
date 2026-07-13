@@ -17,6 +17,8 @@ Agent tool outputs are dominated by repetition: 149 pods that are `Running` and 
 
 Compression inverts the tradeoff: keep what matters (errors, anomalies, query-relevant rows, boundaries), offload the rest to a local store, and let the model retrieve the original if it turns out to need it.
 
+Content-aware strategies cover the shapes agents actually produce: tables and logs (line selection), JSON arrays and `{"items": [...]}` objects (whole-record selection), runner envelopes (`{"stdout": ...}` recursion), and YAML / `kubectl describe` (indentation-tree folding of boring subtrees like `managedFields` and env lists, each behind its own marker — a crashing container's section is never folded because the error floor protects it).
+
 ## How it works
 
 ```
@@ -106,11 +108,32 @@ Savings are first-class audit events, not log noise — see [Audit Logging](/doc
 
 Token figures are tokenizer estimates (directionally accurate); billed truth remains `llm_call.input_tokens`. A surgical session that produced only small outputs correctly reports `compression_count: 0` — compression is insurance against bulk, not a tax on every call.
 
+## The learning loop
+
+Every `context_expand` retrieval is a signal: compression dropped something a model needed. At expansion time the runtime mines the retrieved content for domain-state tokens (CamelCase / ALLCAPS words like `SchedulingGated` or `QUOTA_EXCEEDED`) that are **not** already protected by the error floor or your `keep_patterns`, and counts them across expansions in `.forge/ctxzip-suggestions.json`. A token retrieved in three distinct expansions — distinct content, not the same marker retrieved three times — is surfaced once — a `context_pattern_suggested` audit event plus a log line — and:
+
+```bash
+forge compression suggestions
+```
+
+renders the accumulated candidates with a paste-ready `keep_patterns` block. Suggestions are advisory: a token retrieved often is evidence, not proof — review before adopting. The file is bounded (512 entries, lowest-count evicted) and failures are swallowed (the flywheel never affects compression itself).
+
+### Persistence and containers
+
+The suggestions file lives next to the CCR store (`.forge/ctxzip-suggestions.json`, following `store_path`). In a container without a volume, **a pod restart loses the local counting state** — and in a multi-replica Deployment each replica counts independently, so fleet-wide repetition may never cross any single pod's threshold. Two answers, use either or both:
+
+- **Volume**: point `store_path` at a mounted path (per-replica — the store is single-writer). An `emptyDir` survives container crash-restarts; a per-replica PVC survives rescheduling too.
+- **Audit stream (recommended for fleets)**: every `context_expanded` event carries the producing `tool` and the top mined `candidates`, and threshold crossings emit `context_pattern_suggested` — so a platform consuming the audit export can **rebuild counting fleet-wide from the stream alone**, immune to restarts and replica dilution. The local file is a single-agent convenience, not the source of truth.
+
+The CCR store itself needs no such care: originals expire after `ttl` anyway, and a post-restart marker miss tells the model to re-run the producing tool.
+
 ## Failure posture
 
 Fail-open, always: if the store cannot be opened, a compressor errors, or "compression" would grow a message, the original content is used unchanged. Error tool results are never compressed. An expired retrieval is not a dead end — the model is told to re-run the tool that produced the output.
 
 **Interaction with tool-output truncation.** Forge normally hard-caps tool results at 25% of the context budget *before* anything else sees them. With compression enabled, that cut moves to **after** the compression hook (behind a safety ceiling of 16× the cap, absolute max 4MB): pre-hook truncation both destroys data and breaks the JSON envelopes compression would shrink losslessly. The compressed result is then capped as usual — normally a no-op. If an envelope still arrives cut mid-string (the safety ceiling, or another runtime), ctxzip salvages the intact prefix and adds a `_ctxzip_note` field telling the model the tail was destroyed upstream — not offloaded — so it re-runs the tool rather than calling `context_expand` for bytes that no longer exist.
+
+**Tool-internal caps relax too.** Some tools cut their own output before the runtime ever sees it: the builtin file/search tools cap at 2,000 lines / 50 KB, `grep_search` defaults to 50 matches, `http_request` caps response bodies at 1 MB, and the MCP adapter clips results at 64 KB. With compression on those cuts are the wrong place to economize — a 50-match grep default can silently drop the one `CrashLoopBackOff` row at match #78, and compression never gets the chance to keep it. The runtime stamps the tool-execution context with a relaxed-limits signal, and these caps scale **16×** (grep's default becomes 500 matches; `http_request` and the MCP cap are bounded at 4 MB absolute). Explicit caller arguments (`max_results`, `limit`) are always honored as given. The relaxed output then flows through compression and the post-hook cap, so nothing downstream is unbounded. In both modes `http_request` now reports an over-limit body with `"truncated": true` in its result envelope instead of silently returning a partial body. `cli_execute`'s 1 MB cap is unchanged — it already reports `truncated: true` honestly, and shell output that size should be filtered at the source.
 
 **Single-writer store.** The bbolt store at `store_path` holds an exclusive file lock — one store per process. A second process pointing at the same file (two replicas on a shared volume, or `forge run` alongside `forge serve` in the same directory) fails to acquire the lock after a 5-second timeout and that process runs uncompressed (fail-open, with a startup warning). Give each replica its own `store_path` — offloaded originals are only ever retrieved by the process that offloaded them, so the store has no reason to be shared.
 

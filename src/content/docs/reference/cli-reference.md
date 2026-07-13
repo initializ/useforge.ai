@@ -129,6 +129,14 @@ See [Authentication](/docs/security/authentication) for the full auth provider r
 
 ---
 
+## `forge compression`
+
+Inspect context compression state.
+
+### `forge compression suggestions`
+
+Shows `keep_patterns` candidates mined from `context_expand` retrievals (the [learning loop](/docs/core-concepts/context-compression#the-learning-loop)), with a paste-ready `compression.keep_patterns` block for entries that crossed the suggestion threshold.
+
 ## `forge build`
 
 Build the agent container artifact. Runs the full 8-stage build pipeline.
