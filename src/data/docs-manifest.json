@@ -1,14 +1,14 @@
 {
-  "syncedAt": "2026-07-13T00:06:54.537Z",
+  "syncedAt": "2026-07-13T01:48:47.762Z",
   "ref": "main",
-  "totalDocs": 52,
+  "totalDocs": 53,
   "sections": {
     "core-concepts": 11,
     "deployment": 5,
     "root": 1,
     "getting-started": 5,
     "mcp": 5,
-    "reference": 8,
+    "reference": 9,
     "security": 13,
     "skills": 4
   },
@@ -292,6 +292,16 @@
       "description": "Compatibility matrix for skills across agent types and LLM providers.",
       "order": 4,
       "editUrl": "https://github.com/initializ/forge/edit/main/docs/reference/agent-skills-compatibility.md"
+    },
+    {
+      "sourcePath": "docs/reference/browser-tools.md",
+      "outputPath": "reference/browser-tools.md",
+      "section": "reference",
+      "slug": "browser-tools",
+      "title": "Browser Tools",
+      "description": "Opt-in headless-browser tool family for navigating, reading, and interacting with web pages.",
+      "order": 11,
+      "editUrl": "https://github.com/initializ/forge/edit/main/docs/reference/browser-tools.md"
     },
     {
       "sourcePath": "docs/reference/cli-reference.md",
