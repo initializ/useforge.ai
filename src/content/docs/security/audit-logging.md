@@ -24,13 +24,13 @@ All runtime security events are emitted as structured NDJSON to stderr with corr
 | `llm_call_cancelled` | Streaming LLM call cancelled mid-flight; carries partial token counts captured up to cancellation. |
 | `invocation_complete` | A2A invocation finished (auth → dispatch → engine → response). Carries `duration_ms` (wall-clock) plus aggregated `input_tokens_total` / `output_tokens_total` / `llm_call_count` / `model` / `provider`. When [context compression](/docs/core-concepts/context-compression) is enabled it also carries `compression_saved_tokens_total` — REALIZED savings: tokens this invocation's LLM calls did not send because compression markers rode in place of originals, compounding on every resend of compressed history (this is the number that matches the provider bill) — plus `compression_event_saved_tokens` (the one-time per-compression deltas, matching the sum of this invocation's `context_compressed` events), `compression_count`, and `expansion_count` when nonzero. Accumulated per invocation by correlation ID so concurrent tasks never cross-contaminate. |
 | `invocation_cancelled` | A2A invocation cancelled mid-flight via `tasks/cancel` (or internal cancellation like parent ctx deadline). Carries `fields.reason` (one of `workflow_failure` / `cost_limit_exceeded` / `timeout` / `external_signal`), `duration_ms` up to cancellation, and any partial token totals consumed before the signal. See [Cancellation](#cancellation). |
-| `task_admission_denied` | A new inbound `tasks/send` was rejected by the platform admission middleware (issue #201; opt-in via `FORGE_ADMISSION_URL` + `FORGE_PLATFORM_TOKEN`). Carries `fields.reason` (platform-defined: `cost_limit_exceeded`, `billing_overdue`, …), `fields.scope` (`agent` / `workspace` / `org`), `fields.window` (`hourly` / `daily` / `monthly` / `billing_cycle`), `fields.reset_at` (RFC 3339), and `fields.cached` (`true` when served from the 5s per-agent cache). Caller observes HTTP 402 Payment Required with `Retry-After`. See [Platform Admission Hook](/docs/security/admission). |
+| `task_admission_denied` | A new inbound `tasks/send` was rejected by the platform admission middleware (issue #201; opt-in via `FORGE_ADMISSION_URL` + `FORGE_PLATFORM_TOKEN`). Carries `fields.reason` (platform-defined: `cost_limit_exceeded`, `billing_overdue`, …), `fields.scope` (`agent` / `workspace` / `org`), `fields.window` (`hourly` / `daily` / `monthly` / `billing_cycle`), `fields.reset_at` (RFC 3339), and `fields.cached` (`true` when served from the 5s per-agent cache). Caller observes HTTP 402 Payment Required with `Retry-After`. Since admission sits between auth and dispatch and emits via `EmitFromContext`, it carries the ingress-minted `correlation_id` (#278) — so admission denials group with the `auth_verify` of the same request in per-invocation views. See [Platform Admission Hook](/docs/security/admission). |
 | `guardrail_check` | Guardrail mask / block / warn decision. Carries `fields.gate` (`input` / `context` / `tool_call` / `output` / `stream` — sourced from the library `Result.Gate`), `fields.decision` (`masked` / `warned` / `blocked`), `fields.guardrail` + `fields.category` from the triggering violation, and `fields.violation_count`. `fields.tool` is present on `tool_call` and on `output` events for tool return text. With `FORGE_GUARDRAIL_CAPTURE_EVIDENCE=true` operators also opt into `fields.evidence` carrying the redacted + truncated triggering text. See [Guardrails — Audit Events](/docs/security/guardrails#audit-events). |
 | `context_compressed` | [Context compression](/docs/core-concepts/context-compression) shrank content before it reached the LLM. Carries `fields.seam` (`tool_output` from the AfterToolExec hook / `request` from the client wrapper), `fields.tool`, `tokens_before` / `tokens_after` / `saved_tokens`, plus running totals `total_saved_tokens` / `total_compressions` / `total_expansions` so any single event shows the cumulative picture. Token figures are tokenizer estimates; billed truth stays in `llm_call.input_tokens`. |
 | `context_expanded` | The model retrieved offloaded content via the `context_expand` tool. Carries `fields.hash`, `hit` (`false` = expired/evicted), `bytes`, the producing `tool`, `candidates` (top keep-pattern tokens mined from the retrieved content, ≤5 — lets a platform consuming the audit stream aggregate [learning](/docs/core-concepts/context-compression#the-learning-loop) fleet-wide, immune to pod restarts), and the same running totals — expansions are the cost side auditors net against savings. |
 | `context_pattern_suggested` | The [compression learning loop](/docs/core-concepts/context-compression#the-learning-loop) surfaced a `keep_patterns` candidate: a domain-state token retrieved via `context_expand` in 3+ distinct expansions that the keep floor does not already protect. Fired once per pattern. Carries `fields.pattern`, `expansions`, `tools` (array). Review via `forge compression suggestions`. |
-| `auth_verify` | Inbound request authenticated successfully (with `provider`, `user_id`, `org_id`, `token_kind`) |
-| `auth_fail` | Inbound request rejected (with `reason`, `token_kind`) |
+| `auth_verify` | Inbound request authenticated successfully (with `provider`, `user_id`, `org_id`, `token_kind`). Carries the invocation `correlation_id` (minted at ingress, before auth — see below) and, for orchestrator-dispatched calls, `workflow_execution_id` — so it groups with the task events that follow it in the same request. |
+| `auth_fail` | Inbound request rejected (with `reason`, `token_kind`). No `task_id` (none is ever created), but carries `workflow_execution_id` when the request had the execution header — so a rejected request is still attributable to its workflow run (#278). |
 | `agent_card_published` | Agent Card finalized at startup or hot-reload (with `name`, `version`, `protocol_version`, `url`, `skill_count`, `capabilities`, `security_schemes`, `card_size_bytes`, `card_sha256`). See [Agent Card reference](/docs/reference/a2a-agent-card). |
 | `policy_loaded` | One per non-empty policy layer at startup (system / user / workspace). Carries `fields.layer`, `source` (file path), deny-list size counts, and max bounds. See [Platform Policy](/docs/security/platform-policy). |
 | `policy_violation_at_build_time` | One per violation when `forge.yaml` conflicts with any policy layer. Agent refuses to start. Carries `fields.violation_kind` / `offending_value` / `forge_yaml_field` plus `layer` + `source` identifying the enforcing file. See [Platform Policy](/docs/security/platform-policy). |
@@ -508,20 +508,30 @@ start their own counters. Events emitted outside any invocation scope
 (`policy_loaded`, `agent_card_published`, `audit_export_status`) omit
 `seq` entirely.
 
-#### Counter installation order
+#### Counter + correlation-id installation order
 
-The per-invocation `SequenceCounter` is installed on `r.Context()` by
-`installSequenceCounterMiddleware`, which wraps the auth middleware so
-the counter is already on context before the auth chain runs. This
-puts `auth_verify` / `auth_fail` first in the sequence (`seq=1`) and
-keeps the rest of the per-invocation events (`session_start`,
-`guardrail_check`, `llm_call`, `tool_exec`, `invocation_complete`,
-etc.) gap-free under the same `(correlation_id, task_id)` group. The
-runner's request entry calls `coreruntime.EnsureSequenceCounter` —
-which reuses the wrapper-installed counter when present and installs a
-fresh one on the `--no-auth` path, so no embedder configuration loses
-seq stamping. Pinned by `TestAuthAudit_SeqStampedWhenCounterInstalled`
-and `TestEnsureSequenceCounter_ReusesExisting` (issue #174).
+Both the per-invocation `SequenceCounter` **and** the `correlation_id`
+are installed on `r.Context()` at ingress by
+`installIngressContextMiddleware`, which wraps the auth middleware so
+both are on context before the auth chain runs. This puts
+`auth_verify` / `auth_fail` first in the sequence (`seq=1`) **and**
+gives them the same `correlation_id` the task events will carry — so
+the entire invocation, auth event included, is one gap-free,
+single-id timeline under the `(correlation_id, task_id)` group.
+
+Minting the `correlation_id` at ingress rather than at task creation is
+the key change from issue #278: auth runs before a task exists, so
+before this the pre-admission auth events had no invocation id and fell
+into an "unattributed" bucket in per-invocation views. Emission order is
+preserved (auth genuinely precedes admission — no backfilling).
+
+The runner's request entry calls `coreruntime.EnsureSequenceCounter`
+and `coreruntime.EnsureCorrelationID` — each reuses the ingress-installed
+value when present and installs a fresh one on the `--no-auth` path (and
+schedule fires, which have no ingress), so no path loses seq or
+correlation stamping. Pinned by `TestAuthAudit_SeqStampedWhenCounterInstalled`,
+`TestAuthAudit_CarriesIngressCorrelationID`, and the `Ensure*_ReusesExisting`
+tests (issues #174, #278).
 
 #### Emit invariant
 
