@@ -205,6 +205,49 @@ mcp:
       required: true
 ```
 
+#### Environment placeholders (#321)
+
+`${VAR}` / `$VAR` placeholders in the MCP connection fields — `url`,
+`client_id`, `authorize_url`, `token_url`, and `scopes` — are **expanded
+at load** from the process environment (and the `.env` file loaded by
+`forge run`), matching the egress-domain expansion semantics. This is how
+managed/platform mode ships a server: the generated `forge.yaml` bakes
+only the *shape* (literal `url` + placeholders), and the values are
+injected into the agent's env at deploy — so rotating a pinned client is
+a redeploy, not a rebuild.
+
+```yaml
+auth:
+  type: oauth
+  client_id: ${MCP_LINEAR_CLIENT_ID}
+  authorize_url: ${MCP_LINEAR_AUTHORIZE_URL}
+  token_url: ${MCP_LINEAR_TOKEN_URL}
+  scopes: ["${MCP_LINEAR_SCOPES}"]     # one var carrying "read write" → two scopes
+```
+
+- With all of `client_id`/`authorize_url`/`token_url` present after
+  expansion, resolution takes the **explicit** branch — no runtime
+  discovery or DCR (the managed-mode contract).
+- An **unset** variable expands to `""`, so the block reads as
+  *unconfigured* and falls to the discovery / fail-closed path — never a
+  literal `${…}` dial.
+- A `scopes` entry is **split on whitespace** post-expansion, so
+  `${MCP_LINEAR_SCOPES}="read write"` becomes `[read, write]`. (The split
+  is unconditional — a literal `["read write"]` splits too; OAuth scopes
+  are space-delimited by RFC 6749, so a value never has an internal space.)
+- `token_env` (for `bearer`/`static`) is **not** expanded — it is the
+  *name* of an env var, resolved at runtime.
+
+> ⚠️ **Keep `url` literal.** Although `url` accepts placeholders for
+> symmetry, the **build-time egress freeze** reads MCP hosts from the
+> config at *build* time — where the deploy env is unset, so a
+> `url: ${MCP_URL}` expands to `""`. That empty value fails the
+> `url is required for http transport` validation (a loud build error),
+> and even if it slipped through it wouldn't be in the frozen
+> `egress_allowlist.json` / NetworkPolicy, blocking the host at runtime in
+> a container. Managed mode keeps `url` literal and places placeholders
+> only on the auth fields — do the same.
+
 ### In-cluster MCP with bearer token from a K8s Secret
 
 ```yaml
