@@ -71,7 +71,7 @@ MCPs).
 | `bearer`    | `token_env`     | In-cluster sidecars; CI machine-to-machine |
 | `static`    | `token_env`     | Same as bearer; named for clarity         |
 | `platform`  | top-level `platform` block | **Managed:** agent-principal (service) identity resolved by the platform |
-| `user`      | top-level `platform` block | **Managed:** delegated per-requesting-user identity, resolved by the platform |
+| `user`      | top-level `platform` block **or** explicit endpoints (standalone) | Delegated per-requesting-user identity — **managed** (platform-resolved) or **standalone** (Forge runs the OAuth itself, #332) |
 
 `token_env` is the name of an environment variable; the variable's
 value is read at runtime — never stored in `forge.yaml`.
@@ -128,9 +128,69 @@ mcp:
 > B's. Connections are established lazily (first call) and per subject.
 
 > The platform materializes both the `platform` block and the per-identity
-> server entries (same URL, split by `type`). For the **standalone** (no
-> platform) equivalents, use `type: oauth` — 3-legged `forge mcp login` for a
-> user, or `grant: client_credentials` for an agent-principal (above).
+> server entries (same URL, split by `type`). For a standalone agent-principal,
+> use `type: oauth` with `grant: client_credentials` (above); for standalone
+> **per-user** delegation, use standalone `type: user` (below).
+
+#### Standalone delegated consent — `type: user` without a platform (#332)
+
+When there is **no** `platform` block, `type: user` runs the delegated OAuth
+**in Forge itself**: a grantless call parks on the auth-required gate, the user
+is shown a "Connect" login link, they consent in the browser, and Forge stores
+their per-user access token in memory (no disk) so the call resumes.
+
+```yaml
+server:
+  public_url: https://agent.example.com     # or the AGENT_URL env var — see below
+
+mcp:
+  servers:
+    - name: atlassian
+      url: https://mcp.atlassian.com/mcp
+      auth:
+        type: user
+        # standalone requires explicit endpoints + client_id (no runtime discovery):
+        client_id: ${ATLASSIAN_CLIENT_ID}
+        authorize_url: https://auth.atlassian.com/authorize
+        token_url: https://auth.atlassian.com/oauth/token
+        scopes: [read:jira-work, write:jira-work]
+      required: false
+      tools: { allow: ["*"] }
+```
+
+- **`grant`** is `authorization_code` (the default) — `client_credentials` is
+  rejected for standalone `type: user`.
+- **Explicit endpoints + `client_id` are required.** Standalone does not run
+  discovery/registration at runtime, so `authorize_url`, `token_url`, and
+  `client_id` must be set. (Add a `platform` block instead for managed
+  delegation, which resolves tokens without any of these.)
+- **`server.public_url`** (falling back to the `AGENT_URL` env var) is the
+  agent's externally-reachable base URL. Forge builds `redirect_uri =
+  <public_url>/mcp/oauth/callback`, so the URL must be reachable by the user's
+  browser after IdP consent.
+- **Delivery.** The login link is published on the parked task's A2A
+  `auth-required` artifact (a UI/A2A client renders it). Forge-driven Slack
+  delivery of the same link is tracked separately (#343).
+- **Endpoints registered** (only in standalone mode): `GET /mcp/oauth/start`
+  (sets a `forge_session` cookie, then redirects to the IdP) and
+  `GET /mcp/oauth/callback` (validates state + session, exchanges the code,
+  resumes the parked call). Both are auth-exempt (anonymous browser hops); their
+  authenticity rests on the single-use, expiring, session-bound state — see the
+  [auth-required gate](#delegated-consent--the-auth-required-gate-330).
+
+> **Trust model / limitation (standalone).** The consent link is a **bearer
+> capability**: the browser that completes it is anonymous, so the session
+> cookie only proves the *same browser* did `/start` and `/callback` across the
+> IdP round-trip — it does **not** prove the completing user is the parked
+> subject. If the link leaks, an attacker could authenticate at the IdP as
+> *themselves* and have that token filed under the victim's subject (a
+> confused-deputy / token-fixation vector). This is bounded by the single-use,
+> short-TTL state and, above all, by **delivering the link only over an
+> authenticated channel** to the requesting user (the A2A `auth-required`
+> artifact in their own session; the Slack DM in #343). Treat the link as a
+> secret. The tamper-proof (heavier) alternative — verifying the IdP `userinfo`
+> identity against the parked subject at exchange time — is deferred; managed
+> mode sidesteps it entirely (the platform owns the callback and token custody).
 
 #### Materialized tool schemas (#317)
 
