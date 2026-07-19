@@ -1,13 +1,13 @@
 {
-  "syncedAt": "2026-07-18T19:18:17.428Z",
+  "syncedAt": "2026-07-19T18:03:10.327Z",
   "ref": "main",
-  "totalDocs": 53,
+  "totalDocs": 54,
   "sections": {
     "core-concepts": 11,
     "deployment": 5,
     "root": 1,
     "getting-started": 5,
-    "mcp": 5,
+    "mcp": 6,
     "reference": 9,
     "security": 13,
     "skills": 4
@@ -262,6 +262,16 @@
       "description": "Full schema for the forge.yaml mcp: block.",
       "order": 2,
       "editUrl": "https://github.com/initializ/forge/edit/main/docs/mcp/configuration.md"
+    },
+    {
+      "sourcePath": "docs/mcp/delegated-consent.md",
+      "outputPath": "mcp/delegated-consent.md",
+      "section": "mcp",
+      "slug": "delegated-consent",
+      "title": "MCP — Delegated Consent (Platform Integration)",
+      "description": "How a managing platform deploys type: user MCP servers and drives the auth-required gate to obtain and manage per-user consent.",
+      "order": 6,
+      "editUrl": "https://github.com/initializ/forge/edit/main/docs/mcp/delegated-consent.md"
     },
     {
       "sourcePath": "docs/mcp/index.md",
