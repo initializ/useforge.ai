@@ -138,6 +138,89 @@ Invariants (checked by tests):
 
 Companion feature for #337: raw-TCP egress (databases, message brokers) requires this narrow-private mechanism to be reachable in the first place. Landing the CIDR allowlist first (this PR) unblocks the SOCKS5-based TCP path (follow-up PR) without opening RFC 1918 wholesale.
 
+## Raw-TCP Egress (SOCKS5)
+
+HTTP(S) traffic goes through the HTTP forward proxy; **raw TCP** (Postgres, MySQL, Redis, Kafka, RabbitMQ, MongoDB, NATS, MQTT) goes through a **SOCKS5 listener** the same proxy binds. Both use the same enforcement engine (`ValidateAndDial`) — one allowlist policy, one audit shape, two client-facing protocols.
+
+**Config:**
+
+```yaml
+egress:
+  mode: allowlist
+  allowed_hosts: [api.stripe.com]           # HTTP/HTTPS — unchanged
+  allowed_tcp:                              # raw-TCP allowlist
+    - db.internal:5432
+    - "*.brokers.internal:9092"             # wildcard host, exact port
+    - metrics.internal:*                    # exact host, any port
+    - redis.internal:6379
+  allowed_private_cidrs:                    # required for internal targets
+    - 10.20.0.0/16
+```
+
+**Entry shapes:**
+
+| Shape | Example | Matches |
+|---|---|---|
+| `host:port` | `db.internal:5432` | `db.internal:5432` only |
+| `*.suffix:port` | `*.brokers.internal:9092` | `broker1.brokers.internal:9092`, `cluster-a.brokers.internal:9092` (parent `brokers.internal` NOT matched) |
+| `host:*` | `metrics.internal:*` | any port on `metrics.internal` |
+| `*.suffix:*` | `*.internal:*` | any port on any subdomain of `.internal` |
+
+Bare host (no `:port`) is rejected at config-load. Ports outside 1–65535 are rejected. HTTP-side `allowed_hosts` entries are ALSO reachable via SOCKS5 (either matcher can allow a target) — no need to duplicate.
+
+**Read `allowed_hosts` carefully once SOCKS5 is on.** The HTTP-side allowlist is **port-agnostic**: a hostname listed in `allowed_hosts` for HTTPS use is reachable over SOCKS5 on *any* port. Listing `api.stripe.com` for HTTPS also grants `api.stripe.com:22`, `api.stripe.com:3389`, etc. via the raw-TCP path. SafeDialer still bounds the IPs it resolves to (no cloud-metadata, no unlisted-private), so it's not an SSRF hole — but it may be wider than the operator's HTTPS-only mental model. If you need port-narrow control on an HTTP hostname, remove it from `allowed_hosts` and add explicit `allowed_tcp: [api.stripe.com:443]` instead. Matches pre-existing HTTP CONNECT behavior (CONNECT also checks hostname-only), so this isn't newly introduced — but it's newly exposed to arbitrary TCP protocols.
+
+**IPv6 targets** must be bracketed in the config (`[::1]:5432` or `[2001:db8::1]:6379`). Wildcard hosts (`*.suffix`) are IPv4-hostname patterns — IPv6 literal wildcards aren't supported (there's no meaningful "suffix" for an IP literal).
+
+**Env injection for skill subprocesses:**
+
+The runner sets these env vars alongside the existing `HTTP_PROXY`/`HTTPS_PROXY`:
+
+```sh
+ALL_PROXY=socks5h://127.0.0.1:<port>
+all_proxy=socks5h://127.0.0.1:<port>
+SOCKS_PROXY=socks5h://127.0.0.1:<port>
+```
+
+The `socks5h://` scheme (with the `h`) forces **server-side hostname resolution** — the proxy needs the destination hostname to run the allowlist check and record it in the audit event. Clients that pre-resolve locally to an IP would launder the target past the domain matcher.
+
+**Client support matrix:**
+
+| Client | Native SOCKS5? | How to reach the proxy |
+|---|---|---|
+| `curl` | Yes | `curl --socks5-hostname "$ALL_PROXY" …` |
+| Go apps | Yes | `golang.org/x/net/proxy` reads `ALL_PROXY` automatically |
+| Python (`psycopg2`, `redis-py`, `pymongo`) | Partial | `pip install pysocks`; `socks.set_default_proxy(socks.SOCKS5, …)` |
+| Node (`pg`, `ioredis`, `mongodb`) | With shim | `npm i socks-proxy-agent`; construct the client with the agent |
+| `psql`, `redis-cli`, `mongosh`, `kafka-console-consumer` | **No** | Wrap in `proxychains-ng` — see caveats below |
+
+**`proxychains-ng` platform caveats:**
+
+| Platform | Works? | Notes |
+|---|---|---|
+| Linux (glibc) | ✓ | `LD_PRELOAD` — install via package manager |
+| Linux (musl / Alpine) | ✓ | Requires proxychains built for musl |
+| macOS | ✗ (mostly) | `DYLD_INSERT_LIBRARIES` blocked by SIP for most binaries. Use language-native SOCKS5 SDKs instead. |
+| Statically-linked Go binaries | ✗ | Skip `LD_PRELOAD` entirely — the loader has no dynamic hook. Use `net/proxy` in code. |
+| setuid binaries | ✗ | LD_PRELOAD stripped by dynamic linker |
+
+**Fail-closed invariants:**
+
+- **Deny-all default** — raw TCP is denied unless explicitly in `allowed_tcp` (or in HTTP-side `allowed_hosts`).
+- **Port granularity** — `db.internal:5432` allows only port 5432 on that host. A client trying 5433 gets a policy denial before dial.
+- **Private-CIDR gate** — internal destinations (databases, brokers on RFC 1918) still require `allowed_private_cidrs` or `allow_private_ips: true` to be reachable at all.
+- **Localhost bypass** — `127.0.0.1` / `::1` / `localhost` bypass the matcher (same as HTTP path).
+- **BIND / UDP ASSOCIATE rejected** — only the CONNECT command is supported; other SOCKS5 commands are refused with REP=0x07.
+- **No pre-resolved IPs from clients** — `socks5h://` scheme enforces server-side name resolution. Clients that speak plain `socks5://` and pre-resolve get the IP path in SafeDialer, which either matches `allowed_private_cidrs` or fails with a blocked-IP error.
+
+**Task attribution:**
+
+The HTTP path attributes egress events to task/correlation IDs via `Proxy-Authorization` (see #338). SOCKS5v5 (no-auth) has no equivalent channel — SOCKS5 audit events carry only the host:port and decision. This is a deliberate limitation, not an oversight; adding SOCKS5-auth-based attribution is a follow-up when there's a concrete need.
+
+**Listener lifecycle:**
+
+The SOCKS5 listener is only bound when `allowed_tcp` has at least one entry. Deployments that don't need raw-TCP egress see no additional port bound and no `ALL_PROXY` env vars.
+
 ## Runtime Egress Enforcer
 
 The `EgressEnforcer` (`forge-core/security/egress_enforcer.go`) is an `http.RoundTripper` that wraps a `SafeTransport`. Every outbound HTTP request from in-process Go code (builtins like `http_request`, `web_search`, LLM API calls) passes through it.
