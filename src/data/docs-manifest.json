@@ -1,12 +1,12 @@
 {
-  "syncedAt": "2026-07-23T16:31:57.977Z",
+  "syncedAt": "2026-07-24T15:32:26.678Z",
   "ref": "main",
-  "totalDocs": 54,
+  "totalDocs": 55,
   "sections": {
     "core-concepts": 11,
     "deployment": 5,
     "root": 1,
-    "getting-started": 5,
+    "getting-started": 6,
     "mcp": 6,
     "reference": 9,
     "security": 13,
@@ -219,9 +219,19 @@
       "section": "getting-started",
       "slug": "quick-start",
       "title": "Quick Start",
-      "description": "Get a Forge agent running in under 60 seconds.",
+      "description": "Talk to a working agent in under 60 seconds with forge try.",
       "order": 2,
       "editUrl": "https://github.com/initializ/forge/edit/main/docs/getting-started/quick-start.md"
+    },
+    {
+      "sourcePath": "docs/getting-started/ship-to-production.md",
+      "outputPath": "getting-started/ship-to-production.md",
+      "section": "getting-started",
+      "slug": "ship-to-production",
+      "title": "Ship to Production",
+      "description": "The full pipeline: init, skills, secrets, validate, build, package, deploy.",
+      "order": 3,
+      "editUrl": "https://github.com/initializ/forge/edit/main/docs/getting-started/ship-to-production.md"
     },
     {
       "sourcePath": "docs/getting-started/your-first-skill.md",
