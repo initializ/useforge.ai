@@ -41,6 +41,7 @@ forge init [name] [flags]
 | `--api-key` | | | LLM provider API key |
 | `--org-id` | | | OpenAI Organization ID (enterprise) |
 | `--from-skills` | | | Path to a SKILL.md file for auto-configuration |
+| `--from-skill-dir` | | | Path to a skill folder (SKILL.md + scripts + reference files) to vendor into the new agent and wire (egress/env). See [Skills CLI / Importing a skill folder](/docs/skills/skills-cli#importing-a-skill-folder) |
 | `--non-interactive` | | `false` | Skip interactive prompts |
 | `--compression` | | `false` | Enable reversible context compression — writes `compression.enabled: true` to the scaffolded forge.yaml. See [Context Compression](/docs/core-concepts/context-compression) |
 | `--auth` | | | Auth mode: `none`, `oidc`, `http_verifier`, `aws_sigv4`, `gcp_iap`, `azure_ad`, `custom` |
@@ -89,6 +90,9 @@ forge init my-agent \
 
 # From a skills file
 forge init my-agent --from-skills SKILL.md
+
+# From a skill folder (SKILL.md + scripts + reference files)
+forge init my-agent --from-skill-dir ./path/to/skill-folder
 
 # With builtin tools and registry skills
 forge init my-agent \
@@ -605,6 +609,11 @@ Manage agent skills.
 ```bash
 # Add a skill from the registry (prompts for env vars, merges egress domains)
 forge skills add <skill-name>
+
+# Import an external skill folder (SKILL.md + scripts + reference files) into
+# the current project; vendors files, merges egress, reports env requirements
+forge skills import ./path/to/skill-folder
+forge skills import ./path/to/skill-folder --name my-skill --overwrite
 
 # List available skills
 forge skills list

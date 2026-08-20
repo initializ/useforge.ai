@@ -17,6 +17,70 @@ forge init my-agent --from-skills
 forge build
 ```
 
+## Importing a skill folder
+
+Convert an existing skill folder — a `SKILL.md` plus its scripts and reference
+files — into a vendored skill. Two entry points share the same importer:
+
+```bash
+# Scaffold a NEW agent from a skill folder
+forge init my-agent --from-skill-dir ./path/to/skill-folder
+
+# Import into an EXISTING agent project (run from a dir containing forge.yaml)
+cd my-agent
+forge skills import ./path/to/skill-folder
+```
+
+`forge init --from-skill-dir` scaffolds the agent first (the normal init flow —
+model provider, channels, auth, etc. still apply), then vendors the folder and
+merges its egress into the freshly generated `forge.yaml`. `forge skills import`
+does the same vendoring into an already-scaffolded project.
+
+Accepted input layout (flat folders work too — files are classified by role):
+
+```
+skill-folder/
+  SKILL.md                 # required
+  scripts/                 # *.sh / *.py / *.js
+    fetch-data.py
+  reference/               # arbitrary files the skill reads at runtime
+    schema.json
+  requirements.txt         # optional Python deps
+```
+
+What it does:
+
+- **Vendors** `SKILL.md` into `skills/<name>/SKILL.md`, executable scripts
+  (`.sh`/`.py`/`.js`) under `skills/<name>/scripts/`, and every other file as a
+  reference preserving its relative path. All writes are confined to the skill
+  directory; `.git`/`.venv`/`__pycache__`/`node_modules` and similar build cruft
+  are skipped.
+- **Resolves the skill name** from the `SKILL.md` frontmatter `name` (falling
+  back to the sanitized folder name; override with `--name`).
+- **Merges** `metadata.forge.egress_domains` into `forge.yaml`
+  `egress.allowed_domains`.
+- **Reports** the `requires.env` variables you still need to supply (set them in
+  `.env` or via `forge secret set <KEY>`).
+
+Flags:
+
+| Flag | Description |
+|------|-------------|
+| `--name <name>` | Skill name override (default: frontmatter `name` or folder basename). Must be kebab-case. |
+| `--overwrite` | Replace an existing `skills/<name>/` directory (clears stale scripts). |
+
+> **Python scripts** get first-class tool registration: a `## Tool: foo_bar`
+> backed by `scripts/foo-bar.py` (or `.js`) is registered as a callable tool the
+> model invokes by name, run under `python3` (or `node`) — same as `.sh`. A
+> `.py`/`.js` script that doesn't map to a `## Tool:` heading stays reachable by
+> path via `run_skill_script`. A skill folder may ship a `requirements.txt`:
+> `forge build` discovers `skills/<name>/requirements.txt`, forces `python3` +
+> `pip` into the image (you don't need to list them in `requires.bins`), and
+> adds a `pip install -r` step for it in the generated Dockerfile. For Python
+> scripts **without** a `requirements.txt`, list `python3` under
+> `metadata.forge.requires.bins` so the interpreter is still provisioned —
+> `forge skills import` warns if it's missing.
+
 ## Security Audit
 
 `forge skills audit` scores each skill in the project across four categories — egress, binary, env, script — and runs a `SecurityPolicy` check for hard violations. By default it uses the analyzer's `DefaultPolicy`. A custom policy YAML can be supplied with `--policy`.
