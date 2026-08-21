@@ -1,11 +1,11 @@
 {
-  "syncedAt": "2026-08-21T01:26:29.341Z",
+  "syncedAt": "2026-08-21T02:01:12.800Z",
   "ref": "main",
-  "totalDocs": 55,
+  "totalDocs": 56,
   "sections": {
     "core-concepts": 11,
     "deployment": 5,
-    "root": 1,
+    "root": 2,
     "getting-started": 6,
     "mcp": 6,
     "reference": 9,
@@ -249,7 +249,7 @@
       "section": "mcp",
       "slug": "audit-events",
       "title": "MCP — Audit Events",
-      "description": "Seven event types emitted by the MCP subsystem; their fields and reason codes.",
+      "description": "Event types emitted by the MCP subsystem; their fields and reason codes.",
       "order": 4,
       "editUrl": "https://github.com/initializ/forge/edit/main/docs/mcp/audit-events.md"
     },
@@ -562,6 +562,15 @@
       "description": "Create script-backed skills with tools, guardrails, and the compilation pipeline.",
       "order": 2,
       "editUrl": "https://github.com/initializ/forge/edit/main/docs/skills/writing-custom-skills.md"
+    },
+    {
+      "sourcePath": "docs/sync-docs-state.md",
+      "outputPath": "sync-docs-state.md",
+      "section": "root",
+      "slug": "sync-docs-state",
+      "title": "Docs Sync State (rolling anchor)",
+      "description": "Records the last commit up to which documentation was confirmed in sync, so /sync-docs can run incrementally.",
+      "editUrl": "https://github.com/initializ/forge/edit/main/docs/sync-docs-state.md"
     }
   ]
 }

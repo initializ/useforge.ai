@@ -88,6 +88,6 @@ forge run                               # tools available as linear__create_issu
 
 - [Configuration reference](/docs/mcp/configuration) — every `mcp:` field
 - [CLI reference](/docs/mcp/cli-reference) — every flag of every subcommand
-- [Audit events](/docs/mcp/audit-events) — the seven event types and their fields
+- [Audit events](/docs/mcp/audit-events) — the MCP event types (server, tool, token, and delegated-consent) and their fields
 - [Troubleshooting](/docs/mcp/troubleshooting) — reason codes → fixes
 - [Delegated consent (platform integration)](/docs/mcp/delegated-consent) — deploy `type: user` servers and drive the auth-required gate
