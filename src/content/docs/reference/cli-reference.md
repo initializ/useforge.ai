@@ -268,7 +268,7 @@ On startup the server prints a banner whose **`Forge:`** line shows the running 
 | `--provider` | | LLM provider: `openai`, `anthropic`, or `ollama` |
 | `--compression` | | Enable reversible context compression; `--compression=false` forces it off. Absent = forge.yaml/env decide (sets `FORGE_COMPRESSION`). See [Context Compression](/docs/core-concepts/context-compression) |
 | `--env` | `.env` | Path to .env file |
-| `--with` | | Comma-separated channel adapters (e.g., `slack,telegram`) |
+| `--with` | | Comma-separated channel adapters (e.g., `slack,telegram`). Gated by [settings](/docs/reference/settings) `channels.enabled` when set: a `--with` for a non-enabled adapter fails before the policy deny filter |
 | `--auth-url` | | External auth provider URL for token validation |
 | `--cors-origins` | localhost | Comma-separated CORS allowed origins (e.g., `https://app.example.com,https://admin.example.com`). Use `*` to allow all origins |
 | `--otel-enabled` | `false` | Enable OTLP tracing export. Falls back to `OTEL_SDK_DISABLED` env and `observability.tracing.enabled` in forge.yaml. See [Observability — Tracing](/docs/core-concepts/observability-tracing). |
@@ -513,7 +513,7 @@ Manage agent communication channels.
 
 ### `forge channel add`
 
-Add a channel adapter to the project.
+Add a channel adapter to the project. Refuses to scaffold an adapter not in [settings](/docs/reference/settings) `channels.enabled` when that allowlist is set.
 
 ```bash
 forge channel add <slack|telegram>
@@ -521,7 +521,7 @@ forge channel add <slack|telegram>
 
 ### `forge channel serve`
 
-Run a standalone channel adapter.
+Run a standalone channel adapter. Refuses to start an adapter not in [settings](/docs/reference/settings) `channels.enabled` when that allowlist is set (same gate as `forge run --with`), then applies the policy deny filter.
 
 ```bash
 forge channel serve <slack|telegram>
