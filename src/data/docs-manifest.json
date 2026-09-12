@@ -1,14 +1,14 @@
 {
-  "syncedAt": "2026-09-07T20:32:12.503Z",
+  "syncedAt": "2026-09-12T01:55:13.729Z",
   "ref": "main",
-  "totalDocs": 56,
+  "totalDocs": 57,
   "sections": {
     "core-concepts": 11,
     "deployment": 5,
     "root": 2,
     "getting-started": 6,
     "mcp": 6,
-    "reference": 9,
+    "reference": 10,
     "security": 13,
     "skills": 4
   },
@@ -382,6 +382,16 @@
       "description": "Import forge-core, forge-skills, and forge-plugins as Go library packages — for embedding Forge in a host application.",
       "order": 12,
       "editUrl": "https://github.com/initializ/forge/edit/main/docs/reference/library-modules.md"
+    },
+    {
+      "sourcePath": "docs/reference/settings.md",
+      "outputPath": "reference/settings.md",
+      "section": "reference",
+      "slug": "settings",
+      "title": "Settings",
+      "description": "Layered developer-surface settings — enabled channels, model defaults + gateway, builtin tools — with a user layer and an enterprise-managed (MDM) layer.",
+      "order": 8,
+      "editUrl": "https://github.com/initializ/forge/edit/main/docs/reference/settings.md"
     },
     {
       "sourcePath": "docs/reference/web-dashboard.md",
