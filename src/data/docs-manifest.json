@@ -1,14 +1,14 @@
 {
-  "syncedAt": "2026-09-20T20:51:46.911Z",
+  "syncedAt": "2026-09-21T04:23:03.242Z",
   "ref": "main",
-  "totalDocs": 57,
+  "totalDocs": 58,
   "sections": {
     "core-concepts": 11,
     "deployment": 5,
     "root": 2,
     "getting-started": 6,
     "mcp": 6,
-    "reference": 10,
+    "reference": 11,
     "security": 13,
     "skills": 4
   },
@@ -352,6 +352,16 @@
       "description": "All environment variables supported by Forge.",
       "order": 3,
       "editUrl": "https://github.com/initializ/forge/edit/main/docs/reference/environment-variables.md"
+    },
+    {
+      "sourcePath": "docs/reference/forge-surface.md",
+      "outputPath": "reference/forge-surface.md",
+      "section": "reference",
+      "slug": "forge-surface",
+      "title": "The forge surface",
+      "description": "Running `forge` with no subcommand opens an interactive builder that shells into Claude Code (wired with forge knowledge + tools) or runs forge's own agent — and can generate an initializ-deploy.yaml.",
+      "order": 2,
+      "editUrl": "https://github.com/initializ/forge/edit/main/docs/reference/forge-surface.md"
     },
     {
       "sourcePath": "docs/reference/forge-yaml-schema.md",
