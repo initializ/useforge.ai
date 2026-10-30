@@ -1,14 +1,14 @@
 {
-  "syncedAt": "2026-09-30T19:20:11.674Z",
+  "syncedAt": "2026-10-30T17:03:25.615Z",
   "ref": "main",
-  "totalDocs": 58,
+  "totalDocs": 59,
   "sections": {
     "core-concepts": 11,
     "deployment": 5,
     "root": 2,
     "getting-started": 6,
     "mcp": 6,
-    "reference": 11,
+    "reference": 12,
     "security": 13,
     "skills": 4
   },
@@ -392,6 +392,16 @@
       "description": "Import forge-core, forge-skills, and forge-plugins as Go library packages — for embedding Forge in a host application.",
       "order": 12,
       "editUrl": "https://github.com/initializ/forge/edit/main/docs/reference/library-modules.md"
+    },
+    {
+      "sourcePath": "docs/reference/multimodal-io.md",
+      "outputPath": "reference/multimodal-io.md",
+      "section": "reference",
+      "slug": "multimodal-io",
+      "title": "Multimodal I/O over A2A",
+      "description": "Sending images and PDFs to a forge agent, and receiving media back, over the A2A protocol.",
+      "order": 9,
+      "editUrl": "https://github.com/initializ/forge/edit/main/docs/reference/multimodal-io.md"
     },
     {
       "sourcePath": "docs/reference/settings.md",
