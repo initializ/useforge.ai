@@ -1,10 +1,11 @@
 {
-  "syncedAt": "2026-11-17T01:57:59.401Z",
+  "syncedAt": "2026-11-17T03:22:06.328Z",
   "ref": "main",
-  "totalDocs": 59,
+  "totalDocs": 60,
   "sections": {
     "core-concepts": 11,
     "deployment": 5,
+    "design": 1,
     "root": 2,
     "getting-started": 6,
     "mcp": 6,
@@ -172,6 +173,15 @@
       "description": "Hybrid scheduler backend: file-backed on developer laptops, Kubernetes CronJobs in production.",
       "order": 10,
       "editUrl": "https://github.com/initializ/forge/edit/main/docs/deployment/scheduler-kubernetes.md"
+    },
+    {
+      "sourcePath": "docs/design/computer-use.md",
+      "outputPath": "design/computer-use.md",
+      "section": "design",
+      "slug": "computer-use",
+      "title": "Design: Computer Use for forge agents",
+      "description": "Proposal for adding vision-driven computer-use capability (screenshot → action loop) to forge agents, one profile/OS at a time.",
+      "editUrl": "https://github.com/initializ/forge/edit/main/docs/design/computer-use.md"
     },
     {
       "sourcePath": "docs/faq.md",
